@@ -1,19 +1,24 @@
-# B2: ResNet50 backbone FROZEN (ImageNet weights, not fine-tuned), only the
-# final classifier head is trained -> 8-way scene class. Comparison baseline
-# against B1 to show the value of fine-tuning.
+# B2 (paper name: "Person Classification"): per-PLAYER crops, feature
+# extracted with a FROZEN, never-fine-tuned ImageNet ResNet50 (no training of
+# the backbone at all, no person-action fine-tuning), max-pooled across all
+# players in the clip, then a small classifier head trained on the pooled
+# feature -> 8-way scene class.
 # Paper target: 64.6% test accuracy.
-script: src.training.train_backbone
+#
+# NOTE: an earlier version of this config incorrectly used the whole scene
+# image with a frozen backbone -- that is not this paper's B2 (no person-level
+# input at all). Fixed to use src/training/train_pooled_person.py.
+script: src.training.train_pooled_person
 args:
-  task: scene
-  mode: frozen
+  backbone-mode: frozen
   epochs: 15
-  batch-size: 24
+  batch-size: 16
   workers: 4
-  name: scene_frozen_b2
+  name: person_pooled_b2
 command: >
-  .venv\Scripts\python.exe -m src.training.train_backbone
-  --task scene --mode frozen --epochs 15 --batch-size 24 --workers 4
-  --name scene_frozen_b2
-checkpoint: outputs/checkpoints/scene_frozen_b2.pt
-results: outputs/results/scene_frozen_b2.json
-status: running
+  .venv\Scripts\python.exe -m src.training.train_pooled_person
+  --backbone-mode frozen --epochs 15 --batch-size 16 --workers 4
+  --name person_pooled_b2
+checkpoint: outputs/checkpoints/person_pooled_b2.pt
+results: outputs/results/person_pooled_b2.json
+status: not_started

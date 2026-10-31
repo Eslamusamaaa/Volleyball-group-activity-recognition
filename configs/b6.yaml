@@ -1,24 +1,28 @@
-# B6: image-level LSTM (same structure as B4), but over per-frame pooled
-# features derived from the B3-A (person-trained) backbone instead of B1's
-# raw-image backbone -> 8-way scene class.
+# B6: "Same B3 steps A and B, but repeated per frame": for each of the 9
+# frames, take all player crops, extract B3-A features, max-pool across
+# players -> one pooled vector per frame -> sequence of 9 vectors per clip.
+# Then a single LSTM over this 9-step sequence (image-level LSTM only, no
+# per-player LSTM1) -> 8-way scene class.
 # Paper target: 74.7% test accuracy.
-# NOTE: needs a per-frame (not per-player) feature cache built FROM the B3-A
-# backbone applied to whole frames (not crops) -- reuses cache_features.py
-# --level image but pointed at the B3-A checkpoint.
+#
+# NOTE: an earlier version of this config incorrectly ran the B3-A backbone
+# (trained on person crops) over the WHOLE FRAME image. Fixed: B6 pools
+# PLAYER-level features per frame, same b3a_person cache as B5/B7/B8 -- it
+# does not need its own cache.
 cache_command: >
   .venv\Scripts\python.exe -m src.training.cache_features
-  --level image --checkpoint outputs/checkpoints/person_finetune_b3a.pt
-  --name b3a_image
+  --level person --checkpoint outputs/checkpoints/person_finetune_b3a.pt
+  --name b3a_person
 script: src.training.train_temporal
 args:
   variant: b6
-  feature-name: b3a_image
+  feature-name: b3a_person
   epochs: 30
   batch-size: 16
   name: b6
 command: >
   .venv\Scripts\python.exe -m src.training.train_temporal
-  --variant b6 --feature-name b3a_image --epochs 30 --batch-size 16 --name b6
+  --variant b6 --feature-name b3a_person --epochs 30 --batch-size 16 --name b6
 checkpoint: outputs/checkpoints/b6.pt
 results: outputs/results/b6.json
 status: not_started

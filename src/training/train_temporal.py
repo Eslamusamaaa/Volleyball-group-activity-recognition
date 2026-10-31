@@ -79,7 +79,9 @@ class PersonFeatureSeqDataset(Dataset):
 
 # ---- models per variant ----
 
-class B4B6Model(nn.Module):
+class B4Model(nn.Module):
+    """Image-level LSTM over whole-frame (B1) features -> scene class."""
+
     def __init__(self, hidden_dim=512):
         super().__init__()
         self.lstm = FrameLSTM(FEATURE_DIM, hidden_dim)
@@ -87,6 +89,27 @@ class B4B6Model(nn.Module):
 
     def forward(self, feats, **kw):
         _, final = self.lstm(feats)
+        return self.head(final), None
+
+
+class B6Model(nn.Module):
+    """Same B3 steps A+B per frame (max-pool B3-A player features within each
+    of the 9 frames), then a single LSTM over the resulting 9-step sequence
+    -> scene class. No per-player LSTM (LSTM1) here -- "LSTM applied on the
+    image level only" per the project brief.
+    """
+
+    def __init__(self, hidden_dim=512):
+        super().__init__()
+        self.lstm = FrameLSTM(FEATURE_DIM, hidden_dim)
+        self.head = SceneHead(self.lstm.out_dim)
+
+    def forward(self, feats, mask, **kw):
+        # feats: (B, P, T, D) cached per-player per-frame B3-A features
+        B, P, T, D = feats.shape
+        per_frame = [masked_max_pool(feats[:, :, t, :], mask) for t in range(T)]
+        seq = torch.stack(per_frame, dim=1)  # (B, T, D)
+        _, final = self.lstm(seq)
         return self.head(final), None
 
 
@@ -135,8 +158,8 @@ class B7B8Model(nn.Module):
 
 
 VARIANTS = {
-    "b4": (ImageFeatureSeqDataset, B4B6Model, False),
-    "b6": (ImageFeatureSeqDataset, B4B6Model, False),
+    "b4": (ImageFeatureSeqDataset, B4Model, False),
+    "b6": (PersonFeatureSeqDataset, B6Model, True),
     "b5": (PersonFeatureSeqDataset, B5Model, True),
     "b7": (PersonFeatureSeqDataset, lambda: B7B8Model(team_pooling=False), True),
     "b8": (PersonFeatureSeqDataset, lambda: B7B8Model(team_pooling=True), True),

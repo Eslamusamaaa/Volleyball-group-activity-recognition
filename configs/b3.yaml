@@ -1,14 +1,25 @@
-# B3 (full): (A) B3-A backbone above, trained on person crops, 9-way action.
-# (B) extract a feature per player crop with that backbone, max-pool across
-# all players in the clip. (C) train a small classifier on the pooled
-# feature -> 8-way scene class.
+# B3 (full): (A) fine-tune ResNet50 on person crops, 9-way action
+# classification -- see configs/b3a.yaml, this IS that checkpoint.
+# (B) extract a feature per player crop with that fine-tuned backbone,
+# max-pool across all players in the clip. (C) train a small classifier on
+# the pooled feature -> 8-way scene class.
 # Paper target: 68.1% test accuracy.
-# Needs configs/b3a.yaml's checkpoint first, then Phase B caching:
-cache_command: >
-  .venv\Scripts\python.exe -m src.training.cache_features
-  --level person --checkpoint outputs/checkpoints/person_finetune_b3a.pt
-  --name b3a_person
-# Then a pooled-feature scene classifier (reuses B5's max-pool-then-head
-# path with no LSTM: training script/flag to be added when we build B3's
-# step C).
+# Steps B+C reuse the exact same script as B2, just pointed at the B3-A
+# (fine-tuned) checkpoint instead of a frozen/off-the-shelf backbone.
+script: src.training.train_pooled_person
+args:
+  backbone-checkpoint: outputs/checkpoints/person_finetune_b3a.pt
+  backbone-mode: finetune
+  epochs: 15
+  batch-size: 16
+  workers: 4
+  name: person_pooled_b3
+command: >
+  .venv\Scripts\python.exe -m src.training.train_pooled_person
+  --backbone-checkpoint outputs/checkpoints/person_finetune_b3a.pt
+  --backbone-mode finetune --epochs 15 --batch-size 16 --workers 4
+  --name person_pooled_b3
+checkpoint: outputs/checkpoints/person_pooled_b3.pt
+results: outputs/results/person_pooled_b3.json
 status: not_started
+depends_on: configs/b3a.yaml

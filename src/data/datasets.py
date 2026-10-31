@@ -118,6 +118,45 @@ class PersonCropDataset(Dataset):
         return crop, label
 
 
+MAX_PLAYERS = 12
+
+
+class ClipPersonCropsDataset(Dataset):
+    """B2 / B3 step B+C: ALL player crops of a clip's center frame (no time
+    dimension) -> scene label. Used to build a per-clip pooled representation
+    from single-frame person crops, either with a frozen backbone (B2) or a
+    backbone fine-tuned on person actions (B3).
+
+    Returns:
+      crops: (MAX_PLAYERS, 3, 224, 224), zero-padded if fewer players
+      mask: (MAX_PLAYERS,) bool, True where a real player exists
+      scene_label: int
+    """
+
+    def __init__(self, root, data, keys, transform=None):
+        self.root = root
+        self.data = data
+        self.keys = keys
+        self.transform = transform or EVAL_TRANSFORM
+
+    def __len__(self):
+        return len(self.keys)
+
+    def __getitem__(self, i):
+        video, clip = self.keys[i]
+        players = self.data[(video, clip)]["players"][:MAX_PLAYERS]
+        crops = torch.zeros(MAX_PLAYERS, 3, 224, 224)
+        mask = torch.zeros(MAX_PLAYERS, dtype=torch.bool)
+        with Image.open(center_frame_path(self.root, video, clip)) as img:
+            img = img.convert("RGB")
+            for p_idx, (action, x, y, w, h) in enumerate(players):
+                crop = img.crop((x, y, x + w, y + h))
+                crops[p_idx] = self.transform(crop)
+                mask[p_idx] = True
+        label = SCENE_TO_IDX[self.data[(video, clip)]["category"]]
+        return crops, mask, label
+
+
 class ClipFrameSequenceDataset(Dataset):
     """B4/B6: 9-frame window of whole-image frames per clip -> 8-way scene class.
 
@@ -141,9 +180,6 @@ class ClipFrameSequenceDataset(Dataset):
         imgs = torch.stack([load_image(p, self.transform) for p in paths])
         label = SCENE_TO_IDX[self.data[(video, clip)]["category"]]
         return imgs, label, video, clip
-
-
-MAX_PLAYERS = 12
 
 
 class PersonSequenceDataset(Dataset):
