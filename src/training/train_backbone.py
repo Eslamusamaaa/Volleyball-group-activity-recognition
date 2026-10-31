@@ -81,6 +81,9 @@ def main():
     ap.add_argument("--gamma", type=float, default=2.0, help="focal loss focusing parameter")
     ap.add_argument("--sampler", choices=["none", "balanced"], default="none",
                      help="balanced = WeightedRandomSampler, roughly equalizes per-class exposure per epoch")
+    ap.add_argument("--resume", default=None,
+                     help="path to an existing checkpoint to continue training from, for --epochs more epochs "
+                          "with a fresh cosine schedule (e.g. extend a run that plateaued without restarting from scratch)")
     args = ap.parse_args()
 
     name = args.name or f"{args.task}_{args.mode}"
@@ -114,6 +117,10 @@ def main():
     test_loader = DataLoader(test_ds, batch_size=args.batch_size, shuffle=False, num_workers=args.workers, pin_memory=True)
 
     model = ResNetBackbone(num_classes=len(classes), mode=args.mode).to(device)
+    if args.resume:
+        prev = torch.load(args.resume, map_location=device, weights_only=False)
+        model.load_state_dict(prev["model"])
+        print(f"resumed from {args.resume} (val_acc {prev.get('val_acc', '?')}), training {args.epochs} more epochs")
     if args.loss == "focal":
         criterion = FocalLoss(weight=weights.to(device), gamma=args.gamma)
     else:
