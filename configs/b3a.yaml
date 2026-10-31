@@ -15,4 +15,13 @@ command: >
   --name person_finetune_b3a
 checkpoint: outputs/checkpoints/person_finetune_b3a.pt
 results: outputs/results/person_finetune_b3a.json
-status: not_started
+status: done
+test_acc: 0.8056
+note: >
+  Also ran a v2 (--loss focal --gamma 2.0 --sampler balanced) to address
+  class imbalance: test_acc 0.7283, worse overall and worse on jumping
+  specifically (recall 0.079 vs 0.191), though better on waiting/moving.
+  v1 (this checkpoint) was selected to feed B2/B3/B5/B6/B7/B8 -- see
+  outputs/results/RESULTS.md "B3-A -- detail" for the full comparison.
+v2_checkpoint: outputs/checkpoints/person_finetune_b3a_v2.pt
+v2_results: outputs/results/person_finetune_b3a_v2.json
