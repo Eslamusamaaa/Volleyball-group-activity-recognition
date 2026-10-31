@@ -1,0 +1,24 @@
+# B8-mt: B8 + mandatory extension (project brief Section 6). Adds a
+# per-player 9-way action head on top of LSTM1 (before pooling), trained
+# jointly with the scene head:
+#   total_loss = loss_scene + lambda * loss_person_action
+# Sweep lambda in {0.3, 0.5, 1.0, 2.0} and report both tasks' metrics.
+cache_command: >
+  .venv\Scripts\python.exe -m src.training.cache_features
+  --level person --checkpoint outputs/checkpoints/person_finetune_b3a.pt
+  --name b3a_person
+script: src.training.train_temporal
+args:
+  variant: b8mt
+  feature-name: b3a_person
+  epochs: 30
+  batch-size: 16
+  lam: 1.0
+  name: b8mt_lam1.0
+command: >
+  .venv\Scripts\python.exe -m src.training.train_temporal
+  --variant b8mt --feature-name b3a_person --epochs 30 --batch-size 16
+  --lam 1.0 --name b8mt_lam1.0
+checkpoint: outputs/checkpoints/b8mt_lam1.0.pt
+results: outputs/results/b8mt_lam1.0.json
+status: not_started

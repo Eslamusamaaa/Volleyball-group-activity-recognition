@@ -1,0 +1,17 @@
+# B1-tuned: fine-tuned ResNet50 on the center-frame image -> 8-way scene class.
+# Paper target: 66.7% test accuracy. Our result: 72.2% (see outputs/results/RESULTS.md).
+script: src.training.train_backbone
+args:
+  task: scene
+  mode: finetune
+  epochs: 15
+  batch-size: 24
+  workers: 4
+  name: scene_finetune_b1
+command: >
+  .venv\Scripts\python.exe -m src.training.train_backbone
+  --task scene --mode finetune --epochs 15 --batch-size 24 --workers 4
+  --name scene_finetune_b1
+checkpoint: outputs/checkpoints/scene_finetune_b1.pt
+results: outputs/results/scene_finetune_b1.json
+status: done

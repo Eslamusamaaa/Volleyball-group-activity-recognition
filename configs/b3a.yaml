@@ -1,0 +1,18 @@
+# B3-A: fine-tuned ResNet50 on individual PLAYER CROPS (not the whole image)
+# -> 9-way per-player action class (standing, spiking, blocking, ...).
+# This backbone is reused later (Phase B feature caching) for B5, B6, B7, B8.
+script: src.training.train_backbone
+args:
+  task: person
+  mode: finetune
+  epochs: 15
+  batch-size: 24
+  workers: 4
+  name: person_finetune_b3a
+command: >
+  .venv\Scripts\python.exe -m src.training.train_backbone
+  --task person --mode finetune --epochs 15 --batch-size 24 --workers 4
+  --name person_finetune_b3a
+checkpoint: outputs/checkpoints/person_finetune_b3a.pt
+results: outputs/results/person_finetune_b3a.json
+status: not_started

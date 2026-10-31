@@ -1,0 +1,22 @@
+# B8: like B7, but team-separated ("group-style") pooling: max-pool team 1's
+# 6 players into X, team 2's 6 players into Y, concat([X, Y]) as the
+# per-frame scene representation instead of one pool over all 12.
+# This is the paper's best-performing config.
+# Paper target: 81.9% test accuracy.
+cache_command: >
+  .venv\Scripts\python.exe -m src.training.cache_features
+  --level person --checkpoint outputs/checkpoints/person_finetune_b3a.pt
+  --name b3a_person
+script: src.training.train_temporal
+args:
+  variant: b8
+  feature-name: b3a_person
+  epochs: 30
+  batch-size: 16
+  name: b8
+command: >
+  .venv\Scripts\python.exe -m src.training.train_temporal
+  --variant b8 --feature-name b3a_person --epochs 30 --batch-size 16 --name b8
+checkpoint: outputs/checkpoints/b8.pt
+results: outputs/results/b8.json
+status: not_started

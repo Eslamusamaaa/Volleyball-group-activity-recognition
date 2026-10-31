@@ -25,6 +25,37 @@ Dataset files are not pushed to this repo (too large, ~60GB).
 - **Download**: [Google Drive folder](https://drive.google.com/drive/folders/1rmsrG1mgkwxOKhsr-QYoi9Ss92wQmCOS?usp=sharing)
 - **Expected local layout**: see `src/data/annotations.py`
 
+## B1-tuned — explained
+
+The first and simplest baseline: a single whole-clip image goes in, one
+label for the *whole scene* comes out. No individual players, no bounding
+boxes, no time dimension.
+
+![B1 pipeline](outputs/results/b1_pipeline.png)
+
+ResNet50 (ImageNet-pretrained) is fine-tuned end-to-end: the center frame of
+each clip is fed through the backbone, globally pooled to a 2048-d vector,
+and passed through a linear classifier over the 8 scene classes.
+
+**Result: 72.2% test accuracy**, beating the paper's reported 66.7% for this
+exact baseline.
+
+![B1 training curve](outputs/results/b1_training_curve.png)
+
+Train accuracy reaches ~100% by epoch 12 (clear overfitting on only 3,864
+training images), but validation/test accuracy keeps climbing slightly
+thanks to the weighted loss (corrects for class imbalance) and cosine LR
+schedule — it doesn't collapse the way an unweighted/uncontrolled run would.
+
+![B1 confusion matrix](outputs/results/b1_confusion_matrix.png)
+
+Reading the confusion matrix: almost all the error is between game phases of
+the *same* team — `r-pass` gets confused with `r_set` (27 cases), `l-pass`
+with `l_set` (32 cases) — because a single static frame often can't tell a
+reception from a set-up without seeing the motion. This is exactly the
+failure mode later baselines (B4+, which add an LSTM over the 9-frame
+sequence) are designed to fix.
+
 ## Baseline ladder
 
 Reproducing the paper's ablation study, from simplest to the full model:

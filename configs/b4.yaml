@@ -1,0 +1,21 @@
+# B4: image-level LSTM over a 9-frame window, using B1's per-frame features
+# (Phase B cache) -> 8-way scene class. No per-player information.
+# Paper target: 63.1% test accuracy.
+# Requires Phase B caching from the B1 checkpoint first:
+cache_command: >
+  .venv\Scripts\python.exe -m src.training.cache_features
+  --level image --checkpoint outputs/checkpoints/scene_finetune_b1.pt
+  --name b1_image
+script: src.training.train_temporal
+args:
+  variant: b4
+  feature-name: b1_image
+  epochs: 30
+  batch-size: 16
+  name: b4
+command: >
+  .venv\Scripts\python.exe -m src.training.train_temporal
+  --variant b4 --feature-name b1_image --epochs 30 --batch-size 16 --name b4
+checkpoint: outputs/checkpoints/b4.pt
+results: outputs/results/b4.json
+status: not_started

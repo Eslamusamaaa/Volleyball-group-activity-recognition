@@ -1,0 +1,24 @@
+# B6: image-level LSTM (same structure as B4), but over per-frame pooled
+# features derived from the B3-A (person-trained) backbone instead of B1's
+# raw-image backbone -> 8-way scene class.
+# Paper target: 74.7% test accuracy.
+# NOTE: needs a per-frame (not per-player) feature cache built FROM the B3-A
+# backbone applied to whole frames (not crops) -- reuses cache_features.py
+# --level image but pointed at the B3-A checkpoint.
+cache_command: >
+  .venv\Scripts\python.exe -m src.training.cache_features
+  --level image --checkpoint outputs/checkpoints/person_finetune_b3a.pt
+  --name b3a_image
+script: src.training.train_temporal
+args:
+  variant: b6
+  feature-name: b3a_image
+  epochs: 30
+  batch-size: 16
+  name: b6
+command: >
+  .venv\Scripts\python.exe -m src.training.train_temporal
+  --variant b6 --feature-name b3a_image --epochs 30 --batch-size 16 --name b6
+checkpoint: outputs/checkpoints/b6.pt
+results: outputs/results/b6.json
+status: not_started

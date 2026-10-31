@@ -1,0 +1,19 @@
+# B2: ResNet50 backbone FROZEN (ImageNet weights, not fine-tuned), only the
+# final classifier head is trained -> 8-way scene class. Comparison baseline
+# against B1 to show the value of fine-tuning.
+# Paper target: 64.6% test accuracy.
+script: src.training.train_backbone
+args:
+  task: scene
+  mode: frozen
+  epochs: 15
+  batch-size: 24
+  workers: 4
+  name: scene_frozen_b2
+command: >
+  .venv\Scripts\python.exe -m src.training.train_backbone
+  --task scene --mode frozen --epochs 15 --batch-size 24 --workers 4
+  --name scene_frozen_b2
+checkpoint: outputs/checkpoints/scene_frozen_b2.pt
+results: outputs/results/scene_frozen_b2.json
+status: running

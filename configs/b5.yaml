@@ -1,0 +1,20 @@
+# B5: per-player LSTM (LSTM1) over 9 frames using B3-A features, final-step
+# max-pooled across players -> 8-way scene class. No scene-level LSTM yet.
+# Paper target: 67.6% test accuracy.
+cache_command: >
+  .venv\Scripts\python.exe -m src.training.cache_features
+  --level person --checkpoint outputs/checkpoints/person_finetune_b3a.pt
+  --name b3a_person
+script: src.training.train_temporal
+args:
+  variant: b5
+  feature-name: b3a_person
+  epochs: 30
+  batch-size: 16
+  name: b5
+command: >
+  .venv\Scripts\python.exe -m src.training.train_temporal
+  --variant b5 --feature-name b3a_person --epochs 30 --batch-size 16 --name b5
+checkpoint: outputs/checkpoints/b5.pt
+results: outputs/results/b5.json
+status: not_started
