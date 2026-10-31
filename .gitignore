@@ -1,0 +1,35 @@
+# Dataset (huge, not pushed to GitHub)
+volleyball_/
+volleyball_.zip
+volleyball_tracking_annotation/
+volleyball_tracking_annotation.zip
+volleyball-detections/
+volleyball-detections.zip
+videos_sample/
+videos_sample.zip
+
+# Python / env
+.venv/
+__pycache__/
+*.pyc
+.pipcache/
+.tmp/
+
+# Outputs (large artifacts, keep metrics/json, drop big binaries)
+outputs/checkpoints/
+outputs/features_cache/
+*.pt
+*.pth
+*.npy
+
+# Misc
+.ipynb_checkpoints/
+*.log
+
+# Local planning/reference docs (not part of the repo)
+IMPLEMENTATION_PROMPT.md
+INFERENCE_PIPELINE_AND_ROADMAP.md
+PROJECT_NOTES.md
+CV Volleyball Project Details.pdf
+ibrahim-cvpr16.pdf
+Facing Download issues.docx
