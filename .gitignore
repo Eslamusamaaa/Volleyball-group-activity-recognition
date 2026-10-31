@@ -15,11 +15,8 @@ __pycache__/
 .pipcache/
 .tmp/
 
-# Outputs (large artifacts, keep metrics/json, drop big binaries)
-outputs/checkpoints/
+# Outputs (checkpoints tracked via Git LFS; feature caches are huge intermediates, not kept)
 outputs/features_cache/
-*.pt
-*.pth
 *.npy
 
 # Misc

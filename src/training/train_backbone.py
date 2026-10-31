@@ -17,6 +17,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from src.data.annotations import (
@@ -35,11 +36,12 @@ def class_weights(counts_dict, classes):
     return torch.tensor(w, dtype=torch.float32)
 
 
-def run_epoch(model, loader, device, optimizer=None, scaler=None, criterion=None):
+def run_epoch(model, loader, device, optimizer=None, scaler=None, criterion=None, desc=""):
     train = optimizer is not None
     model.train() if train else model.eval()
     total_loss, all_true, all_pred = 0.0, [], []
-    for x, y in loader:
+    pbar = tqdm(loader, desc=desc, leave=False, dynamic_ncols=True)
+    for x, y in pbar:
         x, y = x.to(device, non_blocking=True), y.to(device, non_blocking=True)
         with torch.set_grad_enabled(train):
             with torch.autocast(device_type="cuda", enabled=(device.type == "cuda")):
@@ -57,6 +59,7 @@ def run_epoch(model, loader, device, optimizer=None, scaler=None, criterion=None
         total_loss += loss.item() * x.size(0)
         all_true.extend(y.cpu().tolist())
         all_pred.extend(logits.argmax(1).cpu().tolist())
+        pbar.set_postfix(loss=f"{loss.item():.3f}")
     return total_loss / len(loader.dataset), all_true, all_pred
 
 
@@ -116,8 +119,10 @@ def main():
 
     for epoch in range(1, args.epochs + 1):
         t0 = time.time()
-        train_loss, tr_true, tr_pred = run_epoch(model, train_loader, device, optimizer, scaler, criterion)
-        val_loss, va_true, va_pred = run_epoch(model, val_loader, device, None, None, criterion)
+        train_loss, tr_true, tr_pred = run_epoch(model, train_loader, device, optimizer, scaler, criterion,
+                                                  desc=f"epoch {epoch}/{args.epochs} train")
+        val_loss, va_true, va_pred = run_epoch(model, val_loader, device, None, None, criterion,
+                                                desc=f"epoch {epoch}/{args.epochs} val")
         scheduler.step()
         train_acc, val_acc = accuracy(tr_true, tr_pred), accuracy(va_true, va_pred)
         dt = time.time() - t0
