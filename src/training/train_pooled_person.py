@@ -58,20 +58,26 @@ class PooledPersonClassifier(nn.Module):
         return self.head(pooled)
 
 
-def run_epoch(model, loader, device, criterion, optimizer=None, desc=""):
+def run_epoch(model, loader, device, criterion, optimizer=None, scaler=None, desc=""):
     train = optimizer is not None
     model.head.train() if train else model.head.eval()
     total_loss, all_true, all_pred = 0.0, [], []
     pbar = tqdm(loader, desc=desc, leave=False, dynamic_ncols=True)
     for crops, mask, label in pbar:
-        crops, mask, label = crops.to(device), mask.to(device), label.to(device)
+        crops, mask, label = crops.to(device, non_blocking=True), mask.to(device, non_blocking=True), label.to(device, non_blocking=True)
         with torch.set_grad_enabled(train):
-            logits = model(crops, mask)
-            loss = criterion(logits, label)
+            with torch.autocast(device_type="cuda", enabled=(device.type == "cuda")):
+                logits = model(crops, mask)
+                loss = criterion(logits, label)
             if train:
                 optimizer.zero_grad(set_to_none=True)
-                loss.backward()
-                optimizer.step()
+                if scaler is not None:
+                    scaler.scale(loss).backward()
+                    scaler.step(optimizer)
+                    scaler.update()
+                else:
+                    loss.backward()
+                    optimizer.step()
         total_loss += loss.item() * label.size(0)
         all_true.extend(label.cpu().tolist())
         all_pred.extend(logits.argmax(1).cpu().tolist())
@@ -111,6 +117,7 @@ def main():
     weights = class_weights(EXPECTED_SCENE_COUNTS, SCENE_CLASSES).to(device)
     criterion = nn.CrossEntropyLoss(weight=weights)
     optimizer = torch.optim.AdamW(model.head.parameters(), lr=args.lr, weight_decay=1e-4)
+    scaler = torch.cuda.amp.GradScaler(enabled=(device.type == "cuda"))
 
     os.makedirs(os.path.join(args.out_dir, "checkpoints"), exist_ok=True)
     os.makedirs(os.path.join(args.out_dir, "results"), exist_ok=True)
@@ -119,9 +126,9 @@ def main():
 
     for epoch in range(1, args.epochs + 1):
         t0 = time.time()
-        tr_loss, tr_t, tr_p = run_epoch(model, train_loader, device, criterion, optimizer,
+        tr_loss, tr_t, tr_p = run_epoch(model, train_loader, device, criterion, optimizer, scaler,
                                          desc=f"epoch {epoch}/{args.epochs} train")
-        va_loss, va_t, va_p = run_epoch(model, val_loader, device, criterion, None,
+        va_loss, va_t, va_p = run_epoch(model, val_loader, device, criterion, None, None,
                                          desc=f"epoch {epoch}/{args.epochs} val")
         tr_acc, va_acc = accuracy(tr_t, tr_p), accuracy(va_t, va_p)
         dt = time.time() - t0
