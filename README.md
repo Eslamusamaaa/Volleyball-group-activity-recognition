@@ -13,6 +13,51 @@ Given a volleyball video clip, predict:
    (e.g. `standing`, `spiking`, `blocking`) — a mandatory extension beyond
    the original paper (see Section 6 of the project brief).
 
+## Deviations from the original CVPR 2016 paper
+
+Verified directly from the paper's text (`ibrahim-cvpr16.pdf`, Sections 3.3
+and 4.1), not from memory or the project brief alone:
+
+- **Backbone: AlexNet (paper) vs. ResNet50 (this repo).** The paper fine-tunes
+  a pre-trained **AlexNet**, implemented in **Caffe**. The project brief
+  explicitly asks for the upgrade: *"In CVPR paper I used alexnet. You better
+  network (e.g. resnet50)"* — this repo is 100% PyTorch with ResNet50
+  throughout, never AlexNet/Caffe.
+- **Person-level representation.** The paper's per-frame, per-player feature
+  fed into pooling is a **concatenation** of the raw AlexNet fc7 feature *and*
+  LSTM1's hidden state (`P_tk = x_tk ⊕ h_tk`, Eq. 7-8) — not the LSTM hidden
+  state alone. This repo currently pools LSTM1's hidden state only (planned
+  for B7/B8); adding the raw-feature concatenation is a possible later
+  refinement, not yet implemented.
+- **LSTM sizing.** Paper: LSTM1 = 9 timesteps, 3000 hidden units, trained
+  first in a person-action-only stage; LSTM2 = a 3000-node FC layer feeding a
+  500-node, 9-timestep LSTM. This repo uses a single configurable hidden size
+  (512 by default) for both LSTM1 and LSTM2 — smaller, since ResNet50's 2048-d
+  features are already far more informative than AlexNet's fc7, and 3000/500
+  units were sized for Caffe-era hardware.
+- **Pooling.** Paper confirms (Section 4.3) all reported experiments use
+  **max-pooling** over players (they also tried sum/average and found max
+  best) — this repo also uses max-pooling throughout, consistent with that
+  finding.
+- **Player tracking.** The paper tracks real player tracklets across frames
+  with a Dlib-based tracker (Danelljan et al.). This repo instead reuses the
+  center frame's ground-truth box for all 9 frames in the window (Section 7.2
+  choice (a) of the project brief — the simplification the brief itself
+  recommends for this exact baseline ladder, given the short 9-frame window
+  makes player movement minimal).
+- **Dataset itself is a different, later version.** The CVPR paper's own
+  volleyball experiments (Table 5) used a *smaller* dataset the authors
+  collected for that paper: 1,525 hand-picked frames from 15 videos, with
+  **7 action labels and 6 group-activity labels** (not 9/8), reporting
+  B1=46.7%, B2=33.1%, B3=35.2%, full model=51.1%. None of those numbers
+  match the project brief's reference table (66.7/64.6/68.1/.../81.9%) or
+  this repo's dataset (4,830 clips, 55 videos, 9 actions, 8 activities) —
+  the brief's reference numbers are from the later, larger, publicly
+  released dataset (and the extension paper's improved group-style pooling),
+  not this original paper's own smaller experiment. Worth knowing so nobody
+  goes looking for 66.7% inside `ibrahim-cvpr16.pdf` and can't find it — it
+  isn't there.
+
 ## Dataset
 
 ~4,830 annotated clips across 55 videos. Each clip is a 9-frame window
