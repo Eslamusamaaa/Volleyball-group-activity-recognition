@@ -56,6 +56,47 @@ reception from a set-up without seeing the motion. This is exactly the
 failure mode later baselines (B4+, which add an LSTM over the 9-frame
 sequence) are designed to fix.
 
+## B2 — explained
+
+Paper name: **"Person Classification"**. Unlike B1, the input is **each
+player's crop individually**, not the whole scene image — but the backbone
+here is **never trained at all**: plain ImageNet weights, frozen.
+
+![B2 pipeline](outputs/results/b2_pipeline.png)
+
+1. Take every player's bounding-box crop in the clip (up to 12).
+2. Run each crop through ResNet50 — frozen, off-the-shelf ImageNet weights,
+   no fine-tuning of any kind.
+3. Max-pool the 12 player feature vectors (2048-d each) into one vector
+   representing the whole clip.
+4. Train only a small 2-layer classifier on top of that pooled vector ->
+   8 scene classes.
+
+Purpose: an ablation control. It answers "how far can we get using
+person-level input with zero task-specific training?" — the gap between this
+and B3 (same pipeline, but with a backbone fine-tuned on person actions
+first) measures how much that fine-tuning is actually worth.
+
+**Result: 42.2% test accuracy** — well below the paper's reported 64.6% for
+this baseline.
+
+![B2 training curve](outputs/results/b2_training_curve.png)
+
+Unlike B1, train accuracy here is still climbing at epoch 15 (60.5%, not
+plateaued) — the classifier head is learning from scratch on generic,
+never-fine-tuned features, so it needs more epochs to fully converge. This
+result is kept and reported as-is: B2's role in the ladder is a comparison
+point, not a baseline to optimize — B3 (next) is the one that matters for the
+main result chain.
+
+![B2 confusion matrix](outputs/results/b2_confusion_matrix.png)
+
+The confusion is much heavier and more spread out than B1's — e.g. `l-pass`
+gets predicted as `r-pass` 110 times (its single biggest bucket, more than
+the correct class itself). With no task-specific training, the pooled
+features don't separate left-team vs right-team phases well at all, unlike
+B1 where fine-tuning let the network learn that distinction directly.
+
 ## Baseline ladder
 
 Reproducing the paper's ablation study, from simplest to the full model:
