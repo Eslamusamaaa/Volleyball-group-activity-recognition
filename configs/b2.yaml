@@ -21,4 +21,9 @@ command: >
   --name person_pooled_b2
 checkpoint: outputs/checkpoints/person_pooled_b2.pt
 results: outputs/results/person_pooled_b2.json
-status: not_started
+status: done
+test_acc: 0.4218
+note: >
+  Below paper's 64.6% target (classifier head not fully converged at 15
+  epochs on never-fine-tuned features); kept as-is since B2's role is an
+  ablation comparison point, not a result to optimize. See outputs/results/RESULTS.md.
