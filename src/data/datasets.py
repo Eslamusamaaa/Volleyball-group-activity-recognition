@@ -117,6 +117,10 @@ class PersonCropDataset(Dataset):
         label = ACTION_TO_IDX[action]
         return crop, label
 
+    def get_labels(self):
+        """All labels in dataset order, for building a class-balanced sampler."""
+        return [ACTION_TO_IDX[self.data[(v, c)]["players"][p][0]] for v, c, p in self.index]
+
 
 MAX_PLAYERS = 12
 

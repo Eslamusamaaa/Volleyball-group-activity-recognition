@@ -27,6 +27,7 @@ from src.data.annotations import (
 from src.data.datasets import SceneImageDataset, PersonCropDataset, TRAIN_TRANSFORM, EVAL_TRANSFORM
 from src.models.backbone import ResNetBackbone
 from src.evaluation.metrics import format_report, accuracy
+from src.training.losses import FocalLoss, make_balanced_sampler
 
 
 def class_weights(counts_dict, classes):
@@ -75,6 +76,11 @@ def main():
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--out-dir", default=r"E:\volleyball datasets\outputs")
     ap.add_argument("--name", default=None, help="checkpoint/results basename, defaults to <task>_<mode>")
+    ap.add_argument("--loss", choices=["ce", "focal"], default="ce",
+                     help="ce = weighted cross-entropy, focal = focal loss (also class-weighted)")
+    ap.add_argument("--gamma", type=float, default=2.0, help="focal loss focusing parameter")
+    ap.add_argument("--sampler", choices=["none", "balanced"], default="none",
+                     help="balanced = WeightedRandomSampler, roughly equalizes per-class exposure per epoch")
     args = ap.parse_args()
 
     name = args.name or f"{args.task}_{args.mode}"
@@ -99,13 +105,19 @@ def main():
         val_ds = PersonCropDataset(args.root, data, val_keys, EVAL_TRANSFORM)
         test_ds = PersonCropDataset(args.root, data, test_keys, EVAL_TRANSFORM)
 
-    train_loader = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True,
+    sampler = None
+    if args.sampler == "balanced":
+        sampler = make_balanced_sampler(train_ds.get_labels(), len(classes))
+    train_loader = DataLoader(train_ds, batch_size=args.batch_size, shuffle=(sampler is None), sampler=sampler,
                                num_workers=args.workers, pin_memory=True, drop_last=True)
     val_loader = DataLoader(val_ds, batch_size=args.batch_size, shuffle=False, num_workers=args.workers, pin_memory=True)
     test_loader = DataLoader(test_ds, batch_size=args.batch_size, shuffle=False, num_workers=args.workers, pin_memory=True)
 
     model = ResNetBackbone(num_classes=len(classes), mode=args.mode).to(device)
-    criterion = nn.CrossEntropyLoss(weight=weights.to(device))
+    if args.loss == "focal":
+        criterion = FocalLoss(weight=weights.to(device), gamma=args.gamma)
+    else:
+        criterion = nn.CrossEntropyLoss(weight=weights.to(device))
     params = [p for p in model.parameters() if p.requires_grad]
     optimizer = torch.optim.AdamW(params, lr=args.lr, weight_decay=1e-4)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
@@ -144,6 +156,8 @@ def main():
 
     with open(os.path.join(args.out_dir, "results", f"{name}.json"), "w") as f:
         json.dump({"name": name, "task": args.task, "mode": args.mode, "epochs": args.epochs,
+                    "loss": args.loss, "gamma": args.gamma if args.loss == "focal" else None,
+                    "sampler": args.sampler,
                     "best_val_acc": best_val_acc, "test_acc": accuracy(te_true, te_pred),
                     "log": log}, f, indent=2)
     with open(os.path.join(args.out_dir, "results", f"{name}_test_report.txt"), "w") as f:
