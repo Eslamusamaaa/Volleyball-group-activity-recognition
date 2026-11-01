@@ -76,3 +76,37 @@ def player_box_per_frame(tracks, track_id, frame, fallback_box):
         return fallback_box
     frames = tracks.get(track_id, {})
     return frames.get(frame, fallback_box)
+
+
+# Per the official reference repo's data notes: these 8 videos are
+# 1920x1080, every other video in the dataset is 1280x720.
+_HD_VIDEOS = {2, 37, 38, 39, 40, 41, 44, 45}
+
+
+def frame_size(video):
+    return (1920, 1080) if int(video) in _HD_VIDEOS else (1280, 720)
+
+
+def motion_features(tracks, track_id, frame_nums, fallback_box, video):
+    """Cheap, free explicit-motion signal for a player across a frame window:
+    frame-to-frame deltas (dx, dy, dw, dh), normalized by image size / the
+    player's own box size. No CNN involved -- pure arithmetic on the
+    already-loaded tracked boxes, aimed at the motion-defined action classes
+    (jumping, moving, falling, digging) that a single-frame CNN feature
+    struggles to tell apart from static ones (standing, waiting).
+
+    Returns a (len(frame_nums), 4) list of [dx, dy, dw, dh] float deltas,
+    where entry 0 is always [0, 0, 0, 0] (no previous frame to diff against).
+    """
+    img_w, img_h = frame_size(video)
+    boxes = [player_box_per_frame(tracks, track_id, f, fallback_box) for f in frame_nums]
+    feats = [[0.0, 0.0, 0.0, 0.0]]
+    for i in range(1, len(boxes)):
+        x0, y0, w0, h0 = boxes[i - 1]
+        x1, y1, w1, h1 = boxes[i]
+        dx = (x1 - x0) / img_w
+        dy = (y1 - y0) / img_h
+        dw = (w1 - w0) / max(w0, 1)
+        dh = (h1 - h0) / max(h0, 1)
+        feats.append([dx, dy, dw, dh])
+    return feats

@@ -26,7 +26,8 @@ from src.data.annotations import (
     load_or_cache, split_keys, SCENE_CLASSES, ACTION_CLASSES,
     EXPECTED_SCENE_COUNTS, EXPECTED_ACTION_COUNTS, SCENE_TO_IDX,
 )
-from src.data.datasets import MAX_PLAYERS
+from src.data.datasets import MAX_PLAYERS, frame_window
+from src.data.tracking import load_tracks, match_players_to_tracks, motion_features
 from src.models.backbone import FEATURE_DIM
 from src.models.temporal import FrameLSTM, PersonLSTM, masked_max_pool, team_pool
 from src.models.heads import SceneHead, PersonActionHead
@@ -51,10 +52,19 @@ class ImageFeatureSeqDataset(Dataset):
 
 
 class PersonFeatureSeqDataset(Dataset):
-    """B5/B7/B8: (MAX_PLAYERS, T, 2048) cached per-player-per-frame features."""
+    """B5/B7/B8: (MAX_PLAYERS, T, 2048[+4]) cached per-player-per-frame
+    features, optionally augmented with a cheap, CNN-free explicit-motion
+    signal (frame-to-frame box deltas from real tracking data) aimed at the
+    motion-defined action classes a single-frame CNN feature struggles
+    with (jumping, moving, falling, digging vs. standing/waiting).
+    """
 
-    def __init__(self, cache, data, keys, n_frames=9):
+    def __init__(self, cache, data, keys, n_frames=9, use_motion=False, root=None, tracking_root=None):
         self.cache, self.data, self.keys, self.n_frames = cache, data, keys, n_frames
+        self.use_motion = use_motion
+        self.root = root
+        self.tracking_root = tracking_root
+        self.feat_dim = FEATURE_DIM + (4 if use_motion else 0)
 
     def __len__(self):
         return len(self.keys)
@@ -62,15 +72,34 @@ class PersonFeatureSeqDataset(Dataset):
     def __getitem__(self, i):
         video, clip = self.keys[i]
         players = self.data[(video, clip)]["players"][:MAX_PLAYERS]
-        feats = torch.zeros(MAX_PLAYERS, self.n_frames, FEATURE_DIM)
+        feats = torch.zeros(MAX_PLAYERS, self.n_frames, self.feat_dim)
         mask = torch.zeros(MAX_PLAYERS, dtype=torch.bool)
         action_labels = torch.full((MAX_PLAYERS,), -1, dtype=torch.long)
         team_mask = torch.zeros(MAX_PLAYERS, dtype=torch.long)
         xs = [p[1] for p in players]
         mid_x = (min(xs) + max(xs)) / 2 if xs else 0
+
+        motion_by_player = None
+        if self.use_motion:
+            frame_nums = [int(os.path.basename(p).split(".")[0])
+                          for p in frame_window(self.root, video, clip, self.n_frames)]
+            try:
+                tracks = load_tracks(self.tracking_root, video, clip)
+                matches = match_players_to_tracks(players, tracks, int(clip))
+            except FileNotFoundError:
+                tracks, matches = {}, [None] * len(players)
+            motion_by_player = []
+            for p_idx, (action, x, y, w, h) in enumerate(players):
+                m = motion_features(tracks, matches[p_idx], frame_nums, (x, y, w, h), video)
+                motion_by_player.append(torch.tensor(m, dtype=torch.float32))
+
         for p_idx, (action, x, y, w, h) in enumerate(players):
             for f_idx in range(self.n_frames):
-                feats[p_idx, f_idx] = self.cache[(video, clip, p_idx, f_idx)]
+                cnn_feat = self.cache[(video, clip, p_idx, f_idx)]
+                if self.use_motion:
+                    feats[p_idx, f_idx] = torch.cat([cnn_feat, motion_by_player[p_idx][f_idx]])
+                else:
+                    feats[p_idx, f_idx] = cnn_feat
             mask[p_idx] = True
             action_labels[p_idx] = ACTION_CLASSES.index(action)
             team_mask[p_idx] = 0 if (x + w / 2) < mid_x else 1
@@ -83,9 +112,9 @@ class PersonFeatureSeqDataset(Dataset):
 class B4Model(nn.Module):
     """Image-level LSTM over whole-frame (B1) features -> scene class."""
 
-    def __init__(self, hidden_dim=512):
+    def __init__(self, hidden_dim=512, input_dim=FEATURE_DIM):
         super().__init__()
-        self.lstm = FrameLSTM(FEATURE_DIM, hidden_dim)
+        self.lstm = FrameLSTM(input_dim, hidden_dim)
         self.head = SceneHead(self.lstm.out_dim)
 
     def forward(self, feats, **kw):
@@ -100,9 +129,9 @@ class B6Model(nn.Module):
     image level only" per the project brief.
     """
 
-    def __init__(self, hidden_dim=512):
+    def __init__(self, hidden_dim=512, input_dim=FEATURE_DIM):
         super().__init__()
-        self.lstm = FrameLSTM(FEATURE_DIM, hidden_dim)
+        self.lstm = FrameLSTM(input_dim, hidden_dim)
         self.head = SceneHead(self.lstm.out_dim)
 
     def forward(self, feats, mask, **kw):
@@ -117,9 +146,9 @@ class B6Model(nn.Module):
 class B5Model(nn.Module):
     """Per-player LSTM, final-step max-pooled across players (no scene-level LSTM)."""
 
-    def __init__(self, hidden_dim=512):
+    def __init__(self, hidden_dim=512, input_dim=FEATURE_DIM):
         super().__init__()
-        self.lstm1 = PersonLSTM(FEATURE_DIM, hidden_dim)
+        self.lstm1 = PersonLSTM(input_dim, hidden_dim)
         self.head = SceneHead(self.lstm1.out_dim)
 
     def forward(self, feats, mask, **kw):
@@ -129,9 +158,9 @@ class B5Model(nn.Module):
 
 
 class B7B8Model(nn.Module):
-    def __init__(self, hidden_dim=512, team_pooling=False, multitask=False):
+    def __init__(self, hidden_dim=512, team_pooling=False, multitask=False, input_dim=FEATURE_DIM):
         super().__init__()
-        self.lstm1 = PersonLSTM(FEATURE_DIM, hidden_dim)
+        self.lstm1 = PersonLSTM(input_dim, hidden_dim)
         self.team_pooling = team_pooling
         scene_in = self.lstm1.out_dim * (2 if team_pooling else 1)
         self.lstm2 = FrameLSTM(scene_in, hidden_dim)
@@ -159,12 +188,14 @@ class B7B8Model(nn.Module):
 
 
 VARIANTS = {
-    "b4": (ImageFeatureSeqDataset, B4Model, False),
-    "b6": (PersonFeatureSeqDataset, B6Model, True),
-    "b5": (PersonFeatureSeqDataset, B5Model, True),
-    "b7": (PersonFeatureSeqDataset, lambda: B7B8Model(team_pooling=False), True),
-    "b8": (PersonFeatureSeqDataset, lambda: B7B8Model(team_pooling=True), True),
-    "b8mt": (PersonFeatureSeqDataset, lambda: B7B8Model(team_pooling=True, multitask=True), True),
+    # dataset_cls, model_fn(input_dim) -> model, is_person_dataset
+    "b4": (ImageFeatureSeqDataset, lambda input_dim: B4Model(input_dim=input_dim), False),
+    "b6": (PersonFeatureSeqDataset, lambda input_dim: B6Model(input_dim=input_dim), True),
+    "b5": (PersonFeatureSeqDataset, lambda input_dim: B5Model(input_dim=input_dim), True),
+    "b7": (PersonFeatureSeqDataset, lambda input_dim: B7B8Model(team_pooling=False, input_dim=input_dim), True),
+    "b8": (PersonFeatureSeqDataset, lambda input_dim: B7B8Model(team_pooling=True, input_dim=input_dim), True),
+    "b8mt": (PersonFeatureSeqDataset,
+             lambda input_dim: B7B8Model(team_pooling=True, multitask=True, input_dim=input_dim), True),
 }
 
 
@@ -232,6 +263,11 @@ def main():
     ap.add_argument("--name", default=None)
     ap.add_argument("--resume", default=None,
                      help="path to an existing checkpoint to continue training from, for --epochs more epochs")
+    ap.add_argument("--use-motion-features", action="store_true",
+                     help="append a cheap 4-d frame-to-frame box-delta (dx,dy,dw,dh) signal from real "
+                          "tracking data to each player's cached CNN feature (person-level variants only)")
+    ap.add_argument("--tracking-root",
+                     default=r"E:\volleyball datasets\volleyball_tracking_annotation\volleyball_tracking_annotation")
     args = ap.parse_args()
 
     name = args.name or args.variant
@@ -242,11 +278,16 @@ def main():
     ds_cls, model_fn, is_person_ds = VARIANTS[args.variant]
 
     caches = {s: load_feature_cache(args.cache_dir, args.feature_name, s) for s in ("train", "val", "test")}
-    datasets = {s: ds_cls(caches[s], data, split_keys(data, s)) for s in ("train", "val", "test")}
+    if is_person_ds and args.use_motion_features:
+        ds_kwargs = dict(use_motion=True, root=args.root, tracking_root=args.tracking_root)
+    else:
+        ds_kwargs = {}
+    datasets = {s: ds_cls(caches[s], data, split_keys(data, s), **ds_kwargs) for s in ("train", "val", "test")}
     loaders = {s: DataLoader(datasets[s], batch_size=args.batch_size, shuffle=(s == "train"),
                               num_workers=0) for s in ("train", "val", "test")}
 
-    model = model_fn().to(device) if callable(model_fn) and not isinstance(model_fn, type) else model_fn().to(device)
+    input_dim = getattr(datasets["train"], "feat_dim", FEATURE_DIM)
+    model = model_fn(input_dim).to(device)
     if args.resume:
         prev = torch.load(args.resume, map_location=device, weights_only=False)
         model.load_state_dict(prev["model"])
