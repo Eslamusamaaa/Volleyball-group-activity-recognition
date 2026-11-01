@@ -713,12 +713,40 @@ often lower-confidence (motion blur) than a clearly standing official, so
 confidence alone can't separate them; left in `tracker.py`, off by
 default, documented rather than silently dropped.
 
-**Stage 3 (sliding window) and stage 4 (post-processing / timeline JSON)**:
-not started yet. Needs: a 9-frame sliding window over the tracked video
-feeding B8-mt, FPS-based frame→second conversion (`src/inference/video_io.py`
-already reads each video's real FPS via `cv2.CAP_PROP_FPS` — Section 7.3's
-requirement to never assume a fixed FPS across all 55 source videos), and
-merging consecutive same-class windows into one continuous event.
+**Stage 3 — sliding window** ([`src/inference/sliding_window.py`](src/inference/sliding_window.py)):
+slides a 9-frame window across the tracked video; for each window, only
+players tracked in *every* frame of that window are used (a track that
+drops out mid-window has no full 9-step sequence to feed LSTM1), crops
+each one's box per frame, runs them through the B3-A backbone
+([`model_io.py`](src/inference/model_io.py) loads it + B8-mt the exact
+same way `train_temporal.py` does, so a checkpoint trained there loads
+here with no surprises), and feeds the resulting per-player sequences into
+B8-mt for a scene prediction + a 9-way action per player. Team split
+(left/right, for B8's team-pooling) is assigned per window by player
+x-position, same convention as training.
+
+**Stage 4 — timeline** ([`src/inference/timeline.py`](src/inference/timeline.py)):
+converts each window's frame range to real seconds using the video's own
+FPS (`video_io.py`, Section 7.3), and merges consecutive windows that
+predicted the same scene class into one continuous event instead of
+reporting duplicates — the actual `video in -> JSON timeline out` entry
+point:
+```bash
+.venv\Scripts\python.exe -m src.inference.timeline <path-to-video.mp4>
+```
+**End-to-end smoke test**: stitched the real 41 frames of clip 94540
+(ground truth: `r_spike`) into a short test video and ran it through the
+full pipeline — first event detected: `{"team": "right", "event":
+"spike", "confidence": 0.999}`, matching the clip's real label. Not a
+substitute for evaluating on genuinely new, unlabeled footage (which the
+project doesn't have a raw video file for yet — every source video on
+disk is already split into annotated clip frames, per Section 3.1), but
+confirms stages 1–4 connect correctly end to end before that test happens.
+
+No per-window accuracy number exists yet for this pipeline as a whole
+(stages 1–2 are validated individually above; stages 3–4 are validated by
+this one smoke test, not yet by a dataset-scale sweep) — a reasonable
+next step before relying on it.
 
 ## Status
 
