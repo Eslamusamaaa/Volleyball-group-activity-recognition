@@ -205,7 +205,8 @@ comparable to the paper's 68.1%.**
 **Result: 65.67% test accuracy** (−2.4 pts vs. the paper).
 
 <p align="center">
-  <img src="outputs/results/b3_confusion_matrix.png" width="420" alt="B3 confusion matrix">
+  <img src="outputs/results/b3_confusion_matrix.png" width="380" alt="B3 confusion matrix">
+  <img src="outputs/results/b3_training_curve.png" width="380" alt="B3 training curve">
 </p>
 
 Reading it: `l-spike`/`r_spike` and `l_set`/`r_set` are classified well
@@ -298,7 +299,8 @@ meaningfully different), far above the paper's 67.6% target either way.
 ![B5 tracked vs static curve](outputs/results/b5_tracked_vs_static_curve.png)
 
 <p align="center">
-  <img src="outputs/results/b5_confusion_matrix.png" width="420" alt="B5 confusion matrix">
+  <img src="outputs/results/b5_confusion_matrix.png" width="380" alt="B5 confusion matrix">
+  <img src="outputs/results/b5_training_curve.png" width="380" alt="B5 training curve">
 </p>
 
 **Tracked vs. static, honestly:** the aggregate accuracy barely changes
