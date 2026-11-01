@@ -19,4 +19,5 @@ command: >
   --variant b8 --feature-name b3a_person_tracked --epochs 30 --batch-size 16 --name b8
 checkpoint: outputs/checkpoints/b8.pt
 results: outputs/results/b8.json
-status: not_started
+status: done
+test_acc: 0.8878

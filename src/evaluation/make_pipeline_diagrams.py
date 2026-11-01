@@ -83,6 +83,16 @@ def _icon_huddle(ax, cx, cy, r, color, asp):
                                       fill=False, edgecolor=color, lw=1.4, zorder=3))
 
 
+def _icon_team_split(ax, cx, cy, r, color, asp):
+    """Net dividing two separate team huddles -- team-separated (B8) pooling,
+    distinct from the single unified huddle used for B5/B6/B7."""
+    rx, ry = r, r * asp
+    ax.plot([cx, cx], [cy - ry * 0.85, cy + ry * 0.85], color=color, lw=1.4, zorder=3)
+    for s in (-1, 1):
+        ax.add_patch(patches.Ellipse((cx + s * rx * 0.62, cy), rx * 0.62, ry * 0.62,
+                                      fill=False, edgecolor=color, lw=1.4, zorder=3))
+
+
 def _icon_scoreboard(ax, cx, cy, r, color, asp):
     """A little scoreboard flag = final classification result."""
     rx, ry = r, r * asp
@@ -97,12 +107,13 @@ ICONS = {
     "backbone": _icon_volleyball,
     "temporal": _icon_pulse,
     "pool": _icon_huddle,
+    "team_pool": _icon_team_split,
     "output": _icon_scoreboard,
     "player": _icon_player,
 }
 
 
-def pipeline_diagram(path, title, steps, accent, figsize=(16, 3.9)):
+def pipeline_diagram(path, title, steps, accent, figsize=(21, 5.1)):
     """steps: list of (label_lines:list[str], kind) where kind picks a
     hand-drawn volleyball-themed icon (ball / court / player / pulse / huddle / flag)."""
     n = len(steps)
@@ -278,7 +289,7 @@ pipeline_diagram(f"{OUT}/b5_pipeline.png", "B5 — per-player LSTM, pooled at th
      (["B3-A backbone", "(frozen, cached)"], "backbone"),
      (["LSTM1 per player", "(9-step sequence)"], "temporal"),
      (["Max-pool final", "hidden states"], "pool"),
-     (["Linear classifier", "→ 8 scene classes"], "output")], ACCENT["b5"], figsize=(18, 3.7))
+     (["Linear classifier", "→ 8 scene classes"], "output")], ACCENT["b5"], figsize=(23, 4.8))
 
 # ---------------- B6 ----------------
 pipeline_diagram(f"{OUT}/b6_pipeline.png", "B6 — pool players per frame, then single LSTM → scene class",
@@ -286,7 +297,7 @@ pipeline_diagram(f"{OUT}/b6_pipeline.png", "B6 — pool players per frame, then 
      (["B3-A backbone", "(frozen, cached)"], "backbone"),
      (["Max-pool per frame", "→ 9-step sequence"], "pool"),
      (["Single LSTM", "over 9 steps"], "temporal"),
-     (["Linear classifier", "→ 8 scene classes"], "output")], ACCENT["b6"], figsize=(18, 3.7))
+     (["Linear classifier", "→ 8 scene classes"], "output")], ACCENT["b6"], figsize=(23, 4.8))
 
 # ---------------- B7 ----------------
 pipeline_diagram(f"{OUT}/b7_pipeline.png", "B7 — LSTM1 per player → pool per frame → LSTM2 → scene class",
@@ -295,22 +306,15 @@ pipeline_diagram(f"{OUT}/b7_pipeline.png", "B7 — LSTM1 per player → pool per
      (["LSTM1 per player", "(full 9-step output,", "not just final state)"], "temporal"),
      (["Max-pool players", "at each frame", "→ 9-step sequence"], "pool"),
      (["LSTM2", "(scene-level)"], "temporal"),
-     (["Linear classifier", "→ 8 scene classes"], "output")], ACCENT["b7"], figsize=(20, 3.7))
+     (["Linear classifier", "→ 8 scene classes"], "output")], ACCENT["b7"], figsize=(26, 4.8))
 
-# ---------------- results panels (confusion matrix + accuracy, side by side) ----------------
-results_panel(f"{OUT}/b1_results.png", "B1-tuned — results", 0.7218, 0.667,
-              f"{OUT}/scene_finetune_b1_test_report.txt", ACCENT["b1"])
-results_panel(f"{OUT}/b2_results.png", "B2 — results", 0.4218, 0.646,
-              f"{OUT}/person_pooled_b2_test_report.txt", ACCENT["b2"])
-results_panel(f"{OUT}/b3_results.png", "B3 (steps B+C) — results", 0.6567, 0.681,
-              f"{OUT}/person_pooled_b3_test_report.txt", ACCENT["b3"])
-results_panel(f"{OUT}/b4_results.png", "B4 — results", 0.7337, 0.631,
-              f"{OUT}/b4_test_report.txt", ACCENT["b4"])
-results_panel(f"{OUT}/b5_results.png", "B5 (real tracking) — results", 0.7898, 0.676,
-              f"{OUT}/b5_tracked_test_report.txt", ACCENT["b5"])
-results_panel(f"{OUT}/b6_results.png", "B6 (65 epochs, final) — results", 0.7315, 0.747,
-              f"{OUT}/b6_extended3_test_report.txt", ACCENT["b6"])
-results_panel(f"{OUT}/b7_results.png", "B7 — results", 0.7883, 0.802,
-              f"{OUT}/b7_test_report.txt", ACCENT["b7"])
+# ---------------- B8 ----------------
+pipeline_diagram(f"{OUT}/b8_pipeline.png", "B8 — like B7, but pool each TEAM separately → scene class",
+    [(["Each player,", "real tracked box", "per frame (9)"], "player"),
+     (["B3-A backbone", "(frozen, cached)"], "backbone"),
+     (["LSTM1 per player", "(full 9-step output)"], "temporal"),
+     (["X = pool team 1", "Y = pool team 2", "concat(X, Y)"], "team_pool"),
+     (["LSTM2", "(scene-level)"], "temporal"),
+     (["Linear classifier", "→ 8 scene classes"], "output")], ACCENT["b8"], figsize=(26, 4.8))
 
 print("ALL DONE")

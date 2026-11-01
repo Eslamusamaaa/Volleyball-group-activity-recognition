@@ -13,7 +13,7 @@ per-player action accuracy (only applicable from B8-mt onward).
 | **B5** | Per-player LSTM, max-pooled (no scene LSTM) | 77.2% | **78.98%** | 67.6% | ✅ done (+11.4 pts over paper, real tracking) |
 | **B6** | Per-frame player pooling then single LSTM | 68.8% | **73.15%** | 74.7% | ✅ done (−1.6 pts under paper, needed 65 epochs — see note) |
 | **B7** | Full hierarchical model (LSTM1 → pool → LSTM2) | 75.2% | **78.83%** | 80.2% | ✅ done (−1.4 pts under paper, slightly under our own B5) |
-| B8 | B7 + team-separated pooling | — | — | 81.9% | not started |
+| **B8** | B7 + team-separated pooling | 86.5% | **88.78%** | 81.9% | ✅ done (+6.9 pts over paper, best result overall) |
 | B8-mt | B8 + per-player action multi-task head | — | — | — | not started |
 
 ## B1-tuned — detail
@@ -359,3 +359,44 @@ gain from LSTM2). `l_set` recall improves substantially over B5 (0.887 vs
 every baseline) -- pooling all 12 players into one vector loses the
 "which side of the court" signal, which B8's team-separated pooling is
 designed to restore.
+
+## B8 — detail (best result in the project)
+
+Identical to B7 except step 4: instead of max-pooling all 12 players
+together, pool each team's 6 players separately (X = team 1, Y = team 2)
+and concatenate -- X, Y both derived from the same LSTM1 outputs as B7.
+
+- 30 epochs, batch size 16, AdamW, AMP, weighted cross-entropy, hidden_dim=512.
+- Best val checkpoint: val_acc 86.5%.
+- Test accuracy: **88.78%**
+- Checkpoint: `outputs/checkpoints/b8.pt`
+
+Per-class test performance:
+
+| class | precision | recall | f1 | support |
+|---|---|---|---|---|
+| l-pass | 0.906 | 0.894 | 0.900 | 226 |
+| l-spike | 0.927 | 0.916 | 0.921 | 179 |
+| l_set | 0.884 | 0.863 | 0.873 | 168 |
+| l_winpoint | 0.918 | 0.882 | 0.900 | 102 |
+| r-pass | 0.814 | 0.919 | 0.864 | 210 |
+| r_set | 0.919 | 0.823 | 0.868 | 192 |
+| r_spike | 0.904 | 0.925 | 0.914 | 173 |
+| r_winpoint | 0.843 | 0.862 | 0.852 | 87 |
+
+Full confusion matrix: [`b8_test_report.txt`](b8_test_report.txt).
+
+**The winpoint confusion that persisted across every single earlier
+baseline (B1-B7) is resolved:**
+
+| class | B7 recall | B8 recall | Δ |
+|---|---|---|---|
+| l_winpoint | 0.627 | 0.882 | +0.255 |
+| r_winpoint | 0.460 | 0.862 | +0.402 |
+
+Every class now scores above 0.81 recall -- no weak class left, unlike
+every prior baseline which had at least one class stuck below 0.6. One
+architectural change (pool by team instead of mixing all 12 players) fixed
+the single most consistent weakness in the whole project, exactly matching
+the paper's own claim that team-separated ("group-style") pooling reduces
+confusion -- confirmed here with real per-class numbers.

@@ -107,7 +107,10 @@ training images), but validation/test accuracy keeps climbing slightly
 thanks to the weighted loss (corrects for class imbalance) and cosine LR
 schedule — it doesn't collapse the way an unweighted/uncontrolled run would.
 
-![B1 results: confusion matrix + accuracy](outputs/results/b1_results.png)
+<p align="center">
+  <img src="outputs/results/b1_confusion_matrix.png" width="380" alt="B1 confusion matrix">
+  <img src="outputs/results/b1_training_curve.png" width="380" alt="B1 training curve">
+</p>
 
 Reading the confusion matrix: almost all the error is between game phases of
 the *same* team — `r-pass` gets confused with `r_set` (27 cases), `l-pass`
@@ -149,7 +152,10 @@ result is kept and reported as-is: B2's role in the ladder is a comparison
 point, not a baseline to optimize — B3 (next) is the one that matters for the
 main result chain.
 
-![B2 results: confusion matrix + accuracy](outputs/results/b2_results.png)
+<p align="center">
+  <img src="outputs/results/b2_confusion_matrix.png" width="380" alt="B2 confusion matrix">
+  <img src="outputs/results/b2_training_curve.png" width="380" alt="B2 training curve">
+</p>
 
 The confusion is much heavier and more spread out than B1's — e.g. `l-pass`
 gets predicted as `r-pass` 110 times (its single biggest bucket, more than
@@ -200,7 +206,9 @@ comparable to the paper's 68.1%.**
 
 **Result: 65.67% test accuracy** (−2.4 pts vs. the paper).
 
-![B3 results: confusion matrix + accuracy](outputs/results/b3_results.png)
+<p align="center">
+  <img src="outputs/results/b3_confusion_matrix.png" width="420" alt="B3 confusion matrix">
+</p>
 
 Reading it: `l-spike`/`r_spike` and `l_set`/`r_set` are classified well
 (precision/recall both 0.72-0.93) — spiking and setting have distinctive
@@ -238,7 +246,10 @@ with motion added. Players arrive in B5.
 
 ![B4 training curve](outputs/results/b4_training_curve.png)
 
-![B4 results: confusion matrix + accuracy](outputs/results/b4_results.png)
+<p align="center">
+  <img src="outputs/results/b4_confusion_matrix.png" width="380" alt="B4 confusion matrix">
+  <img src="outputs/results/b4_training_curve.png" width="380" alt="B4 training curve">
+</p>
 
 **Notable deviation from the paper's own finding:** the paper explicitly
 says B4 performs *worse* than B1 on their volleyball data — a fast-moving
@@ -289,7 +300,9 @@ meaningfully different), far above the paper's 67.6% target either way.
 
 ![B5 tracked vs static curve](outputs/results/b5_tracked_vs_static_curve.png)
 
-![B5 results: confusion matrix + accuracy](outputs/results/b5_results.png)
+<p align="center">
+  <img src="outputs/results/b5_confusion_matrix.png" width="420" alt="B5 confusion matrix">
+</p>
 
 **Tracked vs. static, honestly:** the aggregate accuracy barely changes
 (+0.15 pts), but per-class recall tells a more interesting story — `l-pass`,
@@ -352,7 +365,10 @@ accuracy went flat across the last ~35 epochs. Close to B4, but still well
 below B5, consistent with the pool-before-LSTM structural handicap rather
 than a simple "needed more training" story.
 
-![B6 results: confusion matrix + accuracy](outputs/results/b6_results.png)
+<p align="center">
+  <img src="outputs/results/b6_confusion_matrix.png" width="380" alt="B6 confusion matrix">
+  <img src="outputs/results/b6_full_training_history.png" width="380" alt="B6 training curve">
+</p>
 
 ## B7 — explained
 
@@ -385,7 +401,10 @@ by epoch 26 and val accuracy plateaued smoothly around 74-75% from epoch
 
 ![B7 training curve](outputs/results/b7_training_curve.png)
 
-![B7 results: confusion matrix + accuracy](outputs/results/b7_results.png)
+<p align="center">
+  <img src="outputs/results/b7_confusion_matrix.png" width="380" alt="B7 confusion matrix">
+  <img src="outputs/results/b7_training_curve.png" width="380" alt="B7 training curve">
+</p>
 
 **Slightly below our own B5 (78.98%), not just the paper's target** —
 adding LSTM2 on top of B5's setup didn't help here, unlike the paper's own
@@ -397,6 +416,55 @@ seen in every baseline so far, because pooling all 12 players into one
 vector (no team separation) loses the "which side of the court" signal
 that would make those two classes easy to tell apart. That's exactly what
 B8's team-separated pooling is designed to fix next.
+
+## B8 — explained
+
+Identical to B7 except for one change at step 4: instead of max-pooling
+**all 12 players together**, pool **each team's 6 players separately**,
+then concatenate the two results. The paper's best-performing
+configuration — and the one this project's whole baseline ladder has been
+building toward.
+
+![B8 pipeline](outputs/results/b8_pipeline.png)
+
+1-3. Identical to B7: per-player tracked crops → B3-A backbone (frozen,
+cached) → LSTM1 per player, full 9-step output.
+4. At each frame: **X** = max-pool team 1's 6 players, **Y** = max-pool
+   team 2's 6 players, scene vector = **concat(X, Y)** — instead of B7's
+   single pool over all 12 players, which mixes both teams into one vector
+   and loses track of which side of the court produced which signal.
+5. LSTM2 over the resulting 9-step sequence of team-separated vectors.
+6. Classify the final hidden state → 8-way scene class.
+
+**Result: 88.78% test accuracy** — not just beating the paper's 81.9%
+target (+6.9 pts), but the highest result in this entire baseline ladder,
+by a wide margin over B7 (78.83%).
+
+![B8 training curve](outputs/results/b8_training_curve.png)
+
+<p align="center">
+  <img src="outputs/results/b8_confusion_matrix.png" width="380" alt="B8 confusion matrix">
+  <img src="outputs/results/b8_training_curve.png" width="380" alt="B8 training curve">
+</p>
+
+**This directly confirms the hypothesis from the B7 section above.** The
+persistent `l_winpoint`/`r_winpoint` confusion that showed up in *every*
+earlier baseline — B1 through B7, all of them pooling players without
+team separation — is essentially resolved:
+
+| class | B7 recall | B8 recall | Δ |
+|---|---|---|---|
+| l_winpoint | 0.627 | **0.882** | +0.255 |
+| r_winpoint | 0.460 | **0.862** | +0.402 |
+
+Every one of the 8 scene classes now scores above 0.81 recall (the
+previous best baseline, B5, had 3 classes below that). One cheap
+architectural change — separating pooling by team instead of mixing all
+12 players — fixed the single biggest, most consistent weakness across the
+whole project. This matches the paper's own framing exactly: *"using one
+representation per team reduced the confusion and enhanced the results"*
+(project brief, Section 8) — confirmed here with real numbers, not just
+taken on faith.
 
 ## Baseline ladder
 
@@ -416,7 +484,7 @@ quotes the exact mechanism for each one.
 | **B5** | *"Temporal on crops"*: one LSTM (LSTM1) per player over the 9-frame window using B3-A features → take each player's **last hidden state** → max-pool across players → small classifier (**no** scene-level LSTM) → 8-way scene class. | 67.6% | **79.0%** ✅ (real per-frame tracking, not the static-box simplification) |
 | **B6** | *"Same B3 steps A and B, repeated per frame"*: for **each of the 9 frames**, take all player crops, extract B3-A features, max-pool across players → one vector per frame → 9-step sequence → a **single** LSTM over that sequence (image-level LSTM only, no per-player LSTM1) → 8-way scene class. | 74.7% | **73.2%** ✅ (needed 65 epochs — see "needed far more training" note above) |
 | **B7** | Full two-stage model. LSTM1 (per player, over 9 frames) → for each frame, max-pool all players' LSTM1 outputs → LSTM2 (scene-level, over the resulting 9-step sequence) → 8-way scene class. | 80.2% | **78.8%** ✅ (slightly under even our own B5 — see note above) |
-| **B8** | Same as B7, but *"group-style"* pooling: X = max-pool team 1's 6 players, Y = max-pool team 2's 6 players, scene representation = concat(X, Y) instead of one pool over all 12. The paper's best config. | 81.9% | not started |
+| **B8** | Same as B7, but *"group-style"* pooling: X = max-pool team 1's 6 players, Y = max-pool team 2's 6 players, scene representation = concat(X, Y) instead of one pool over all 12. The paper's best config. | 81.9% | **88.8%** ✅ (best result in the whole ladder — see note above, winpoint confusion resolved) |
 | **B8-mt** | B8 + a per-player 9-way action head on LSTM1's output (before pooling), trained jointly: `loss = loss_scene + λ·loss_person_action` (Section 6, mandatory extension beyond the paper). | — (not a paper baseline) | not started |
 
 **B2 vs B3 note:** both reuse the identical pooling pipeline
