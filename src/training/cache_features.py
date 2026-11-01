@@ -17,6 +17,7 @@ from tqdm import tqdm
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from src.data.annotations import load_or_cache, split_keys
 from src.data.datasets import frame_window, EVAL_TRANSFORM, load_image, MAX_PLAYERS
+from src.data.tracking import load_tracks, match_players_to_tracks, player_box_per_frame
 from src.models.backbone import ResNetBackbone
 
 
@@ -35,19 +36,39 @@ def cache_image_level(model, device, root, data, keys, n_frames=9):
 
 
 @torch.no_grad()
-def cache_person_level(model, device, root, data, keys, n_frames=9, batch_size=64):
+def cache_person_level(model, device, root, data, keys, n_frames=9, batch_size=64,
+                        box_mode="tracked", tracking_root=None):
     from PIL import Image
     cache = {}
+    missed_tracks, total_players = 0, 0
     for video, clip in tqdm(keys, desc="caching person-level features"):
         paths = frame_window(root, video, clip, n_frames)
+        frame_nums = [int(os.path.splitext(os.path.basename(p))[0]) for p in paths]
         frames = [Image.open(p).convert("RGB") for p in paths]
         players = data[(video, clip)]["players"][:MAX_PLAYERS]
+        center_frame = int(clip)
+
+        tracks, matches = {}, [None] * len(players)
+        if box_mode == "tracked":
+            try:
+                tracks = load_tracks(tracking_root, video, clip)
+                matches = match_players_to_tracks(players, tracks, center_frame)
+            except FileNotFoundError:
+                matches = [None] * len(players)
 
         crops = []
         index = []
         for p_idx, (action, x, y, w, h) in enumerate(players):
-            box = (x, y, x + w, y + h)
-            for f_idx, frame in enumerate(frames):
+            fallback = (x, y, w, h)
+            total_players += 1
+            if box_mode == "tracked" and matches[p_idx] is None:
+                missed_tracks += 1
+            for f_idx, (frame, fnum) in enumerate(zip(frames, frame_nums)):
+                if box_mode == "tracked":
+                    bx, by, bw, bh = player_box_per_frame(tracks, matches[p_idx], fnum, fallback)
+                else:
+                    bx, by, bw, bh = fallback
+                box = (bx, by, bx + bw, by + bh)
                 crops.append(EVAL_TRANSFORM(frame.crop(box)))
                 index.append((p_idx, f_idx))
         for frame in frames:
@@ -65,6 +86,9 @@ def cache_person_level(model, device, root, data, keys, n_frames=9, batch_size=6
 
         for (p_idx, f_idx), feat in zip(index, feats):
             cache[(video, clip, p_idx, f_idx)] = feat
+    if box_mode == "tracked" and total_players:
+        print(f"  track match rate: {total_players - missed_tracks}/{total_players} players matched "
+              f"({missed_tracks} fell back to the static center-frame box)")
     return cache
 
 
@@ -77,6 +101,12 @@ def main():
     ap.add_argument("--n-frames", type=int, default=9)
     ap.add_argument("--out-dir", default=r"E:\volleyball datasets\outputs\features_cache")
     ap.add_argument("--name", required=True, help="e.g. b1_image or b3a_person")
+    ap.add_argument("--box-mode", choices=["tracked", "static"], default="tracked",
+                     help="tracked = real per-frame player box from volleyball_tracking_annotation "
+                          "(matches the paper's Dlib tracker); static = reuse the center-frame box "
+                          "for all 9 frames (Section 7.2 choice (a) simplification, person-level only)")
+    ap.add_argument("--tracking-root",
+                     default=r"E:\volleyball datasets\volleyball_tracking_annotation\volleyball_tracking_annotation")
     args = ap.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -95,7 +125,8 @@ def main():
         if args.level == "image":
             cache = cache_image_level(model, device, args.root, data, keys, args.n_frames)
         else:
-            cache = cache_person_level(model, device, args.root, data, keys, args.n_frames)
+            cache = cache_person_level(model, device, args.root, data, keys, args.n_frames,
+                                        box_mode=args.box_mode, tracking_root=args.tracking_root)
         out_path = os.path.join(args.out_dir, f"{args.name}_{split}.pt")
         torch.save(cache, out_path)
         print(f"  saved {len(cache)} vectors -> {out_path}")
