@@ -9,7 +9,7 @@ per-player action accuracy (only applicable from B8-mt onward).
 | B2 | Frozen ResNet50 on person crops, max-pooled | 43.5% | 42.2% | 64.6% | ✅ done (−22.4 pts under paper, see note below) |
 | B3-A | Fine-tune ResNet50 on person crops, 9-way action (intermediate step, feeds B2/B3/B5/B6/B7/B8) | 69.6% | 80.6% (v1) / 72.8% (v2) | n/a (not paper-reported) | ✅ done, v1 selected for B+C |
 | **B3 (B+C)** | B3-A backbone (v1), pooled → scene head | 59.8% | **65.67%** | 68.1% | ✅ done (−2.4 pts under paper) |
-| B4 | Image-level LSTM (B1 features) | — | — | 63.1% | not started |
+| **B4** | Image-level LSTM (B1 features) | 72.0% | **73.37%** | 63.1% | ✅ done (+10.3 pts over paper) |
 | B5 | Per-player LSTM, max-pooled (no scene LSTM) | — | — | 67.6% | not started |
 | B6 | Image-level LSTM (B3-A features) | — | — | 74.7% | not started |
 | B7 | Full hierarchical model (LSTM1 → pool → LSTM2) | — | — | 80.2% | not started |
@@ -170,3 +170,39 @@ and `r-pass` 4 times). This matches the paper's own framing too -- the paper's o
 not a blowout. B3's real advantage only shows up once temporal modeling
 (B4+) is added on top of person-level features, which is exactly what
 B5-B8 test next.
+
+## B4 — detail
+
+Image-level LSTM: B1's (frozen, cached) whole-frame feature for each of the
+9 frames in the window -> single LSTM over that 9-step sequence -> linear
+classifier -> 8-way scene class. No per-player information at all.
+
+- 30 epochs, batch size 16, AdamW, AMP, weighted cross-entropy, hidden_dim=512.
+- Best val checkpoint: val_acc 72.0%.
+- Test accuracy: **73.37%**
+- Checkpoint: `outputs/checkpoints/b4.pt`
+
+Per-class test performance:
+
+| class | precision | recall | f1 | support |
+|---|---|---|---|---|
+| l-pass | 0.749 | 0.673 | 0.709 | 226 |
+| l-spike | 0.745 | 0.832 | 0.786 | 179 |
+| l_set | 0.758 | 0.690 | 0.723 | 168 |
+| l_winpoint | 0.856 | 0.873 | 0.864 | 102 |
+| r-pass | 0.582 | 0.743 | 0.653 | 210 |
+| r_set | 0.732 | 0.641 | 0.683 | 192 |
+| r_spike | 0.772 | 0.746 | 0.759 | 173 |
+| r_winpoint | 0.905 | 0.770 | 0.832 | 87 |
+
+Full confusion matrix: [`b4_test_report.txt`](b4_test_report.txt).
+
+**Unexpected result vs. the paper's own finding:** the paper explicitly
+reports that B4 (image-level temporal, no player info) performs *worse*
+than B1 on their volleyball dataset, because the fast-moving camera
+corrupts frame-to-frame background dynamics more than it helps. Here B4
+(73.37%) slightly *beats* B1 (72.18%) instead. Likely explanation: ResNet50's
+2048-d features are far more discriminative per-frame than AlexNet's fc7,
+so even noisy camera motion doesn't erase the signal the LSTM needs — the
+backbone upgrade changes not just the absolute numbers but this specific
+qualitative finding from the paper.

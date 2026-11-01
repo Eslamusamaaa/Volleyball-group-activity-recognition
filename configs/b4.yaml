@@ -18,4 +18,5 @@ command: >
   --variant b4 --feature-name b1_image --epochs 30 --batch-size 16 --name b4
 checkpoint: outputs/checkpoints/b4.pt
 results: outputs/results/b4.json
-status: not_started
+status: done
+test_acc: 0.7337

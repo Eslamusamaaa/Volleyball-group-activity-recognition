@@ -215,6 +215,39 @@ are a close comparison in the paper too, not a blowout — B3's real advantage
 over B1 is meant to show up once temporal modeling is layered on top (B5+),
 which is what comes next.
 
+## B4 — explained
+
+First baseline with a **time** dimension — and the first one trained on
+*cached* features rather than raw images (Phase B/C of the project's
+VRAM-saving strategy).
+
+![B4 pipeline](outputs/results/b4_pipeline.png)
+
+1. For each clip, take the **9-frame window** around the annotated center
+   frame (not just one frame like B1).
+2. Run each of the 9 frames through B1's already-trained backbone (frozen,
+   features cached to disk beforehand — no backbone training happens here).
+3. Feed the resulting 9-step sequence of 2048-d vectors into a **single
+   LSTM**.
+4. Classify the LSTM's final hidden state → 8-way scene class.
+
+Still **no per-player information at all** — same blind spot as B1, just
+with motion added. Players arrive in B5.
+
+**Result: 73.37% test accuracy**, far above the paper's 63.1% target.
+
+![B4 training curve](outputs/results/b4_training_curve.png)
+
+![B4 confusion matrix](outputs/results/b4_confusion_matrix.png)
+
+**Notable deviation from the paper's own finding:** the paper explicitly
+says B4 performs *worse* than B1 on their volleyball data — a fast-moving
+camera corrupts frame-to-frame background dynamics more than the added time
+information helps. Here B4 (73.37%) slightly *beats* B1 (72.18%) instead,
+most likely because ResNet50's much richer per-frame features give the LSTM
+enough signal to overcome that camera-motion noise, where AlexNet's weaker
+features couldn't.
+
 ## Baseline ladder
 
 Reproducing the paper's ablation study, from simplest to the full model.
@@ -229,7 +262,7 @@ quotes the exact mechanism for each one.
 | **B1-tuned** | Whole center-frame image → fine-tuned ResNet50 (all weights trainable) → 8-way scene class. No players, no time. | 66.7% | **72.2%** ✅ |
 | **B2** | Paper name *"Person Classification"*. Every player's crop → **frozen, never-fine-tuned** ImageNet ResNet50 → max-pool the per-player features → small *trained* classifier → 8-way scene class. Pure ablation control (isolates "does fine-tuning matter?" from "does person-level input matter?"). | 64.6% | **42.2%** (documented as-is, see note below) |
 | **B3** | Two steps. **(A)** fine-tune ResNet50 on individual player crops → 9-way *person action* class (this sub-step has no paper-reported accuracy of its own — it's an intermediate step, not the final metric). **(B+C)** freeze that backbone, extract a feature per player crop, max-pool across players, train a small classifier on the pooled vector → 8-way *scene* class — this is the number comparable to the paper's 68.1%. | 68.1% (scene, after B+C) | step A: 80.6% (9-way person-action, not comparable to 68.1%); **step B+C: 65.7%** ✅ |
-| **B4** | *"Implementation #1"* from the brief: run B1's fine-tuned backbone over 9 whole-image frames per clip → one LSTM over the 9-step sequence → 8-way scene class. Image-level only, no players. | 63.1% | not started |
+| **B4** | *"Implementation #1"* from the brief: run B1's fine-tuned backbone over 9 whole-image frames per clip → one LSTM over the 9-step sequence → 8-way scene class. Image-level only, no players. | 63.1% | **73.4%** ✅ (paper's own B1>B4 finding reversed — see note above) |
 | **B5** | *"Temporal on crops"*: one LSTM (LSTM1) per player over the 9-frame window using B3-A features → take each player's **last hidden state** → max-pool across players → small classifier (**no** scene-level LSTM) → 8-way scene class. | 67.6% | not started |
 | **B6** | *"Same B3 steps A and B, repeated per frame"*: for **each of the 9 frames**, take all player crops, extract B3-A features, max-pool across players → one vector per frame → 9-step sequence → a **single** LSTM over that sequence (image-level LSTM only, no per-player LSTM1) → 8-way scene class. | 74.7% | not started |
 | **B7** | Full two-stage model. LSTM1 (per player, over 9 frames) → for each frame, max-pool all players' LSTM1 outputs → LSTM2 (scene-level, over the resulting 9-step sequence) → 8-way scene class. | 80.2% | not started |
