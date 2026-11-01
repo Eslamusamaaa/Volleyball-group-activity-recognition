@@ -20,6 +20,7 @@ SUBTEXT = "#9aa2b1"
 ACCENT = {
     "b1": "#4f8cff", "b2": "#ff8a4f", "b3": "#36b37e",
     "b4": "#a66bff", "b5": "#4fd1ff", "b6": "#ff5c7a",
+    "b7": "#f0b429", "b8": "#48d1cc", "b8mt": "#ff7ab6",
 }
 
 
@@ -101,7 +102,7 @@ ICONS = {
 }
 
 
-def pipeline_diagram(path, title, steps, accent, figsize=(13, 3.2)):
+def pipeline_diagram(path, title, steps, accent, figsize=(16, 3.9)):
     """steps: list of (label_lines:list[str], kind) where kind picks a
     hand-drawn volleyball-themed icon (ball / court / player / pulse / huddle / flag)."""
     n = len(steps)
@@ -150,7 +151,93 @@ def pipeline_diagram(path, title, steps, accent, figsize=(13, 3.2)):
 
     ax.text(0.5, 0.925, title, ha="center", va="center", fontsize=12.5, color=TEXT, weight="bold")
     fig.tight_layout(pad=0.4)
-    fig.savefig(path, dpi=150, facecolor=BG)
+    fig.savefig(path, dpi=190, facecolor=BG)
+    plt.close(fig)
+    print("saved", path)
+
+
+def results_panel(path, title, accuracy, paper_target, report_path, accent):
+    """Side-by-side: confusion matrix (left) + accuracy readout & per-class
+    recall bars (right). Large (18x8in @170dpi) so it's legible standalone."""
+    rows, cm = [], []
+    with open(report_path) as f:
+        lines = f.read().splitlines()
+    i = 0
+    while i < len(lines) and not lines[i].startswith("class"):
+        i += 1
+    i += 1
+    for _ in range(8):
+        parts = lines[i].split()
+        rows.append({"class": parts[0], "precision": float(parts[1]), "recall": float(parts[2]),
+                     "f1": float(parts[3]), "support": int(parts[4])})
+        i += 1
+    while i < len(lines) and "confusion matrix" not in lines[i]:
+        i += 1
+    i += 2
+    for r in range(8):
+        parts = lines[i + r].split()
+        cm.append([int(x) for x in parts[1:9]])
+    cm = np.array(cm)
+    cm_norm = cm / cm.sum(axis=1, keepdims=True)
+
+    fig = plt.figure(figsize=(18, 8.4), facecolor=BG)
+    gs = fig.add_gridspec(1, 2, width_ratios=[1.0, 1.15], wspace=0.24,
+                           left=0.055, right=0.975, top=0.74, bottom=0.08)
+
+    axL = fig.add_subplot(gs[0, 0])
+    axL.set_facecolor(BG)
+    im = axL.imshow(cm_norm, cmap="magma", vmin=0, vmax=1)
+    axL.set_xticks(range(8)); axL.set_xticklabels(CLASSES, rotation=45, ha="right", fontsize=10.5, color=TEXT)
+    axL.set_yticks(range(8)); axL.set_yticklabels(CLASSES, fontsize=10.5, color=TEXT)
+    axL.set_xlabel("Predicted", fontsize=11, color=SUBTEXT)
+    axL.set_ylabel("True", fontsize=11, color=SUBTEXT)
+    for spine in axL.spines.values():
+        spine.set_visible(False)
+    for r in range(8):
+        for c in range(8):
+            v = cm[r, c]
+            if v == 0:
+                continue
+            color = "white" if cm_norm[r, c] > 0.42 else "#1a1a1a"
+            axL.text(c, r, str(v), ha="center", va="center", fontsize=9.5, color=color)
+    cb = fig.colorbar(im, ax=axL, fraction=0.046, pad=0.03)
+    cb.ax.tick_params(labelsize=9, colors=SUBTEXT)
+    cb.outline.set_visible(False)
+    axL.set_title("Confusion matrix (row-normalized)", fontsize=13, color=TEXT, pad=12)
+
+    axR = fig.add_subplot(gs[0, 1])
+    axR.set_facecolor(BG)
+    for spine in axR.spines.values():
+        spine.set_visible(False)
+
+    delta = (accuracy - paper_target) * 100
+    sign = "+" if delta >= 0 else ""
+    dcolor = "#36b37e" if delta >= 0 else "#ff5c7a"
+    fig.text(0.565, 0.905, f"{accuracy*100:.1f}%", fontsize=42, color=accent, weight="bold", ha="left", va="center")
+    fig.text(0.565, 0.838, "test accuracy", fontsize=12.5, color=SUBTEXT, ha="left", va="center")
+    fig.text(0.975, 0.905, f"{sign}{delta:.1f} pts", fontsize=18, color=dcolor, weight="bold", ha="right", va="center")
+    fig.text(0.975, 0.838, f"vs. paper target {paper_target*100:.1f}%", fontsize=12.5, color=SUBTEXT, ha="right", va="center")
+
+    names = [r["class"] for r in rows]
+    recalls = [r["recall"] for r in rows]
+    y_pos = np.arange(8)[::-1]
+    bar_colors = [accent if rc >= 0.6 else ("#f0b429" if rc >= 0.4 else "#ff5c7a") for rc in recalls]
+    axR.barh(y_pos, recalls, height=0.6, color=bar_colors, zorder=3)
+    for yp, rc, nm in zip(y_pos, recalls, names):
+        axR.text(rc + 0.015, yp, f"{rc:.2f}", va="center", fontsize=10.5, color=TEXT)
+        axR.text(-0.015, yp, nm, va="center", ha="right", fontsize=11, color=TEXT)
+    axR.set_xlim(0, 1.12)
+    axR.set_ylim(-0.6, 7.6)
+    axR.set_yticks([])
+    axR.set_xticks([0, 0.25, 0.5, 0.75, 1.0])
+    axR.set_xticklabels(["0", ".25", ".5", ".75", "1.0"], fontsize=10, color=SUBTEXT)
+    axR.xaxis.grid(True, color=GRID, lw=0.7, zorder=0)
+    axR.set_axisbelow(True)
+    axR.set_title("Per-class recall", fontsize=13, color=TEXT, pad=12, loc="left")
+    axR.margins(y=0)
+
+    fig.text(0.5, 0.965, title, fontsize=17, color=TEXT, weight="bold", ha="center", va="center")
+    fig.savefig(path, dpi=170, facecolor=BG)
     plt.close(fig)
     print("saved", path)
 
@@ -191,7 +278,7 @@ pipeline_diagram(f"{OUT}/b5_pipeline.png", "B5 — per-player LSTM, pooled at th
      (["B3-A backbone", "(frozen, cached)"], "backbone"),
      (["LSTM1 per player", "(9-step sequence)"], "temporal"),
      (["Max-pool final", "hidden states"], "pool"),
-     (["Linear classifier", "→ 8 scene classes"], "output")], ACCENT["b5"], figsize=(14.5, 3.0))
+     (["Linear classifier", "→ 8 scene classes"], "output")], ACCENT["b5"], figsize=(18, 3.7))
 
 # ---------------- B6 ----------------
 pipeline_diagram(f"{OUT}/b6_pipeline.png", "B6 — pool players per frame, then single LSTM → scene class",
@@ -199,6 +286,31 @@ pipeline_diagram(f"{OUT}/b6_pipeline.png", "B6 — pool players per frame, then 
      (["B3-A backbone", "(frozen, cached)"], "backbone"),
      (["Max-pool per frame", "→ 9-step sequence"], "pool"),
      (["Single LSTM", "over 9 steps"], "temporal"),
-     (["Linear classifier", "→ 8 scene classes"], "output")], ACCENT["b6"], figsize=(14.5, 3.0))
+     (["Linear classifier", "→ 8 scene classes"], "output")], ACCENT["b6"], figsize=(18, 3.7))
+
+# ---------------- B7 ----------------
+pipeline_diagram(f"{OUT}/b7_pipeline.png", "B7 — LSTM1 per player → pool per frame → LSTM2 → scene class",
+    [(["Each player,", "real tracked box", "per frame (9)"], "player"),
+     (["B3-A backbone", "(frozen, cached)"], "backbone"),
+     (["LSTM1 per player", "(full 9-step output,", "not just final state)"], "temporal"),
+     (["Max-pool players", "at each frame", "→ 9-step sequence"], "pool"),
+     (["LSTM2", "(scene-level)"], "temporal"),
+     (["Linear classifier", "→ 8 scene classes"], "output")], ACCENT["b7"], figsize=(20, 3.7))
+
+# ---------------- results panels (confusion matrix + accuracy, side by side) ----------------
+results_panel(f"{OUT}/b1_results.png", "B1-tuned — results", 0.7218, 0.667,
+              f"{OUT}/scene_finetune_b1_test_report.txt", ACCENT["b1"])
+results_panel(f"{OUT}/b2_results.png", "B2 — results", 0.4218, 0.646,
+              f"{OUT}/person_pooled_b2_test_report.txt", ACCENT["b2"])
+results_panel(f"{OUT}/b3_results.png", "B3 (steps B+C) — results", 0.6567, 0.681,
+              f"{OUT}/person_pooled_b3_test_report.txt", ACCENT["b3"])
+results_panel(f"{OUT}/b4_results.png", "B4 — results", 0.7337, 0.631,
+              f"{OUT}/b4_test_report.txt", ACCENT["b4"])
+results_panel(f"{OUT}/b5_results.png", "B5 (real tracking) — results", 0.7898, 0.676,
+              f"{OUT}/b5_tracked_test_report.txt", ACCENT["b5"])
+results_panel(f"{OUT}/b6_results.png", "B6 (65 epochs, final) — results", 0.7315, 0.747,
+              f"{OUT}/b6_extended3_test_report.txt", ACCENT["b6"])
+results_panel(f"{OUT}/b7_results.png", "B7 — results", 0.7883, 0.802,
+              f"{OUT}/b7_test_report.txt", ACCENT["b7"])
 
 print("ALL DONE")

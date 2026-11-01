@@ -107,7 +107,7 @@ training images), but validation/test accuracy keeps climbing slightly
 thanks to the weighted loss (corrects for class imbalance) and cosine LR
 schedule — it doesn't collapse the way an unweighted/uncontrolled run would.
 
-![B1 confusion matrix](outputs/results/b1_confusion_matrix.png)
+![B1 results: confusion matrix + accuracy](outputs/results/b1_results.png)
 
 Reading the confusion matrix: almost all the error is between game phases of
 the *same* team — `r-pass` gets confused with `r_set` (27 cases), `l-pass`
@@ -149,7 +149,7 @@ result is kept and reported as-is: B2's role in the ladder is a comparison
 point, not a baseline to optimize — B3 (next) is the one that matters for the
 main result chain.
 
-![B2 confusion matrix](outputs/results/b2_confusion_matrix.png)
+![B2 results: confusion matrix + accuracy](outputs/results/b2_results.png)
 
 The confusion is much heavier and more spread out than B1's — e.g. `l-pass`
 gets predicted as `r-pass` 110 times (its single biggest bucket, more than
@@ -200,7 +200,7 @@ comparable to the paper's 68.1%.**
 
 **Result: 65.67% test accuracy** (−2.4 pts vs. the paper).
 
-![B3 confusion matrix](outputs/results/b3_confusion_matrix.png)
+![B3 results: confusion matrix + accuracy](outputs/results/b3_results.png)
 
 Reading it: `l-spike`/`r_spike` and `l_set`/`r_set` are classified well
 (precision/recall both 0.72-0.93) — spiking and setting have distinctive
@@ -238,7 +238,7 @@ with motion added. Players arrive in B5.
 
 ![B4 training curve](outputs/results/b4_training_curve.png)
 
-![B4 confusion matrix](outputs/results/b4_confusion_matrix.png)
+![B4 results: confusion matrix + accuracy](outputs/results/b4_results.png)
 
 **Notable deviation from the paper's own finding:** the paper explicitly
 says B4 performs *worse* than B1 on their volleyball data — a fast-moving
@@ -289,7 +289,7 @@ meaningfully different), far above the paper's 67.6% target either way.
 
 ![B5 tracked vs static curve](outputs/results/b5_tracked_vs_static_curve.png)
 
-![B5 confusion matrix](outputs/results/b5_confusion_matrix.png)
+![B5 results: confusion matrix + accuracy](outputs/results/b5_results.png)
 
 **Tracked vs. static, honestly:** the aggregate accuracy barely changes
 (+0.15 pts), but per-class recall tells a more interesting story — `l-pass`,
@@ -309,6 +309,8 @@ Same ingredients as B4 and B5 (players, time, pooling) but a different
 *order*: pool the players first, within each frame, then run a single LSTM
 over the pooled sequence — the reverse of B5, which runs a per-player LSTM
 first and pools only at the very end.
+
+![B6 pipeline](outputs/results/b6_pipeline.png)
 
 1. For each of the 9 frames: take all players' B3-A features, max-pool
    across players → one vector per frame.
@@ -350,7 +352,7 @@ accuracy went flat across the last ~35 epochs. Close to B4, but still well
 below B5, consistent with the pool-before-LSTM structural handicap rather
 than a simple "needed more training" story.
 
-![B6 confusion matrix](outputs/results/b6_confusion_matrix.png)
+![B6 results: confusion matrix + accuracy](outputs/results/b6_results.png)
 
 ## B7 — explained
 
@@ -383,7 +385,7 @@ by epoch 26 and val accuracy plateaued smoothly around 74-75% from epoch
 
 ![B7 training curve](outputs/results/b7_training_curve.png)
 
-![B7 confusion matrix](outputs/results/b7_confusion_matrix.png)
+![B7 results: confusion matrix + accuracy](outputs/results/b7_results.png)
 
 **Slightly below our own B5 (78.98%), not just the paper's target** —
 adding LSTM2 on top of B5's setup didn't help here, unlike the paper's own
