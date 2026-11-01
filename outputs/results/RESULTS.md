@@ -8,7 +8,7 @@ per-player action accuracy (only applicable from B8-mt onward).
 | **B1-tuned** | Fine-tuned ResNet50, center-frame image | 68.9% | **72.2%** | 66.7% | ✅ done (+5.5 pts over paper) |
 | B2 | Frozen ResNet50 on person crops, max-pooled | 43.5% | 42.2% | 64.6% | ✅ done (−22.4 pts under paper, see note below) |
 | B3-A | Fine-tune ResNet50 on person crops, 9-way action (intermediate step, feeds B2/B3/B5/B6/B7/B8) | 69.6% | 80.6% (v1) / 72.8% (v2) | n/a (not paper-reported) | ✅ done, v1 selected for B+C |
-| B3 (B+C) | B3-A backbone (v1), pooled → scene head | — | — | 68.1% | not started |
+| **B3 (B+C)** | B3-A backbone (v1), pooled → scene head | 59.8% | **65.67%** | 68.1% | ✅ done (−2.4 pts under paper) |
 | B4 | Image-level LSTM (B1 features) | — | — | 63.1% | not started |
 | B5 | Per-player LSTM, max-pooled (no scene LSTM) | — | — | 67.6% | not started |
 | B6 | Image-level LSTM (B3-A features) | — | — | 74.7% | not started |
@@ -130,3 +130,43 @@ overall test accuracy and is stronger on every class except `waiting` and
 into the downstream baselines rather than a solved problem; a smarter fix
 (e.g. capping how many times a rare class can be resampled, instead of
 equalizing all classes outright) is a candidate follow-up, not applied here.
+
+## B3 (B+C) — detail
+
+The full B3 baseline: B3-A's (v1) fine-tuned backbone, frozen, used to
+extract a feature per player crop; max-pooled across players; small
+classifier head trained on the pooled vector (AdamW lr=1e-3, 15 epochs, AMP,
+weighted cross-entropy on scene classes).
+
+- Best val checkpoint: epoch with val_acc 59.8%.
+- Test accuracy: **65.67%** — close to the paper's 68.1% (−2.4 pts).
+- Checkpoint: `outputs/checkpoints/person_pooled_b3.pt`
+
+Per-class test performance:
+
+| class | precision | recall | f1 | support |
+|---|---|---|---|---|
+| l-pass | 0.511 | 0.708 | 0.594 | 226 |
+| l-spike | 0.781 | 0.838 | 0.809 | 179 |
+| l_set | 0.810 | 0.762 | 0.785 | 168 |
+| l_winpoint | 0.542 | 0.441 | 0.486 | 102 |
+| r-pass | 0.578 | 0.510 | 0.542 | 210 |
+| r_set | 0.926 | 0.589 | 0.720 | 192 |
+| r_spike | 0.933 | 0.723 | 0.814 | 173 |
+| r_winpoint | 0.333 | 0.575 | 0.422 | 87 |
+
+Full confusion matrix: [`person_pooled_b3_test_report.txt`](person_pooled_b3_test_report.txt).
+
+Comparing to B1 (72.2%): B3 is worse overall despite using person-level
+information, which at first looks odd -- the per-player action backbone
+(B3-A) adds real signal (`l-spike`/`r_spike` precision/recall are both
+strong, 0.78-0.93, since spiking is visually distinctive per-player), but
+single-frame max-pooling loses *which* player is doing what relative to the
+court, and B3-A's known `jumping`/`digging` weakness (Section "B3-A --
+detail") propagates into noisier pooled features for the ambiguous classes
+(`r_winpoint` precision is only 0.333 -- confused with `l_winpoint` 28 times
+and `r-pass` 4 times). This matches the paper's own framing too -- the paper's own B3 target
+(68.1%) is only slightly above its B1 target (66.7%), a close comparison,
+not a blowout. B3's real advantage only shows up once temporal modeling
+(B4+) is added on top of person-level features, which is exactly what
+B5-B8 test next.

@@ -21,5 +21,6 @@ command: >
   --name person_pooled_b3
 checkpoint: outputs/checkpoints/person_pooled_b3.pt
 results: outputs/results/person_pooled_b3.json
-status: not_started
+status: done
+test_acc: 0.6567
 depends_on: configs/b3a.yaml
