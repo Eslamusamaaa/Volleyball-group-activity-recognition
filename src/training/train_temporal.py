@@ -19,6 +19,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
+from tqdm import tqdm
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from src.data.annotations import (
@@ -172,14 +173,15 @@ def load_feature_cache(cache_dir, name, split):
 
 
 def run_epoch(model, loader, device, is_person_ds, scene_criterion, person_criterion=None,
-              lam=1.0, optimizer=None, scaler=None):
+              lam=1.0, optimizer=None, scaler=None, desc=""):
     train = optimizer is not None
     model.train() if train else model.eval()
     total_loss = 0.0
     scene_true, scene_pred = [], []
     person_true, person_pred = [], []
     n = 0
-    for batch in loader:
+    pbar = tqdm(loader, desc=desc, leave=False, dynamic_ncols=True)
+    for batch in pbar:
         if is_person_ds:
             feats, mask, action_labels, team_mask, label = batch
             feats, mask, action_labels, team_mask, label = (
@@ -211,6 +213,7 @@ def run_epoch(model, loader, device, is_person_ds, scene_criterion, person_crite
         n += bs
         scene_true.extend(label.cpu().tolist())
         scene_pred.extend(scene_logits.argmax(-1).cpu().tolist())
+        pbar.set_postfix(loss=f"{loss.item():.3f}")
     return total_loss / n, scene_true, scene_pred, person_true, person_pred
 
 
@@ -261,9 +264,11 @@ def main():
     for epoch in range(1, args.epochs + 1):
         t0 = time.time()
         tr_loss, tr_t, tr_p, _, _ = run_epoch(model, loaders["train"], device, is_person_ds,
-                                               scene_criterion, person_criterion, args.lam, optimizer, scaler)
+                                               scene_criterion, person_criterion, args.lam, optimizer, scaler,
+                                               desc=f"epoch {epoch}/{args.epochs} train")
         va_loss, va_t, va_p, va_pt, va_pp = run_epoch(model, loaders["val"], device, is_person_ds,
-                                                       scene_criterion, person_criterion, args.lam)
+                                                       scene_criterion, person_criterion, args.lam,
+                                                       desc=f"epoch {epoch}/{args.epochs} val")
         scheduler.step()
         tr_acc, va_acc = accuracy(tr_t, tr_p), accuracy(va_t, va_p)
         dt = time.time() - t0
@@ -279,7 +284,7 @@ def main():
     ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
     model.load_state_dict(ckpt["model"])
     _, te_t, te_p, te_pt, te_pp = run_epoch(model, loaders["test"], device, is_person_ds,
-                                             scene_criterion, person_criterion, args.lam)
+                                             scene_criterion, person_criterion, args.lam, desc="test")
     report = format_report(te_t, te_p, len(SCENE_CLASSES), SCENE_CLASSES)
     print("\n=== TEST scene (best val checkpoint) ===")
     print(report)
