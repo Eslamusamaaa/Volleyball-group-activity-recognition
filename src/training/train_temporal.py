@@ -62,9 +62,26 @@ class PersonFeatureSeqDataset(Dataset):
     def __init__(self, cache, data, keys, n_frames=9, use_motion=False, root=None, tracking_root=None):
         self.cache, self.data, self.keys, self.n_frames = cache, data, keys, n_frames
         self.use_motion = use_motion
-        self.root = root
-        self.tracking_root = tracking_root
         self.feat_dim = FEATURE_DIM + (4 if use_motion else 0)
+        self.motion_cache = {}
+        if use_motion:
+            # Precompute once here (disk I/O: tracking file + frame listing per
+            # clip), not inside __getitem__ -- that read the same files fresh on
+            # every sample of every epoch (num_workers=0), ~16x slowdown.
+            for video, clip in tqdm(keys, desc="precomputing motion features", leave=False):
+                players = data[(video, clip)]["players"][:MAX_PLAYERS]
+                frame_nums = [int(os.path.basename(p).split(".")[0])
+                              for p in frame_window(root, video, clip, n_frames)]
+                try:
+                    tracks = load_tracks(tracking_root, video, clip)
+                    matches = match_players_to_tracks(players, tracks, int(clip))
+                except FileNotFoundError:
+                    tracks, matches = {}, [None] * len(players)
+                per_player = []
+                for p_idx, (action, x, y, w, h) in enumerate(players):
+                    m = motion_features(tracks, matches[p_idx], frame_nums, (x, y, w, h), video)
+                    per_player.append(torch.tensor(m, dtype=torch.float32))
+                self.motion_cache[(video, clip)] = per_player
 
     def __len__(self):
         return len(self.keys)
@@ -79,19 +96,7 @@ class PersonFeatureSeqDataset(Dataset):
         xs = [p[1] for p in players]
         mid_x = (min(xs) + max(xs)) / 2 if xs else 0
 
-        motion_by_player = None
-        if self.use_motion:
-            frame_nums = [int(os.path.basename(p).split(".")[0])
-                          for p in frame_window(self.root, video, clip, self.n_frames)]
-            try:
-                tracks = load_tracks(self.tracking_root, video, clip)
-                matches = match_players_to_tracks(players, tracks, int(clip))
-            except FileNotFoundError:
-                tracks, matches = {}, [None] * len(players)
-            motion_by_player = []
-            for p_idx, (action, x, y, w, h) in enumerate(players):
-                m = motion_features(tracks, matches[p_idx], frame_nums, (x, y, w, h), video)
-                motion_by_player.append(torch.tensor(m, dtype=torch.float32))
+        motion_by_player = self.motion_cache.get((video, clip)) if self.use_motion else None
 
         for p_idx, (action, x, y, w, h) in enumerate(players):
             for f_idx in range(self.n_frames):
