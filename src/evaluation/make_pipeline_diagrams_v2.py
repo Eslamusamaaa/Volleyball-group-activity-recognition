@@ -23,34 +23,33 @@ ANN_FILE = os.path.join(ROOT, "volleyball_", "videos", str(VID), "annotations.tx
 OUT = os.path.join(ROOT, "outputs", "results")
 
 # ---------- design tokens (shared with make_pipeline_diagrams.py) ----------
-BG = (15, 17, 23)
+BG = (13, 15, 20)
 PANEL = (19, 23, 33)
-LINE = (38, 44, 61)
+LINE = (40, 47, 66)
 LINE_SOFT = (28, 33, 46)
-TEXT = (230, 232, 239)
-SUBTEXT = (154, 162, 177)
-GOOD = (54, 179, 126)
-BAD = (255, 92, 122)
-TEAM = {"L": (255, 140, 66), "R": (60, 170, 255)}
+TEXT = (232, 235, 242)
+SUBTEXT = (160, 168, 184)
+GOOD = (58, 191, 134)
+BAD = (255, 99, 128)
+TEAM = {"L": (255, 148, 74), "R": (66, 176, 255)}
 ACCENT = {
-    "b1": (79, 140, 255), "b2": (255, 138, 79), "b3": (54, 179, 126),
-    "b4": (166, 107, 255), "b5": (79, 209, 255), "b6": (255, 92, 122),
-    "b7": (240, 180, 41), "b8": (72, 209, 204), "b8mt": (255, 122, 182),
+    "b1": (86, 148, 255), "b2": (255, 148, 86), "b3": (60, 191, 134),
+    "b4": (176, 118, 255), "b5": (86, 217, 255), "b6": (255, 99, 128),
+    "b7": (247, 189, 59), "b8": (79, 222, 216), "b8mt": (255, 133, 193),
 }
 
-F_TITLE = ImageFont.truetype("arialbd.ttf", 30)
-F_BADGE = ImageFont.truetype("arialbd.ttf", 34)
-F_PAPER = ImageFont.truetype("consola.ttf", 15)
-F_LABEL = ImageFont.truetype("arialbd.ttf", 18)
-F_SUB = ImageFont.truetype("arial.ttf", 15)
-F_CAP = ImageFont.truetype("consola.ttf", 13)
-F_NUM = ImageFont.truetype("arialbd.ttf", 15)
-F_BIG = ImageFont.truetype("arialbd.ttf", 40)
-F_DELTA = ImageFont.truetype("consola.ttf", 16)
-
-
-def rrect(draw, box, radius, outline, width=2, fill=None):
-    draw.rounded_rectangle(box, radius=radius, outline=outline, width=width, fill=fill)
+F_BADGE = ImageFont.truetype("arialbd.ttf", 46)
+F_PAPER = ImageFont.truetype("consola.ttf", 17)
+F_MECH = ImageFont.truetype("arial.ttf", 19)
+F_LABEL = ImageFont.truetype("arialbd.ttf", 22)
+F_SUB = ImageFont.truetype("arial.ttf", 17)
+F_CAP = ImageFont.truetype("consola.ttf", 15)
+F_TAG = ImageFont.truetype("arialbd.ttf", 13)
+F_NUM = ImageFont.truetype("arialbd.ttf", 18)
+F_SCORE = ImageFont.truetype("arialbd.ttf", 24)
+F_DELTA = ImageFont.truetype("consola.ttf", 18)
+F_FOOT_LBL = ImageFont.truetype("arialbd.ttf", 14)
+F_FOOT = ImageFont.truetype("arial.ttf", 17)
 
 
 def wrap_text(draw, text, font, max_w):
@@ -146,32 +145,6 @@ def fit(im, box_w, box_h, cover=False):
     return canvas
 
 
-def img_annotated_center(all_boxes=True):
-    im = A["center_im"].copy()
-    draw = ImageDraw.Draw(im)
-    highlight = {"spiking", "blocking", "setting", "digging", "jumping", "falling"}
-    order = [p for p in A["players"] if p["action"] in highlight]
-    order.sort(key=lambda p: p["x"])
-    slot = {id(p): i for i, p in enumerate(order)}
-    for p in A["players"]:
-        x, y, w, h = p["x"], p["y"], p["w"], p["h"]
-        color = TEAM[p["team"]]
-        lw = 5 if p["action"] in highlight else 2
-        draw.rectangle([x, y, x + w, y + h], outline=color, width=lw)
-        if p["action"] in highlight:
-            label = p["action"]
-            try:
-                font_px = ImageFont.truetype("arial.ttf", 20)
-            except Exception:
-                font_px = ImageFont.load_default()
-            tw = draw.textlength(label, font=font_px)
-            above = slot[id(p)] % 2 == 0
-            ly = (y - 26) if above else (y + h + 3)
-            draw.rectangle([x, ly, x + tw + 10, ly + 24], fill=color)
-            draw.text((x + 5, ly + 2), label, fill=(10, 10, 15), font=font_px)
-    return im
-
-
 def img_player_crop(p, pad=6):
     x, y, w, h = p["x"], p["y"], p["w"], p["h"]
     box = (max(0, x - pad), max(0, y - pad), x + w + pad, y + h + pad)
@@ -182,18 +155,18 @@ def img_filmstrip():
     thumbs = []
     for fr in A["frames"]:
         im = frame_im(fr)
-        im.thumbnail((200, 113))
+        im.thumbnail((300, 169))
         thumbs.append((fr, im))
     w, h = thumbs[0][1].size
-    gap = 4
+    gap = 5
     strip = Image.new("RGB", (w * len(thumbs) + gap * (len(thumbs) - 1), h), BG)
     d = ImageDraw.Draw(strip)
     for i, (fr, im) in enumerate(thumbs):
         x = i * (w + gap)
         strip.paste(im, (x, 0))
         tag = "t=0" if fr == CENTER else f"{fr - CENTER:+d}"
-        d.rectangle([x, 0, x + 34, 15], fill=(0, 0, 0))
-        d.text((x + 3, 1), tag, fill=(255, 255, 255), font=F_CAP)
+        d.rectangle([x, 0, x + 42, 19], fill=(0, 0, 0))
+        d.text((x + 4, 2), tag, fill=(255, 255, 255), font=F_CAP)
     return strip
 
 
@@ -208,20 +181,20 @@ def img_spiker_sequence():
         pad = 8
         box = (max(0, x1 - pad), max(0, y1 - pad), min(im.width, x2 + pad), min(im.height, y2 + pad))
         crops.append((fr, im.crop(box)))
-    th = 150
+    th = 230
     resized = []
     for fr, im in crops:
         r = th / im.height
         resized.append((fr, im.resize((max(1, int(im.width * r)), th))))
-    gap = 4
+    gap = 5
     total_w = sum(im.width for _, im in resized) + gap * (len(resized) - 1)
-    strip = Image.new("RGB", (total_w, th + 16), BG)
+    strip = Image.new("RGB", (total_w, th + 20), BG)
     d = ImageDraw.Draw(strip)
     x = 0
     for fr, im in resized:
-        strip.paste(im, (x, 16))
+        strip.paste(im, (x, 20))
         tag = "t=0" if fr == CENTER else f"{fr - CENTER:+d}"
-        d.text((x + 2, 1), tag, fill=TEXT, font=F_CAP)
+        d.text((x + 2, 2), tag, fill=TEXT, font=F_CAP)
         x += im.width + gap
     return strip
 
@@ -229,10 +202,10 @@ def img_spiker_sequence():
 def img_team_split():
     def block(team):
         ps = [p for p in A["players"] if p["team"] == team]
-        th = 150
-        cell = 92
-        gap = 5
-        blk = Image.new("RGB", (cell * len(ps) + gap * (len(ps) - 1), th + 20), BG)
+        th = 230
+        cell = 142
+        gap = 6
+        blk = Image.new("RGB", (cell * len(ps) + gap * (len(ps) - 1), th + 24), BG)
         bd = ImageDraw.Draw(blk)
         for i, p in enumerate(ps):
             im = img_player_crop(p, pad=4)
@@ -240,11 +213,11 @@ def img_team_split():
             im = im.resize((min(cell, int(im.width * r)), th))
             x = i * (cell + gap)
             blk.paste(im, (x + (cell - im.width) // 2, 0))
-            bd.text((x, th + 2), p["action"][:9], fill=TEAM[team], font=F_CAP)
+            bd.text((x, th + 3), p["action"][:9], fill=TEAM[team], font=F_CAP)
         return blk
 
     left, right = block("L"), block("R")
-    net_w = 22
+    net_w = 28
     h = max(left.height, right.height)
     out = Image.new("RGB", (left.width + net_w + right.width, h), BG)
     out.paste(left, (0, 0))
@@ -256,7 +229,7 @@ def img_team_split():
 
 
 def img_all_players_grid():
-    th, cell, cols, pad, gap = 120, 96, 6, 6, 22
+    th, cell, cols, pad, gap = 165, 128, 6, 8, 28
     rows = 2
     w = cols * cell + (cols - 1) * pad
     h = rows * (th + gap) + rows * 4
@@ -271,113 +244,128 @@ def img_all_players_grid():
         cy = row * (th + gap + 4)
         gd.rectangle([cx - 2, cy - 2, cx + cell + 2, cy + th + 2], outline=TEAM[p["team"]], width=3)
         grid.paste(im, (cx + (cell - im.width) // 2, cy))
-        gd.text((cx, cy + th + 3), p["action"][:9], fill=TEAM[p["team"]], font=F_CAP)
+        gd.text((cx, cy + th + 4), p["action"][:9], fill=TEAM[p["team"]], font=F_CAP)
     return grid
-
-
-def img_static_vs_tracked():
-    first_fr = A["frames"][0]
-    im = frame_im(first_fr)
-    d = ImageDraw.Draw(im)
-    gx, gy, gw, gh = (A["spiker_gt"][k] for k in ("x", "y", "w", "h"))
-    d.rectangle([gx, gy, gx + gw, gy + gh], outline=BAD, width=5)
-    d.text((gx, gy - 24), "static: reused center-frame box", fill=BAD, font=F_SUB)
-    tbox = A["tracks"].get(A["spiker_tid"], {}).get(first_fr)
-    if tbox:
-        tx1, ty1, tx2, ty2, _ = tbox
-        d.rectangle([tx1, ty1, tx2, ty2], outline=GOOD, width=5)
-        d.text((tx1, ty2 + 6), "tracked: actual box at t-4", fill=GOOD, font=F_SUB)
-    return im
 
 
 # pre-build the handful of real-image assets every baseline draws from
 ASSETS = {
-    "center_annotated": img_annotated_center(),
     "spiker_single": img_player_crop(next(p for p in A["players"] if p["action"] == "spiking")),
     "player_grid": img_all_players_grid(),
     "filmstrip": img_filmstrip(),
     "spiker_seq": img_spiker_sequence(),
     "team_split": img_team_split(),
-    "static_vs_tracked": img_static_vs_tracked(),
 }
 
 
 # ============================================================
 # 2. Composition primitives
 # ============================================================
-STAGE_W_DEFAULT = 236
-STAGE_H = 300
-PHOTO_H = 140
-MARGIN = 36
-GAP = 46
-TOP = 118
-BOTTOM_PAD = 34
+STAGE_W_DEFAULT = 300
+STAGE_H = 540
+PHOTO_H = 270
+MARGIN = 52
+GAP = 54
+TOP = 158
+FOOT_H = 96
+BOTTOM_PAD = 40
 
 
-def draw_arrow(draw, x0, y0, x1, y1, color, width=4):
+def draw_arrow(draw, x0, y0, x1, y1, color, width=5):
     draw.line([x0, y0, x1, y1], fill=color, width=width)
-    ah = 9
-    draw.polygon([(x1, y0), (x1 - ah, y0 - ah * 0.6), (x1 - ah, y0 + ah * 0.6)], fill=color)
+    ah = 11
+    draw.polygon([(x1, y0), (x1 - ah, y0 - ah * 0.65), (x1 - ah, y0 + ah * 0.65)], fill=color)
 
 
-def draw_stage(draw, canvas, x, y, w, h, accent, num, label, sub_lines, image=None, caption=None, photo_h=PHOTO_H,
-               cover=False):
-    rrect(draw, [x, y, x + w, y + h], 18, outline=accent, width=2, fill=PANEL)
-    # numbered chip
-    chip_r = 16
-    cx, cy = x + 24, y + 24
+def draw_tag_pill(draw, x, y, text, color):
+    tw = draw.textlength(text, font=F_TAG)
+    draw.rounded_rectangle([x, y, x + tw + 16, y + 22], radius=11, fill=color)
+    draw.text((x + 8, y + 4), text, fill=BG, font=F_TAG)
+    return tw + 16
+
+
+def draw_stage(draw, canvas, x, y, w, h, accent, num, label, sub_lines, image=None, caption=None,
+               photo_h=PHOTO_H, cover=False, tag=None):
+    draw.rounded_rectangle([x, y, x + w, y + h], radius=20, outline=accent, width=2, fill=PANEL)
+    # numbered chip, top-left
+    chip_r = 19
+    cx, cy = x + 28, y + 28
     draw.ellipse([cx - chip_r, cy - chip_r, cx + chip_r, cy + chip_r], fill=accent)
     tw = draw.textlength(str(num), font=F_NUM)
-    draw.text((cx - tw / 2, cy - 9), str(num), fill=BG, font=F_NUM)
-    cursor_y = y + 52
+    draw.text((cx - tw / 2, cy - 11), str(num), fill=BG, font=F_NUM)
+
+    cursor_y = y + 60
     if image is not None:
-        iw = w - 24
+        if tag:
+            draw_tag_pill(draw, x + 16, cursor_y, tag, accent)
+            cursor_y += 30
+        iw = w - 32
         fitted = fit(image, iw, photo_h, cover=cover)
-        canvas.paste(fitted, (x + 12, cursor_y))
-        draw.rectangle([x + 12, cursor_y, x + 12 + iw, cursor_y + photo_h], outline=LINE_SOFT, width=1)
-        cursor_y += photo_h + 6
+        canvas.paste(fitted, (x + 16, cursor_y))
+        draw.rectangle([x + 16, cursor_y, x + 16 + iw, cursor_y + photo_h], outline=LINE_SOFT, width=2)
+        cursor_y += photo_h + 8
         if caption:
-            draw.text((x + 14, cursor_y), caption, fill=SUBTEXT, font=F_CAP)
-            cursor_y += 20
+            for line in wrap_text(draw, caption, F_CAP, w - 34):
+                draw.text((x + 17, cursor_y), line, fill=SUBTEXT, font=F_CAP)
+                cursor_y += 20
+            cursor_y += 4
+    cursor_y += 10
+    for line in wrap_text(draw, label, F_LABEL, w - 32):
+        draw.text((x + 17, cursor_y), line, fill=TEXT, font=F_LABEL)
+        cursor_y += 28
     cursor_y += 6
-    for line in wrap_text(draw, label, F_LABEL, w - 24):
-        draw.text((x + 14, cursor_y), line, fill=TEXT, font=F_LABEL)
-        cursor_y += 23
-    cursor_y += 4
     for s in sub_lines:
-        for line in wrap_text(draw, s, F_SUB, w - 24):
-            draw.text((x + 14, cursor_y), line, fill=SUBTEXT, font=F_SUB)
-            cursor_y += 19
+        for line in wrap_text(draw, s, F_SUB, w - 32):
+            draw.text((x + 17, cursor_y), line, fill=SUBTEXT, font=F_SUB)
+            cursor_y += 23
     return cursor_y
 
 
+def draw_dashed_rect(draw, box, color, dash=10, gap=7, width=2):
+    x0, y0, x1, y1 = box
+    x = x0
+    while x < x1:
+        draw.line([(x, y0), (min(x + dash, x1), y0)], fill=color, width=width)
+        draw.line([(x, y1), (min(x + dash, x1), y1)], fill=color, width=width)
+        x += dash + gap
+    y = y0
+    while y < y1:
+        draw.line([(x0, y), (x0, min(y + dash, y1))], fill=color, width=width)
+        draw.line([(x1, y), (x1, min(y + dash, y1))], fill=color, width=width)
+        y += dash + gap
+
+
 def pipeline_diagram(path, baseline_id, paper_note, title, stages, accent, result_text, delta_text, delta_good,
-                      stage_w=None):
+                      ablation, stage_w=None):
     n = len(stages)
     sw = stage_w or STAGE_W_DEFAULT
     widths = [st.get("w", sw) for st in stages]
     width = MARGIN * 2 + sum(widths) + (n - 1) * GAP
-    height = TOP + STAGE_H + BOTTOM_PAD
+    height = TOP + STAGE_H + 28 + FOOT_H + BOTTOM_PAD
     canvas = Image.new("RGB", (width, height), BG)
     draw = ImageDraw.Draw(canvas)
 
+    # top accent bar
+    draw.rectangle([0, 0, width, 6], fill=accent)
+
     # header
-    draw.text((MARGIN, 18), baseline_id, fill=accent, font=F_BADGE)
+    draw.text((MARGIN, 26), baseline_id, fill=accent, font=F_BADGE)
     bw = draw.textlength(baseline_id, font=F_BADGE)
-    draw.rounded_rectangle([MARGIN + bw + 16, 24, MARGIN + bw + 16 + draw.textlength(paper_note, font=F_PAPER) + 20, 52],
-                            radius=8, outline=LINE, width=1)
-    draw.text((MARGIN + bw + 26, 30), paper_note, fill=SUBTEXT, font=F_PAPER)
-    draw.text((MARGIN, 62), title, fill=TEXT, font=F_SUB)
+    pill_x = MARGIN + bw + 22
+    pill_w = draw.textlength(paper_note, font=F_PAPER) + 24
+    draw.rounded_rectangle([pill_x, 36, pill_x + pill_w, 66], radius=10, outline=LINE, width=1)
+    draw.text((pill_x + 12, 43), paper_note, fill=SUBTEXT, font=F_PAPER)
+    draw.text((MARGIN, 80), title, fill=TEXT, font=F_MECH)
 
     # scoreboard top-right (two lines: result readout, then delta below)
-    rw = max(300, int(draw.textlength(result_text, font=F_LABEL)) + 28,
-             int(draw.textlength(delta_text, font=F_DELTA)) + 28)
+    rw = max(340, int(draw.textlength(result_text, font=F_SCORE)) + 36,
+             int(draw.textlength(delta_text, font=F_DELTA)) + 36)
     rx = width - MARGIN - rw
-    draw.rounded_rectangle([rx, 10, rx + rw, 66], radius=10, outline=LINE, width=1, fill=PANEL)
-    draw.text((rx + 14, 17), result_text, fill=TEXT, font=F_LABEL)
+    draw.rounded_rectangle([rx, 18, rx + rw, 78], radius=12, outline=LINE, width=1, fill=PANEL)
+    draw.text((rx + 16, 24), result_text, fill=TEXT, font=F_SCORE)
     dcolor = GOOD if delta_good else BAD
     dtw = draw.textlength(delta_text, font=F_DELTA)
-    draw.text((rx + rw - dtw - 14, 42), delta_text, fill=dcolor, font=F_DELTA)
+    draw.text((rx + rw - dtw - 16, 54), delta_text, fill=dcolor, font=F_DELTA)
 
     x = MARGIN
     y = TOP
@@ -385,14 +373,29 @@ def pipeline_diagram(path, baseline_id, paper_note, title, stages, accent, resul
         w = st.get("w", sw)
         draw_stage(draw, canvas, x, y, w, STAGE_H, accent, st["num"], st["label"], st.get("sub", []),
                    image=st.get("image"), caption=st.get("caption"), photo_h=st.get("photo_h", PHOTO_H),
-                   cover=st.get("cover", False))
+                   cover=st.get("cover", False), tag=st.get("tag"))
         if i < n - 1:
             nx = x + w + GAP
-            draw_arrow(draw, x + w + 6, y + STAGE_H / 2, nx - 6, y + STAGE_H / 2, accent)
+            draw_arrow(draw, x + w + 8, y + STAGE_H / 2, nx - 8, y + STAGE_H / 2, accent)
         x += w + GAP
 
-    canvas.save(path, quality=92)
-    print("saved", path)
+    # footer: what this baseline isolates, as a standalone callout baked into the figure
+    fy0 = TOP + STAGE_H + 28
+    fy1 = fy0 + FOOT_H
+    draw_dashed_rect(draw, [MARGIN, fy0, width - MARGIN, fy1], accent)
+    lbl = "ISOLATES"
+    draw.rounded_rectangle([MARGIN + 16, fy0 + 14, MARGIN + 16 + draw.textlength(lbl, font=F_FOOT_LBL) + 20, fy0 + 38],
+                            radius=10, fill=accent)
+    draw.text((MARGIN + 26, fy0 + 19), lbl, fill=BG, font=F_FOOT_LBL)
+    text_x = MARGIN + 16 + draw.textlength(lbl, font=F_FOOT_LBL) + 40
+    lines = wrap_text(draw, ablation, F_FOOT, width - MARGIN - text_x - 24)
+    ty = fy0 + (FOOT_H - len(lines) * 24) / 2
+    for line in lines:
+        draw.text((text_x, ty), line, fill=TEXT, font=F_FOOT)
+        ty += 24
+
+    canvas.save(path)
+    print("saved", path, canvas.size)
 
 
 # ============================================================
@@ -404,113 +407,159 @@ pipeline_diagram(
     f"{OUT}/b1_pipeline.png", "B1-tuned", "paper: fine-tuned AlexNet -> this repo: ResNet50",
     "Whole center frame -> fine-tuned ResNet50 -> 8-way scene class. No players, no time.",
     [
-        {"num": 1, "label": "Center frame", "sub": ["one whole-scene image", "1280x720, raw input"],
-         "image": A["center_im"], "caption": "t=0, raw"},
-        {"num": 2, "label": "ResNet50", "sub": ["fine-tuned end-to-end", "every weight trainable"]},
-        {"num": 3, "label": "Global pool", "sub": ["spatial average", "-> one 2048-d vector"]},
-        {"num": 4, "label": "Linear classifier", "sub": ["-> 8 scene classes"]},
-    ], ACCENT["b1"], "72.2% test acc.", "+5.5 pts vs. paper 66.7%", True)
+        {"num": 1, "label": "Center frame", "sub": ["One whole-scene RGB image,", "1280x720, no crops, no boxes."],
+         "image": A["center_im"], "caption": "t = 0 (the annotated frame)", "tag": "REAL FRAME"},
+        {"num": 2, "label": "ResNet50", "sub": ["Fine-tuned end-to-end:", "every weight in the backbone",
+                                                 "is trainable, not just the head."]},
+        {"num": 3, "label": "Global pool", "sub": ["Spatial average over the", "last feature map ->",
+                                                     "one 2048-d vector."]},
+        {"num": 4, "label": "Linear classifier", "sub": ["Single trained layer", "-> 8-way scene class",
+                                                           "(l-pass, r_spike, ...)"]},
+    ], ACCENT["b1"], "72.2% test acc.", "+5.5 pts vs. paper 66.7%", True,
+    "the no-player, no-time floor -- how far does a single static image get you on its own?")
 
 # ---- B2 ----
 pipeline_diagram(
     f"{OUT}/b2_pipeline.png", "B2", 'paper name: "Person Classification"',
     "Every player crop -> FROZEN ImageNet ResNet50 -> max-pool -> small trained classifier -> scene class.",
     [
-        {"num": 1, "label": "All player crops", "sub": ["up to 12 boxes,", "same center frame"],
-         "image": ASSETS["player_grid"], "caption": "orange = left team, blue = right", "w": 300, "photo_h": 110},
-        {"num": 2, "label": "ResNet50 -- frozen", "sub": ["plain ImageNet weights,", "never fine-tuned"]},
-        {"num": 3, "label": "Max-pool players", "sub": ["12 x 2048-d", "-> 1 x 2048-d"]},
-        {"num": 4, "label": "Small classifier", "sub": ["(only trained part)", "-> 8 scene classes"]},
-    ], ACCENT["b2"], "42.2% test acc.", "-22.4 pts vs. paper 64.6%", False)
+        {"num": 1, "label": "All player crops", "sub": ["Every player's bounding-box", "crop in the clip (up to 12),",
+                                                          "same center frame as B1."],
+         "image": ASSETS["player_grid"], "caption": "orange = left team, blue = right team",
+         "w": 440, "photo_h": 200, "tag": "REAL CROPS x12"},
+        {"num": 2, "label": "ResNet50 -- frozen", "sub": ["Plain off-the-shelf ImageNet", "weights. Never fine-tuned",
+                                                            "on this dataset at all."]},
+        {"num": 3, "label": "Max-pool players", "sub": ["12 x 2048-d feature vectors", "-> one 2048-d vector",
+                                                          "for the whole clip."]},
+        {"num": 4, "label": "Small classifier", "sub": ["The only part that trains", "-> 8-way scene class."]},
+    ], ACCENT["b2"], "42.2% test acc.", "-22.4 pts vs. paper 64.6%", False,
+    "person-level input on its own, with zero task-specific training -- the gap to B3 is what fine-tuning is worth.")
 
 # ---- B3 ----
 pipeline_diagram(
     f"{OUT}/b3_pipeline.png", "B3", "two steps: A (teach a backbone), then B+C (reuse B2's pipeline)",
     "Step A fine-tunes on person action; steps B+C freeze it and pool across players -> scene class.",
     [
-        {"num": "1A", "label": "One player crop", "sub": ["target: 9-way person", "action, not scene"],
-         "image": ASSETS["spiker_single"], "caption": 'label: "spiking"', "photo_h": 150, "cover": True},
-        {"num": "2A", "label": "ResNet50 fine-tuned", "sub": ["on person-action labels", "(step B3-A): 80.6% 9-way acc."]},
-        {"num": "1BC", "label": "Freeze, re-run on all 12", "sub": ["now-fine-tuned backbone,", "every player crop"],
-         "image": ASSETS["player_grid"], "caption": "same 12 crops as B2", "w": 300, "photo_h": 100},
-        {"num": "2BC", "label": "Max-pool + classify", "sub": ["identical to B2's", "steps 3-4 -> scene class"]},
-    ], ACCENT["b3"], "65.7% test acc. (B+C)", "-2.4 pts vs. paper 68.1%", False, stage_w=236)
+        {"num": "1A", "label": "One player crop", "sub": ["Target for step A: 9-way", "PERSON action, not the",
+                                                            "8-way scene class."],
+         "image": ASSETS["spiker_single"], "caption": 'ground-truth label: "spiking"',
+         "photo_h": 230, "cover": True, "tag": "REAL CROP"},
+        {"num": "2A", "label": "ResNet50 fine-tuned", "sub": ["On person-action labels", "(this sub-step = \"B3-A\"):",
+                                                                "80.6% 9-way accuracy."]},
+        {"num": "1BC", "label": "Freeze, re-run on all 12", "sub": ["Same now-fine-tuned backbone,",
+                                                                     "every player crop in the clip."],
+         "image": ASSETS["player_grid"], "caption": "same 12 crops as B2, different backbone",
+         "w": 440, "photo_h": 190, "tag": "REAL CROPS x12"},
+        {"num": "2BC", "label": "Max-pool + classify", "sub": ["Identical to B2's steps 3-4", "-> 8-way scene class."]},
+    ], ACCENT["b3"], "65.7% test acc. (B+C)", "-2.4 pts vs. paper 68.1%", False,
+    "whether fine-tuning the backbone (even on a proxy task) beats person-level input alone (B2).")
 
 # ---- B4 ----
 pipeline_diagram(
     f"{OUT}/b4_pipeline.png", "B4", "paper's \"Implementation #1\" -- image-level temporal",
     "9-frame window of whole images -> B1's frozen backbone (cached) -> one LSTM -> scene class.",
     [
-        {"num": 1, "label": "9-frame window", "sub": ["whole images, centered", "on the annotated frame"],
-         "image": ASSETS["filmstrip"], "caption": "t = -4 ... 0 ... +4", "w": 420, "photo_h": 90},
-        {"num": 2, "label": "B1 backbone", "sub": ["frozen, features", "cached to disk"]},
-        {"num": 3, "label": "Single LSTM", "sub": ["over the 9-step", "sequence of vectors"]},
-        {"num": 4, "label": "Linear classifier", "sub": ["on final hidden state", "-> 8 scene classes"]},
-    ], ACCENT["b4"], "73.4% test acc.", "+10.3 pts vs. paper 63.1%", True)
+        {"num": 1, "label": "9-frame window", "sub": ["Whole images, centered on", "the annotated frame --",
+                                                         "still no player boxes."],
+         "image": ASSETS["filmstrip"], "caption": "t = -4 ... 0 (center) ... +4",
+         "w": 620, "photo_h": 175, "tag": "9 REAL FRAMES"},
+        {"num": 2, "label": "B1 backbone", "sub": ["Frozen; features cached", "to disk beforehand, no",
+                                                     "backbone training here."]},
+        {"num": 3, "label": "Single LSTM", "sub": ["Runs over the 9-step", "sequence of 2048-d", "frame vectors."]},
+        {"num": 4, "label": "Linear classifier", "sub": ["On the LSTM's final", "hidden state ->",
+                                                           "8-way scene class."]},
+    ], ACCENT["b4"], "73.4% test acc.", "+10.3 pts vs. paper 63.1%", True,
+    "whether adding time alone (still no players) helps over B1 -- the paper found it hurt; here it helps.")
 
 # ---- B5 ----
 pipeline_diagram(
     f"{OUT}/b5_pipeline.png", "B5", 'paper\'s "Temporal on crops" -- players arrive here',
     "Per-player tracked crop sequence -> B3-A backbone -> LSTM1 per player -> pool -> scene class.",
     [
-        {"num": 1, "label": "Per-player tracked crop", "sub": ["this player's own box,", "each of the 9 frames"],
-         "image": ASSETS["spiker_seq"], "caption": "the spiker's own box, t = -4...+4", "w": 460, "photo_h": 110},
-        {"num": 2, "label": "B3-A backbone", "sub": ["frozen, cached --", "2048-d per player/frame"]},
-        {"num": 3, "label": "LSTM1 per player", "sub": ["shared weights,", "-> final hidden state"]},
-        {"num": 4, "label": "Max-pool players", "sub": ["across all 12", "final hidden states"]},
-        {"num": 5, "label": "Linear classifier", "sub": ["-> 8 scene classes,", "no scene-level LSTM yet"]},
-    ], ACCENT["b5"], "79.0% test acc. (tracked)", "+11.4 pts vs. paper 67.6%", True)
+        {"num": 1, "label": "Per-player tracked crop", "sub": ["This player's OWN box in", "each of the 9 frames --",
+                                                                 "not one box reused 9x."],
+         "image": ASSETS["spiker_seq"], "caption": "the spiker's real tracked box, t = -4 ... +4",
+         "w": 680, "photo_h": 185, "tag": "9 REAL TRACKED CROPS"},
+        {"num": 2, "label": "B3-A backbone", "sub": ["Frozen, cached --", "2048-d feature per", "player per frame."]},
+        {"num": 3, "label": "LSTM1 per player", "sub": ["Shared weights, one run", "per player -> keeps only",
+                                                          "the final hidden state."]},
+        {"num": 4, "label": "Max-pool players", "sub": ["Across all 12 players'", "final hidden states ->",
+                                                          "one clip-level vector."]},
+        {"num": 5, "label": "Linear classifier", "sub": ["-> 8-way scene class.", "No scene-level LSTM", "yet (that's B7)."]},
+    ], ACCENT["b5"], "79.0% test acc. (tracked)", "+11.4 pts vs. paper 67.6%", True,
+    "whether time helps once players are already in the picture (B3 had players, no time).")
 
 # ---- B6 ----
 pipeline_diagram(
     f"{OUT}/b6_pipeline.png", "B6", "same ingredients as B5, pooling and LSTM order reversed",
     "Pool players per frame first -> single LSTM over the pooled 9-step sequence -> scene class.",
     [
-        {"num": 1, "label": "Each of 9 frames", "sub": ["all player crops", "in that frame"],
-         "image": ASSETS["filmstrip"], "caption": "same 9-frame window as B4", "w": 420, "photo_h": 90},
-        {"num": 2, "label": "B3-A backbone", "sub": ["frozen, cached,", "per player per frame"]},
-        {"num": 3, "label": "Max-pool per frame", "sub": ["12 players -> 1 vector,", "9x -> 9-step sequence"]},
-        {"num": 4, "label": "Single LSTM", "sub": ["over pooled sequence --", "no per-player LSTM1"]},
-        {"num": 5, "label": "Linear classifier", "sub": ["-> 8 scene classes"]},
-    ], ACCENT["b6"], "73.2% test acc. (65 ep.)", "-1.5 pts vs. paper 74.7%", False)
+        {"num": 1, "label": "Each of 9 frames", "sub": ["All player crops in that", "frame, read independently",
+                                                          "frame by frame."],
+         "image": ASSETS["filmstrip"], "caption": "same 9-frame window as B4, now read per-player",
+         "w": 620, "photo_h": 175, "tag": "9 REAL FRAMES"},
+        {"num": 2, "label": "B3-A backbone", "sub": ["Frozen, cached,", "per player per frame",
+                                                       "(same features as B5)."]},
+        {"num": 3, "label": "Max-pool per frame", "sub": ["12 players -> 1 vector,", "repeated 9x -> a",
+                                                            "9-step pooled sequence."]},
+        {"num": 4, "label": "Single LSTM", "sub": ["Over the pooled sequence --", "NO per-player LSTM1",
+                                                     "like B5 has."]},
+        {"num": 5, "label": "Linear classifier", "sub": ["-> 8-way scene class."]},
+    ], ACCENT["b6"], "73.2% test acc. (65 ep.)", "-1.5 pts vs. paper 74.7%", False,
+    "whether pooling-before-LSTM (B6) vs. LSTM-before-pooling (B5) changes what the model actually learns.")
 
 # ---- B7 ----
 pipeline_diagram(
     f"{OUT}/b7_pipeline.png", "B7", "full two-stage hierarchical model, minus team pooling",
     "LSTM1 (full 9-step output) -> pool per frame -> LSTM2 (scene-level) -> scene class.",
     [
-        {"num": 1, "label": "Per-player tracked crop", "sub": ["same real-tracked", "sequences as B5"],
-         "image": ASSETS["spiker_seq"], "caption": "9-frame per-player sequence", "w": 400, "photo_h": 100},
-        {"num": 2, "label": "B3-A backbone", "sub": ["frozen, cached"]},
-        {"num": 3, "label": "LSTM1 per player", "sub": ["FULL 9-step output kept,", "not just the last state"]},
-        {"num": 4, "label": "Pool at each frame", "sub": ["all players' state at t", "-> 9-step pooled seq."]},
-        {"num": 5, "label": "LSTM2 (scene-level)", "sub": ["over the pooled", "9-step sequence"]},
-        {"num": 6, "label": "Linear classifier", "sub": ["-> 8 scene classes"]},
-    ], ACCENT["b7"], "78.8% test acc.", "-1.4 pts vs. paper 80.2%", False, stage_w=216)
+        {"num": 1, "label": "Per-player tracked crop", "sub": ["Same real-tracked per-player", "sequences as B5."],
+         "image": ASSETS["spiker_seq"], "caption": "9-frame per-player sequence (same as B5)",
+         "w": 560, "photo_h": 160, "tag": "9 REAL TRACKED CROPS"},
+        {"num": 2, "label": "B3-A backbone", "sub": ["Frozen, cached."]},
+        {"num": 3, "label": "LSTM1 per player", "sub": ["Keeps the FULL 9-step", "output this time, not",
+                                                          "just the last state."]},
+        {"num": 4, "label": "Pool at each frame", "sub": ["All players' hidden state", "at frame t -> a 9-step",
+                                                            "pooled sequence."]},
+        {"num": 5, "label": "LSTM2 (scene-level)", "sub": ["A second LSTM, over the", "pooled 9-step sequence."]},
+        {"num": 6, "label": "Linear classifier", "sub": ["-> 8-way scene class."]},
+    ], ACCENT["b7"], "78.8% test acc.", "-1.4 pts vs. paper 80.2%", False,
+    "whether a second, scene-level LSTM on top of the per-player one adds anything beyond B5/B6.", stage_w=258)
 
 # ---- B8 ----
 pipeline_diagram(
     f"{OUT}/b8_pipeline.png", "B8", "paper's best config -- identical to B7, one pooling change",
     "Like B7, but pool each TEAM's 6 players separately and concat, instead of mixing all 12.",
     [
-        {"num": "1-3", "label": "Same as B7", "sub": ["tracked crops -> B3-A ->", "LSTM1 per player, full output"]},
-        {"num": 4, "label": "Pool PER TEAM", "sub": ["X=pool team L, Y=pool team R,", "concat(X, Y)"],
-         "image": ASSETS["team_split"], "caption": "net-divided pooling: left / right team", "w": 420, "photo_h": 110},
-        {"num": 5, "label": "LSTM2 (scene-level)", "sub": ["over the 9-step", "team-separated sequence"]},
-        {"num": 6, "label": "Linear classifier", "sub": ["-> 8 scene classes"]},
-    ], ACCENT["b8"], "88.8% test acc. (best)", "+6.9 pts vs. paper 81.9%", True, stage_w=236)
+        {"num": "1-3", "label": "Same as B7", "sub": ["Tracked crops -> B3-A ->", "LSTM1 per player, full",
+                                                        "9-step output."]},
+        {"num": 4, "label": "Pool PER TEAM", "sub": ["X = pool team L's 6 players,", "Y = pool team R's 6 players,",
+                                                       "scene vector = concat(X, Y)."],
+         "image": ASSETS["team_split"], "caption": "net-divided pooling: left team | right team",
+         "w": 620, "photo_h": 185, "tag": "REAL CROPS, TEAM-SPLIT"},
+        {"num": 5, "label": "LSTM2 (scene-level)", "sub": ["Over the 9-step", "team-separated sequence."]},
+        {"num": 6, "label": "Linear classifier", "sub": ["-> 8-way scene class."]},
+    ], ACCENT["b8"], "88.8% test acc. (best)", "+6.9 pts vs. paper 81.9%", True,
+    "whether keeping which-side-of-the-court information (instead of mixing both teams) fixes winpoint confusion.",
+    stage_w=272)
 
 # ---- B8-mt ----
 pipeline_diagram(
     f"{OUT}/b8mt_pipeline.png", "B8-mt", "B8 + a mandatory extension beyond the paper -- final model",
     "Like B8, plus a per-player 9-way action head on LSTM1's output, trained jointly with the scene loss.",
     [
-        {"num": "1-3", "label": "Same as B8", "sub": ["tracked crops -> B3-A ->", "LSTM1 per player, full output"]},
-        {"num": "4a", "label": "Action head (per player)", "sub": ["directly on LSTM1 output", "-> 9-way action/player"],
-         "image": ASSETS["spiker_single"], "caption": 'this player -> "spiking"', "photo_h": 110, "cover": True},
-        {"num": "4b", "label": "Team pool -> LSTM2", "sub": ["identical to B8's branch,", "unchanged"],
-         "image": ASSETS["team_split"], "caption": "B8's pooling branch", "w": 300, "photo_h": 100},
-        {"num": 5, "label": "loss = loss_scene", "sub": ["+ lambda * loss_person", "(lambda = 1.0)"]},
-    ], ACCENT["b8mt"], "87.4% scene / 75.7% act.", "joint, one forward pass", True, stage_w=236)
+        {"num": "1-3", "label": "Same as B8", "sub": ["Tracked crops -> B3-A ->", "LSTM1 per player, full",
+                                                        "9-step output."]},
+        {"num": "4a", "label": "Action head (per player)", "sub": ["Attached directly to LSTM1's", "output, before any pooling",
+                                                                     "-> 9-way action per player."],
+         "image": ASSETS["spiker_single"], "caption": 'this player\'s own prediction -> "spiking"',
+         "photo_h": 185, "cover": True, "tag": "REAL CROP"},
+        {"num": "4b", "label": "Team pool -> LSTM2", "sub": ["Identical to B8's branch,", "completely unchanged."],
+         "image": ASSETS["team_split"], "caption": "B8's team-split pooling branch, reused as-is",
+         "w": 460, "photo_h": 160, "tag": "REAL CROPS, TEAM-SPLIT"},
+        {"num": 5, "label": "Joint loss", "sub": ["loss = loss_scene", "+ lambda * loss_person", "(lambda = 1.0)"]},
+    ], ACCENT["b8mt"], "87.4% scene / 75.7% act.", "joint, one forward pass", True,
+    "nothing -- this is the deliverable: one forward pass producing both the scene label and every player's action.",
+    stage_w=262)
 
 print("ALL DONE")
