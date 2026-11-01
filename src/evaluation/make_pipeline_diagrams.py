@@ -317,4 +317,14 @@ pipeline_diagram(f"{OUT}/b8_pipeline.png", "B8 — like B7, but pool each TEAM s
      (["LSTM2", "(scene-level)"], "temporal"),
      (["Linear classifier", "→ 8 scene classes"], "output")], ACCENT["b8"], figsize=(26, 4.8))
 
+# ---------------- B8-mt ----------------
+pipeline_diagram(f"{OUT}/b8mt_pipeline.png", "B8-mt — B8 + a per-player action head trained jointly (multi-task)",
+    [(["Each player,", "real tracked box", "per frame (9)"], "player"),
+     (["B3-A backbone", "(frozen, cached)"], "backbone"),
+     (["LSTM1 per player", "(full 9-step output)"], "temporal"),
+     (["+ branch: action head", "on LSTM1 output", "→ 9-way/player"], "player"),
+     (["X = pool team 1", "Y = pool team 2", "concat(X, Y)"], "team_pool"),
+     (["LSTM2 → classifier", "→ 8 scene classes"], "temporal"),
+     (["loss = loss_scene", "+ λ·loss_person"], "output")], ACCENT["b8mt"], figsize=(29, 4.8))
+
 print("ALL DONE")

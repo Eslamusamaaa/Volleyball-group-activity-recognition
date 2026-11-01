@@ -1,0 +1,47 @@
+accuracy: 0.8736
+
+class        precision  recall      f1 support
+l-pass           0.909   0.841   0.874     226
+l-spike          0.930   0.888   0.909     179
+l_set            0.847   0.893   0.870     168
+l_winpoint       0.891   0.882   0.887     102
+r-pass           0.830   0.886   0.857     210
+r_set            0.893   0.823   0.856     192
+r_spike          0.874   0.925   0.899     173
+r_winpoint       0.789   0.862   0.824      87
+
+confusion matrix (rows=true, cols=pred):
+  l-pass l-spik  l_set l_winp r-pass  r_set r_spik r_winp
+l-pass    190      1      9      1     11      1      4      9
+l-spik      4    159      9      0      2      0      5      0
+ l_set      7      6    150      1      1      3      0      0
+l_winp      0      1      3     90      2      0      0      6
+r-pass      6      2      0      2    186      8      3      3
+ r_set      1      0      4      1     16    158     11      1
+r_spik      1      2      2      0      3      4    160      1
+r_winp      0      0      0      6      3      3      0     75
+
+accuracy: 0.7573
+
+class        precision  recall      f1 support
+blocking         0.678   0.923   0.782     691
+digging          0.417   0.513   0.460     645
+falling          0.778   0.901   0.835     373
+jumping          0.180   0.281   0.219      89
+moving           0.491   0.742   0.591    1342
+setting          0.688   0.875   0.770     368
+spiking          0.768   0.885   0.822     340
+standing         0.930   0.763   0.838   10655
+waiting          0.429   0.667   0.522    1023
+
+confusion matrix (rows=true, cols=pred):
+  blocki diggin fallin jumpin moving settin spikin standi waitin
+blocki    638      4      0      9      1      5      3     31      0
+diggin      6    331     36      0     22     16      5     85    144
+fallin      1     19    336      0      8      1      1      4      3
+jumpin      5      5      0     25      9      8     23     14      0
+moving      2     38      7      4    996      5      3    265     22
+settin      5     12      1      5      0    322     11     12      0
+spikin      3      3      0     12      1     14    301      6      0
+standi    280    280     37     83    968     97     45   8127    738
+waitin      1    102     15      1     24      0      0    198    682

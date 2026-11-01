@@ -490,6 +490,64 @@ representation per team reduced the confusion and enhanced the results"*
 (project brief, Section 8) — confirmed here with real numbers, not just
 taken on faith.
 
+## B8-mt — explained (the final model)
+
+B8 plus the **mandatory extension** from the project brief (Section 6):
+every clip must get *both* a scene prediction *and* a per-player action
+prediction out of a single forward pass, trained jointly. This is the
+model the video → timeline inference pipeline (the project's final stage)
+actually uses.
+
+![B8-mt pipeline](outputs/results/b8mt_pipeline.png)
+
+Identical to B8's steps 1-3, 5-6, with one addition: a small classifier
+head is attached directly to **LSTM1's per-player output** (step 3, before
+any pooling) — so each player gets their own 9-way action prediction,
+independent of the team-pooled scene branch. Both heads train together:
+
+```
+total_loss = loss_scene (8-way, weighted) + λ · loss_person_action (9-way, weighted)
+```
+
+with λ=1.0 for this run.
+
+**Results: 87.36% scene accuracy, 75.73% person-action accuracy** — one
+model, one forward pass, both outputs.
+
+<p align="center">
+  <img src="outputs/results/b8mt_scene_confusion_matrix.png" width="380" alt="B8-mt scene confusion matrix">
+  <img src="outputs/results/b8mt_training_curve.png" width="380" alt="B8-mt training curve">
+</p>
+
+**Scene accuracy (87.36%) is 1.4 pts below B8 alone (88.78%)** — the
+expected multi-task trade-off: the shared LSTM1 now has to serve two
+objectives instead of one, so it can't specialize as fully for the scene
+task alone.
+
+**But the person-action head benefits noticeably from training jointly**,
+compared to B3-A's standalone person-action training:
+
+| class | B3-A (v1, standalone) recall | B8-mt (joint) recall | Δ |
+|---|---|---|---|
+| jumping | 0.191 | **0.281** | +0.090 |
+| digging | 0.329 | **0.513** | +0.184 |
+| waiting | 0.470 | **0.667** | +0.197 |
+| standing | 0.880 | 0.763 | −0.117 |
+
+The rare classes (`jumping`, `digging`, `waiting`) all improve meaningfully,
+while `standing` (already strong, and the dominant class) gives up some
+accuracy — plausible explanation: the scene-level loss forces LSTM1 to
+encode information useful for distinguishing *game phases*, not just
+*static poses*, and that signal happens to help tell apart the harder,
+motion-defined action classes (a player mid-jump vs. standing still looks
+different in a way that also matters for recognizing a spike is happening)
+more than it helps the already-easy `standing` class.
+
+**This is the final deliverable model for Section 10** (the video →
+timestamped-event-timeline pipeline) — it's the only baseline that outputs
+everything the downstream pipeline needs (team activity *and* per-player
+actions) in one pass.
+
 ## Baseline ladder
 
 Reproducing the paper's ablation study, from simplest to the full model.
@@ -509,7 +567,7 @@ quotes the exact mechanism for each one.
 | **B6** | *"Same B3 steps A and B, repeated per frame"*: for **each of the 9 frames**, take all player crops, extract B3-A features, max-pool across players → one vector per frame → 9-step sequence → a **single** LSTM over that sequence (image-level LSTM only, no per-player LSTM1) → 8-way scene class. | 74.7% | **73.2%** ✅ (needed 65 epochs — see "needed far more training" note above) |
 | **B7** | Full two-stage model. LSTM1 (per player, over 9 frames) → for each frame, max-pool all players' LSTM1 outputs → LSTM2 (scene-level, over the resulting 9-step sequence) → 8-way scene class. | 80.2% | **78.8%** ✅ (slightly under even our own B5 — see note above) |
 | **B8** | Same as B7, but *"group-style"* pooling: X = max-pool team 1's 6 players, Y = max-pool team 2's 6 players, scene representation = concat(X, Y) instead of one pool over all 12. The paper's best config. | 81.9% | **88.8%** ✅ (best result in the whole ladder — see note above, winpoint confusion resolved) |
-| **B8-mt** | B8 + a per-player 9-way action head on LSTM1's output (before pooling), trained jointly: `loss = loss_scene + λ·loss_person_action` (Section 6, mandatory extension beyond the paper). | — (not a paper baseline) | not started |
+| **B8-mt** | B8 + a per-player 9-way action head on LSTM1's output (before pooling), trained jointly: `loss = loss_scene + λ·loss_person_action` (Section 6, mandatory extension beyond the paper). | — (not a paper baseline) | **87.4% scene / 75.7% person** ✅ final deliverable model |
 
 **B2 vs B3 note:** both reuse the identical pooling pipeline
 (`src/training/train_pooled_person.py`); the only difference is whether the

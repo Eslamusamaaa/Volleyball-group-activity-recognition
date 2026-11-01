@@ -21,4 +21,11 @@ command: >
   --lam 1.0 --name b8mt_lam1.0
 checkpoint: outputs/checkpoints/b8mt_lam1.0.pt
 results: outputs/results/b8mt_lam1.0.json
-status: not_started
+status: done
+test_scene_acc: 0.8736
+test_person_acc: 0.7573
+note: >
+  Final deliverable model (used for the Section 10 inference pipeline).
+  lambda=1.0 only; the brief's suggested sweep {0.3, 0.5, 1.0, 2.0} was
+  not performed since this run already gave strong results on both
+  heads -- see outputs/results/RESULTS.md "B8-mt -- detail".

@@ -14,7 +14,7 @@ per-player action accuracy (only applicable from B8-mt onward).
 | **B6** | Per-frame player pooling then single LSTM | 68.8% | **73.15%** | 74.7% | ✅ done (−1.6 pts under paper, needed 65 epochs — see note) |
 | **B7** | Full hierarchical model (LSTM1 → pool → LSTM2) | 75.2% | **78.83%** | 80.2% | ✅ done (−1.4 pts under paper, slightly under our own B5) |
 | **B8** | B7 + team-separated pooling | 86.5% | **88.78%** | 81.9% | ✅ done (+6.9 pts over paper, best result overall) |
-| B8-mt | B8 + per-player action multi-task head | — | — | — | not started |
+| **B8-mt** | B8 + per-player action multi-task head (final model) | 85.8% | **87.36% scene / 75.73% person** | n/a | ✅ done, final deliverable |
 
 ## B1-tuned — detail
 
@@ -400,3 +400,71 @@ architectural change (pool by team instead of mixing all 12 players) fixed
 the single most consistent weakness in the whole project, exactly matching
 the paper's own claim that team-separated ("group-style") pooling reduces
 confusion -- confirmed here with real per-class numbers.
+
+## B8-mt -- detail (final deliverable model)
+
+B8 + a per-player 9-way action head attached to LSTM1's per-player output
+(before pooling), trained jointly: `loss = loss_scene + lambda * loss_person_action`,
+lambda=1.0. This is the model used for the final video -> timeline
+inference pipeline (Section 10), since it is the only baseline producing
+both outputs the downstream pipeline needs.
+
+- 30 epochs, batch size 16, AdamW, AMP, weighted cross-entropy on both heads.
+- Best val checkpoint: val_acc (scene) 85.8%.
+- Test scene accuracy: **87.36%**
+- Test person-action accuracy: **75.73%**
+- Checkpoint: `outputs/checkpoints/b8mt_lam1.0.pt`
+
+Scene per-class performance:
+
+| class | precision | recall | f1 | support |
+|---|---|---|---|---|
+| l-pass | 0.909 | 0.841 | 0.874 | 226 |
+| l-spike | 0.930 | 0.888 | 0.909 | 179 |
+| l_set | 0.847 | 0.893 | 0.870 | 168 |
+| l_winpoint | 0.891 | 0.882 | 0.887 | 102 |
+| r-pass | 0.830 | 0.886 | 0.857 | 210 |
+| r_set | 0.893 | 0.823 | 0.856 | 192 |
+| r_spike | 0.874 | 0.925 | 0.899 | 173 |
+| r_winpoint | 0.789 | 0.862 | 0.824 | 87 |
+
+Person-action per-class performance:
+
+| class | precision | recall | f1 | support |
+|---|---|---|---|---|
+| blocking | 0.678 | 0.923 | 0.782 | 691 |
+| digging | 0.417 | 0.513 | 0.460 | 645 |
+| falling | 0.778 | 0.901 | 0.835 | 373 |
+| jumping | 0.180 | 0.281 | 0.219 | 89 |
+| moving | 0.491 | 0.742 | 0.591 | 1342 |
+| setting | 0.688 | 0.875 | 0.770 | 368 |
+| spiking | 0.768 | 0.885 | 0.822 | 340 |
+| standing | 0.930 | 0.763 | 0.838 | 10655 |
+| waiting | 0.429 | 0.667 | 0.522 | 1023 |
+
+Full reports: [`b8mt_lam1.0_test_report.txt`](b8mt_lam1.0_test_report.txt).
+
+**Scene accuracy trade-off:** 87.36% is 1.4 pts below B8 alone (88.78%) --
+LSTM1 now serves two objectives (scene pooling and per-player action)
+instead of one, so it specializes slightly less for the scene task.
+
+**Person-action accuracy improves over standalone B3-A (v1) on the hardest
+classes**, despite B3-A being trained with the exact same data and weighted
+loss:
+
+| class | B3-A (v1, standalone) recall | B8-mt (joint) recall | delta |
+|---|---|---|---|
+| jumping | 0.191 | 0.281 | +0.090 |
+| digging | 0.329 | 0.513 | +0.184 |
+| waiting | 0.470 | 0.667 | +0.197 |
+| standing | 0.880 | 0.763 | -0.117 |
+
+Plausible mechanism: the scene-level loss pushes LSTM1 to encode
+information about *game-phase dynamics* (not just a static per-frame
+pose), which happens to help separate the motion-defined action classes
+(jumping, digging, waiting all involve distinctive movement) more than it
+helps the already-easy, static `standing` class, which gives up some
+accuracy in exchange. Lambda sweeping ({0.3, 0.5, 1.0, 2.0}, per the
+project brief) was not performed -- lambda=1.0 was run once and kept since
+results were already strong on both heads; sweeping lambda remains a
+documented follow-up, not done here.
