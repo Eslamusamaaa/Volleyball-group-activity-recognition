@@ -157,6 +157,64 @@ the correct class itself). With no task-specific training, the pooled
 features don't separate left-team vs right-team phases well at all, unlike
 B1 where fine-tuning let the network learn that distinction directly.
 
+## B3 — explained
+
+Two separate steps, A then B+C. Step A is a full fine-tune (like B1, but on
+a different task); steps B+C reuse B2's exact pipeline, just with a
+fine-tuned backbone instead of a frozen one.
+
+![B3 pipeline](outputs/results/b3_pipeline.png)
+
+**Step A (= "B3-A"):** fine-tune ResNet50 end-to-end, but this time the
+input is individual player crops and the target is the **9-way person
+action** (`standing`, `spiking`, `blocking`, ...) — not the scene class.
+This is an intermediate step: its own accuracy isn't reported in the paper's
+tables, and isn't directly comparable to any other number here, because the
+task (per-player action) is different from every other baseline (scene
+activity).
+
+Ran twice to fight severe class imbalance (`standing` is ~115x `jumping` in
+the training set):
+
+![B3-A v1 vs v2](outputs/results/b3a_v1_vs_v2_curve.png)
+
+| | **v1**: weighted cross-entropy | **v2**: focal loss (γ=2) + class-balanced sampler |
+|---|---|---|
+| test accuracy (9-way) | **80.6%** | 72.8% |
+| `jumping` recall | 19.1% | 7.9% (**worse**, despite targeting this exact problem) |
+| `waiting` / `moving` recall | 47.0% / 67.6% | 60.2% / 70.3% (better) |
+
+The counter-intuitive result: v2's fixes were aimed at the worst class
+(`jumping`), but it got *worse* — with only 151 training images, the
+balanced sampler redraws them ~18x per epoch, and combined with focal loss
+up-weighting "hard" examples, the model appears to overfit (memorize) those
+151 images rather than generalize. **v1 was selected** to feed every
+downstream baseline (B2, B3 B+C, B5, B6, B7, B8) since it's stronger
+overall and on 7 of 9 classes; `jumping`'s weakness is a known, carried-over
+limitation, not something later baselines silently fix.
+
+**Steps B+C:** freeze that backbone (v1), extract a 2048-d feature per
+player crop, max-pool across all players in the clip, train a small
+classifier on the pooled vector → 8-way scene class — **this is the number
+comparable to the paper's 68.1%.**
+
+**Result: 65.67% test accuracy** (−2.4 pts vs. the paper).
+
+![B3 confusion matrix](outputs/results/b3_confusion_matrix.png)
+
+Reading it: `l-spike`/`r_spike` and `l_set`/`r_set` are classified well
+(precision/recall both 0.72-0.93) — spiking and setting have distinctive
+per-player poses that B3-A learned to recognize, and that signal survives
+pooling. The weak spot is `r_winpoint` (precision only 0.333, confused with
+`l_winpoint` 28 times and `r-pass` 72 times going the other way for
+`r-pass`→`r_winpoint`-adjacent confusion) — "winning the point" isn't a
+distinctive *pose* the way spiking is, so a model with no temporal context
+and no explicit score/ball information struggles to tell it apart from
+ordinary rallying. This is expected: B1 (66.7% target) and B3 (68.1% target)
+are a close comparison in the paper too, not a blowout — B3's real advantage
+over B1 is meant to show up once temporal modeling is layered on top (B5+),
+which is what comes next.
+
 ## Baseline ladder
 
 Reproducing the paper's ablation study, from simplest to the full model.
