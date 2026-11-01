@@ -1,0 +1,150 @@
+{
+  "per_clip": [
+    {
+      "matched": 9,
+      "total": 12,
+      "match_rate": 0.75,
+      "detected_at_center_frame": 16,
+      "video": 0,
+      "clip": "58411"
+    },
+    {
+      "matched": 8,
+      "total": 12,
+      "match_rate": 0.6666666666666666,
+      "detected_at_center_frame": 13,
+      "video": 0,
+      "clip": "59590"
+    },
+    {
+      "matched": 9,
+      "total": 11,
+      "match_rate": 0.8181818181818182,
+      "detected_at_center_frame": 11,
+      "video": 0,
+      "clip": "18911"
+    },
+    {
+      "matched": 12,
+      "total": 12,
+      "match_rate": 1.0,
+      "detected_at_center_frame": 20,
+      "video": 1,
+      "clip": "28810"
+    },
+    {
+      "matched": 8,
+      "total": 12,
+      "match_rate": 0.6666666666666666,
+      "detected_at_center_frame": 17,
+      "video": 1,
+      "clip": "45535"
+    },
+    {
+      "matched": 5,
+      "total": 12,
+      "match_rate": 0.4166666666666667,
+      "detected_at_center_frame": 15,
+      "video": 1,
+      "clip": "43640"
+    },
+    {
+      "matched": 6,
+      "total": 11,
+      "match_rate": 0.5454545454545454,
+      "detected_at_center_frame": 12,
+      "video": 4,
+      "clip": "24885"
+    },
+    {
+      "matched": 8,
+      "total": 12,
+      "match_rate": 0.6666666666666666,
+      "detected_at_center_frame": 13,
+      "video": 4,
+      "clip": "91655"
+    },
+    {
+      "matched": 9,
+      "total": 12,
+      "match_rate": 0.75,
+      "detected_at_center_frame": 12,
+      "video": 4,
+      "clip": "94420"
+    },
+    {
+      "matched": 9,
+      "total": 12,
+      "match_rate": 0.75,
+      "detected_at_center_frame": 11,
+      "video": 5,
+      "clip": "51255"
+    },
+    {
+      "matched": 8,
+      "total": 11,
+      "match_rate": 0.7272727272727273,
+      "detected_at_center_frame": 13,
+      "video": 5,
+      "clip": "62805"
+    },
+    {
+      "matched": 9,
+      "total": 11,
+      "match_rate": 0.8181818181818182,
+      "detected_at_center_frame": 11,
+      "video": 5,
+      "clip": "51575"
+    },
+    {
+      "matched": 7,
+      "total": 12,
+      "match_rate": 0.5833333333333334,
+      "detected_at_center_frame": 10,
+      "video": 9,
+      "clip": "57510"
+    },
+    {
+      "matched": 10,
+      "total": 11,
+      "match_rate": 0.9090909090909091,
+      "detected_at_center_frame": 15,
+      "video": 9,
+      "clip": "30880"
+    },
+    {
+      "matched": 11,
+      "total": 12,
+      "match_rate": 0.9166666666666666,
+      "detected_at_center_frame": 17,
+      "video": 9,
+      "clip": "51435"
+    },
+    {
+      "matched": 8,
+      "total": 12,
+      "match_rate": 0.6666666666666666,
+      "detected_at_center_frame": 13,
+      "video": 11,
+      "clip": "24975"
+    },
+    {
+      "matched": 8,
+      "total": 12,
+      "match_rate": 0.6666666666666666,
+      "detected_at_center_frame": 10,
+      "video": 11,
+      "clip": "41400"
+    },
+    {
+      "matched": 8,
+      "total": 12,
+      "match_rate": 0.6666666666666666,
+      "detected_at_center_frame": 12,
+      "video": 11,
+      "clip": "80750"
+    }
+  ],
+  "average_match_rate": 0.7213804713804713,
+  "n_clips": 18
+}

@@ -616,6 +616,7 @@ configs/        per-baseline hyperparameter configs (as needed)
 python -m venv .venv
 .venv\Scripts\python.exe -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
 .venv\Scripts\python.exe -m pip install tqdm
+.venv\Scripts\python.exe -m pip install ultralytics opencv-python  # Section 10: detector/tracker
 ```
 
 ## Training a baseline
@@ -658,6 +659,43 @@ outnumbers `jumping` ~100:1): `train_backbone.py --task person` supports
 and `--sampler balanced` (`WeightedRandomSampler` — gives every class roughly
 equal expected exposure per epoch, effectively oversampling rare classes and
 undersampling `standing` at the same time).
+
+## Inference pipeline — video → timestamped event timeline (in progress)
+
+The final deliverable (project brief Section 10): take a raw, previously
+unseen volleyball match video and output a list of timestamped events
+(`{start_sec, end_sec, team, event, confidence}`), using B8-mt as the
+model. Built stage by stage, each validated against ground truth before
+the next stage is added — not built all at once and debugged blind.
+
+**Stage 1 — person detector** ([`src/inference/detector.py`](src/inference/detector.py)):
+off-the-shelf COCO-pretrained YOLOv8n (no volleyball-specific fine-tuning),
+filtered to the "person" class. No ball annotations exist anywhere in this
+dataset (verified directly — none in `volleyball_`, `volleyball_tracking_annotation`,
+or `volleyball-detections`), so a ball component would need its own
+separate detector/fine-tuning effort; not started, and not required for
+the event timeline itself (Section 8 only uses it for one optional
+post-processing detail — attributing a `winpoint` to the specific nearest
+player, not for classifying events at all).
+
+**Stage 2 — tracker** ([`src/inference/tracker.py`](src/inference/tracker.py)):
+YOLO's built-in ByteTrack, giving each detected player a consistent ID
+across frames. Validated exactly as the brief requires — *before* trusting
+it on a new video — by running it on 18 real clips across 6 different
+videos and IoU-matching its tracked boxes against this dataset's own
+ground-truth player boxes at each clip's annotated center frame:
+**72.1% average match rate** (`outputs/results/tracker_validation.json`).
+Not perfect — the detector sometimes also picks up courtside officials/staff
+as "person" detections, and match rate varies clip to clip (42%–100%) — but
+a real, measured number instead of an assumed one, exactly the empirical
+check Section 10 asks for before building further stages on top of it.
+
+**Stage 3 (sliding window) and stage 4 (post-processing / timeline JSON)**:
+not started yet. Needs: a 9-frame sliding window over the tracked video
+feeding B8-mt, FPS-based frame→second conversion (`src/inference/video_io.py`
+already reads each video's real FPS via `cv2.CAP_PROP_FPS` — Section 7.3's
+requirement to never assume a fixed FPS across all 55 source videos), and
+merging consecutive same-class windows into one continuous event.
 
 ## Status
 
