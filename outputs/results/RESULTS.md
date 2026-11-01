@@ -468,3 +468,43 @@ accuracy in exchange. Lambda sweeping ({0.3, 0.5, 1.0, 2.0}, per the
 project brief) was not performed -- lambda=1.0 was run once and kept since
 results were already strong on both heads; sweeping lambda remains a
 documented follow-up, not done here.
+
+## B8-mt follow-up experiments (beyond the project brief)
+
+Two extra experiments tried against the lambda=1.0 baseline above, both
+documented honestly even though neither is a clean aggregate-accuracy win
+-- the project's weakest person-action classes (`jumping`, `digging`) are
+small enough that aggregate accuracy is dominated by `standing` (68.6% of
+all person-action labels), so "did the aggregate number go up" and "did we
+actually fix the hard classes" can disagree.
+
+**lambda=2.0** (more weight on the person-action loss): aggregate numbers
+went up (scene 87.36%->88.18%, person 75.73%->77.30%), but per-class
+recall mostly got *worse*, including the exact class this was meant to
+help: `jumping` 0.281->0.202. The aggregate gain is explained by
+`standing`'s recall improving (0.763->0.798) and dominating the weighted
+average -- not a real fix. Checkpoint kept for reference
+(`b8mt_lam2.0.pt`), not used as the final model.
+
+**Motion features (new idea, outside the brief)**: append a cheap 4-d
+frame-to-frame box-delta signal (dx, dy, dw, dh), computed directly from
+real tracking data with no CNN involved, to each player's cached feature
+before LSTM1 (`--use-motion-features`). Targets the motion-defined action
+classes a single static-frame CNN feature struggles to separate from
+static ones. Result: aggregate person accuracy went *down* slightly
+(75.73%->74.06%, scene ~unchanged at 87.28%), but recall on the two
+hardest classes improved meaningfully: `jumping` 0.281->0.348 (+0.067),
+`digging` 0.513->0.586 (+0.073), at the cost of `standing` (0.763->0.738)
+and a couple of mid-tier classes (`falling`, `spiking`) softening.
+Checkpoint: `b8mt_motion.pt`.
+
+**Takeaway**: both experiments reinforce the same lesson as B2's focal-loss
+run earlier in the project -- with this severe a class imbalance (standing
+~115x jumping), a single aggregate accuracy number is an unreliable guide
+for whether an imbalance fix actually worked; per-class recall on the
+targeted rare classes is the number that matters. Of the two, motion
+features is the one that actually moved the needle on `jumping`/`digging`
+in the intended direction; lambda=2.0 did not. Neither checkpoint replaces
+`b8mt_lam1.0.pt` as this project's stated final model -- kept here as
+documented, reproducible follow-up experiments, perf fix (see
+src/training/train_temporal.py) included for anyone extending this further.
