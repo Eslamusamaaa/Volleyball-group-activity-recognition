@@ -1,17 +1,27 @@
-"""Section 10, stage 1: automatic player (person) detection on raw video
-frames -- a genuinely new video has no ground-truth boxes, unlike the
-training clips, so this replaces the annotation file's boxes at inference
-time.
+"""Section 10, stage 1: automatic player detection on raw video frames --
+a genuinely new video has no ground-truth boxes, unlike the training
+clips, so this replaces the annotation file's boxes at inference time.
 
-COCO-pretrained YOLOv8n, no volleyball-specific fine-tuning (project brief
-Section 8/10: try the off-the-shelf detector first, only fine-tune if
-quality turns out too poor -- not assumed up front).
+First pass was the stock COCO-pretrained YOLOv8n (person class), per the
+project brief's "try off-the-shelf first" instruction. Measured quality
+empirically (see outputs/results/tracker_validation.json): the generic
+"person" class also fires on courtside referees/coaches/ball kids, and
+the plain detector itself (before any tracking) only matched 77.8% of
+ground-truth players on an 18-clip sweep across 6 videos. Fine-tuned
+YOLOv8n on this project's own ~2,150 train-split clips' ground-truth
+player boxes instead (single class: "player", see prepare_yolo_dataset.py
++ train_detector.py) -- 95.3% precision / 94.2% recall / 0.98 mAP50 on
+the held-out val-split images. That fine-tuned checkpoint is now the
+default here.
 """
 import os
 from ultralytics import YOLO
 
-WEIGHTS = os.path.join(os.path.dirname(__file__), "..", "..", "outputs", "checkpoints", "yolov8n.pt")
-PERSON_CLASS_ID = 0  # COCO class 0 = "person"
+FINETUNED_WEIGHTS = os.path.join(os.path.dirname(__file__), "..", "..", "outputs", "checkpoints",
+                                  "yolov8n_player", "weights", "best.pt")
+COCO_WEIGHTS = os.path.join(os.path.dirname(__file__), "..", "..", "outputs", "checkpoints", "yolov8n.pt")
+WEIGHTS = FINETUNED_WEIGHTS if os.path.exists(FINETUNED_WEIGHTS) else COCO_WEIGHTS
+PERSON_CLASS_ID = 0  # class 0 in both: COCO "person", and the fine-tuned model's only class "player"
 
 
 class PlayerDetector:

@@ -17,6 +17,7 @@ __pycache__/
 
 # Outputs (checkpoints tracked via Git LFS; feature caches are huge intermediates, not kept)
 outputs/features_cache/
+outputs/yolo_player_data/
 *.npy
 
 # Misc

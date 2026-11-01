@@ -668,27 +668,50 @@ unseen volleyball match video and output a list of timestamped events
 model. Built stage by stage, each validated against ground truth before
 the next stage is added — not built all at once and debugged blind.
 
+**Why this stage exists at all**: every training clip came with ground-truth
+player boxes already given (Section 3.2); a genuinely new, unlabeled video
+has none, so something has to find the players automatically before B8-mt
+can even run. Bad detections don't just look wrong — a misdetected referee
+counted as a "13th player" breaks B8's 6-vs-6 team-pooling assumption, and
+a missed or swapped player corrupts that player's 9-frame sequence feeding
+LSTM1, directly degrading the final prediction quality downstream.
+
 **Stage 1 — person detector** ([`src/inference/detector.py`](src/inference/detector.py)):
-off-the-shelf COCO-pretrained YOLOv8n (no volleyball-specific fine-tuning),
-filtered to the "person" class. No ball annotations exist anywhere in this
-dataset (verified directly — none in `volleyball_`, `volleyball_tracking_annotation`,
-or `volleyball-detections`), so a ball component would need its own
-separate detector/fine-tuning effort; not started, and not required for
-the event timeline itself (Section 8 only uses it for one optional
-post-processing detail — attributing a `winpoint` to the specific nearest
-player, not for classifying events at all).
+first pass was the off-the-shelf COCO-pretrained YOLOv8n (no fine-tuning),
+filtered to the "person" class, per the brief's "try off-the-shelf first"
+instruction. Measured empirically rather than assumed good: on an 18-clip
+sweep across 6 videos, the plain detector (no tracking yet) only matched
+**77.8%** of ground-truth players by IoU — it also fires on courtside
+referees/coaches/ball kids, since "person" is COCO's generic class, not
+"volleyball player." **Fine-tuned instead** on this project's own
+ground-truth player boxes — single class `player`, ~2,150 train-split
+clips' center frames via [`prepare_yolo_dataset.py`](src/inference/prepare_yolo_dataset.py),
+30 epochs via [`train_detector.py`](src/inference/train_detector.py) (RTX
+3050, same 4 GB VRAM constraint as every other baseline here — YOLOv8n
+fine-tuning fits comfortably at batch 16). Held-out val-split result:
+**95.3% precision / 94.2% recall / 0.98 mAP50**. No ball annotations exist
+anywhere in this dataset (verified directly — none in `volleyball_`,
+`volleyball_tracking_annotation`, or `volleyball-detections`), so a ball
+component is separately scoped and not started; not required for the
+event timeline itself (Section 8 only uses it for one optional
+post-processing detail — attributing a `winpoint` to the nearest player).
 
 **Stage 2 — tracker** ([`src/inference/tracker.py`](src/inference/tracker.py)):
 YOLO's built-in ByteTrack, giving each detected player a consistent ID
 across frames. Validated exactly as the brief requires — *before* trusting
-it on a new video — by running it on 18 real clips across 6 different
-videos and IoU-matching its tracked boxes against this dataset's own
-ground-truth player boxes at each clip's annotated center frame:
-**72.1% average match rate** (`outputs/results/tracker_validation.json`).
-Not perfect — the detector sometimes also picks up courtside officials/staff
-as "person" detections, and match rate varies clip to clip (42%–100%) — but
-a real, measured number instead of an assumed one, exactly the empirical
-check Section 10 asks for before building further stages on top of it.
+it on a new video — by running it on the same 18 real clips and
+IoU-matching its tracked boxes against this dataset's own ground-truth
+player boxes at each clip's annotated center frame. With the stock COCO
+detector this was 72.1%; **with the fine-tuned detector, 97.7%**
+(`outputs/results/tracker_validation.json`) — confirming the gap was
+coming from detection quality, not from ByteTrack's own ID-linking logic
+(a diagnostic run of the plain fine-tuned detector alone, no tracker,
+matched just as well). Capping detections to the top-12 by confidence per
+frame was tried as a cheap way to drop extra officials and measured to
+make things *worse* (64.6%) before the fine-tune — a mid-swing player is
+often lower-confidence (motion blur) than a clearly standing official, so
+confidence alone can't separate them; left in `tracker.py`, off by
+default, documented rather than silently dropped.
 
 **Stage 3 (sliding window) and stage 4 (post-processing / timeline JSON)**:
 not started yet. Needs: a 9-frame sliding window over the tracked video

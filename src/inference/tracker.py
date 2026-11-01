@@ -26,11 +26,22 @@ def iou(a, b):
 
 
 class PlayerTracker:
-    def __init__(self, weights=WEIGHTS, conf=0.35, tracker_cfg="bytetrack.yaml", device=None):
+    def __init__(self, weights=WEIGHTS, conf=0.35, tracker_cfg="bytetrack.yaml", device=None, max_players=None):
+        """max_players: if set, keep only the top-N detections by confidence
+        per frame. Tried as a cheap way to drop courtside officials/staff
+        when still using the stock COCO detector -- measured to make the
+        match rate WORSE (72.1% -> 64.6% on the same 18-clip sweep), because
+        a mid-action player is often lower-confidence (motion blur, partial
+        occlusion) than a clearly-visible standing official, so confidence
+        alone can't tell them apart. Off by default; the real fix was fine-
+        tuning the detector on this dataset's own player boxes instead (see
+        prepare_yolo_dataset.py / train_detector.py), which made this knob
+        unnecessary (97.7% match rate with no cap at all)."""
         self.model = YOLO(weights)
         self.conf = conf
         self.tracker_cfg = tracker_cfg
         self.device = device
+        self.max_players = max_players
 
     def reset(self):
         """Start a fresh set of track IDs -- call this between videos, since
@@ -53,6 +64,9 @@ class PlayerTracker:
         for box, tid in zip(r.boxes, r.boxes.id):
             x1, y1, x2, y2 = box.xyxy[0].tolist()
             out.append({"track_id": int(tid), "bbox": [x1, y1, x2, y2], "conf": float(box.conf[0])})
+        if self.max_players is not None and len(out) > self.max_players:
+            out.sort(key=lambda d: -d["conf"])
+            out = out[: self.max_players]
         return out
 
 
