@@ -4,6 +4,12 @@ Reproduction and extension of **"A Hierarchical Deep Temporal Model for Group
 Activity Recognition"** (Ibrahim et al., CVPR 2016) on the official Volleyball
 dataset, implemented fresh in PyTorch.
 
+## References
+
+- **CVPR 2016 paper**: [openaccess.thecvf.com PDF](https://openaccess.thecvf.com/content_cvpr_2016/papers/Ibrahim_A_Hierarchical_Deep_CVPR_2016_paper.pdf)
+- **Extended journal version** (group-style pooling improvement, expanded dataset): [arXiv:1607.02643](https://arxiv.org/abs/1607.02643)
+- **Official reference implementation + dataset** (C++/Caffe, used here only to verify data format/splits and training hyperparameters, never ported directly): [github.com/mostafa-saad/deep-activity-rec](https://github.com/mostafa-saad/deep-activity-rec)
+
 ## Task
 
 Given a volleyball video clip, predict:
@@ -23,6 +29,15 @@ and 4.1), not from memory or the project brief alone:
   explicitly asks for the upgrade: *"In CVPR paper I used alexnet. You better
   network (e.g. resnet50)"* — this repo is 100% PyTorch with ResNet50
   throughout, never AlexNet/Caffe.
+- **Training schedule.** The paper's own text never states an epoch count; the
+  official Caffe solver config (`ibrahim16-cvpr/p1-network1/trainval-test-solver.prototxt`
+  in the [reference repo](https://github.com/mostafa-saad/deep-activity-rec))
+  specifies `base_lr: 0.00001`, `momentum: 0.9`, `weight_decay: 0.0005`,
+  `max_iter: 15000`, `batch_size: 250` (SGD, fixed/step LR). This repo uses
+  AdamW with a cosine schedule and 15 epochs over whole-dataset batches
+  instead of 15,000 fixed-size-250 iterations — a different optimizer and a
+  different way of counting "how much training," not a direct match, though
+  the rough total-samples-seen is in a similar ballpark.
 - **Person-level representation.** The paper's per-frame, per-player feature
   fed into pooling is a **concatenation** of the raw AlexNet fc7 feature *and*
   LSTM1's hidden state (`P_tk = x_tk ⊕ h_tk`, Eq. 7-8) — not the LSTM hidden
