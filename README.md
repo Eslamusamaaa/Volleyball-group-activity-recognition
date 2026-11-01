@@ -100,7 +100,6 @@ and passed through a linear classifier over the 8 scene classes.
 **Result: 72.2% test accuracy**, beating the paper's reported 66.7% for this
 exact baseline.
 
-![B1 training curve](outputs/results/b1_training_curve.png)
 
 Train accuracy reaches ~100% by epoch 12 (clear overfitting on only 3,864
 training images), but validation/test accuracy keeps climbing slightly
@@ -143,7 +142,6 @@ first) measures how much that fine-tuning is actually worth.
 **Result: 42.2% test accuracy** — well below the paper's reported 64.6% for
 this baseline.
 
-![B2 training curve](outputs/results/b2_training_curve.png)
 
 Unlike B1, train accuracy here is still climbing at epoch 15 (60.5%, not
 plateaued) — the classifier head is learning from scratch on generic,
@@ -244,7 +242,6 @@ with motion added. Players arrive in B5.
 
 **Result: 73.37% test accuracy**, far above the paper's 63.1% target.
 
-![B4 training curve](outputs/results/b4_training_curve.png)
 
 <p align="center">
   <img src="outputs/results/b4_confusion_matrix.png" width="380" alt="B4 confusion matrix">
@@ -347,9 +344,8 @@ good at modeling. In B5, each player gets their own LSTM *before* pooling,
 so the thing being pooled is already a smooth per-player summary, not raw
 per-frame noise.
 
-Extended training (3 resumed runs, 65 epochs total) mostly closed the gap:
-
-![B6 full training history](outputs/results/b6_full_training_history.png)
+Extended training (3 resumed runs, 65 epochs total) mostly closed the gap
+(full history chart further down, next to the final confusion matrix).
 
 Along the way, a real bug surfaced: `--resume` loaded weights correctly but
 the cosine LR schedule restarted from the top on every resumed run, causing
@@ -399,7 +395,6 @@ training cleanly in a single 30-epoch run — train accuracy reached 99.8%
 by epoch 26 and val accuracy plateaued smoothly around 74-75% from epoch
 19 onward, no resume/LR issues like B6 needed.
 
-![B7 training curve](outputs/results/b7_training_curve.png)
 
 <p align="center">
   <img src="outputs/results/b7_confusion_matrix.png" width="380" alt="B7 confusion matrix">
@@ -440,7 +435,6 @@ cached) → LSTM1 per player, full 9-step output.
 target (+6.9 pts), but the highest result in this entire baseline ladder,
 by a wide margin over B7 (78.83%).
 
-![B8 training curve](outputs/results/b8_training_curve.png)
 
 <p align="center">
   <img src="outputs/results/b8_confusion_matrix.png" width="380" alt="B8 confusion matrix">
