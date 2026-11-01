@@ -265,6 +265,7 @@ def main():
     os.makedirs(os.path.join(args.out_dir, "checkpoints"), exist_ok=True)
     os.makedirs(os.path.join(args.out_dir, "results"), exist_ok=True)
     ckpt_path = os.path.join(args.out_dir, "checkpoints", f"{name}.pt")
+    last_ckpt_path = os.path.join(args.out_dir, "checkpoints", f"{name}_last.pt")
     log, best_val_acc = [], -1.0
 
     for epoch in range(1, args.epochs + 1):
@@ -286,6 +287,8 @@ def main():
         if va_acc > best_val_acc:
             best_val_acc = va_acc
             torch.save({"model": model.state_dict(), "variant": args.variant, "val_acc": va_acc}, ckpt_path)
+        torch.save({"model": model.state_dict(), "variant": args.variant, "val_acc": va_acc,
+                     "train_acc": tr_acc, "epoch": epoch}, last_ckpt_path)
 
     ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
     model.load_state_dict(ckpt["model"])
