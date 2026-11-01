@@ -1,0 +1,22 @@
+accuracy: 0.7315
+
+class        precision  recall      f1 support
+l-pass           0.774   0.650   0.707     226
+l-spike          0.872   0.799   0.834     179
+l_set            0.853   0.792   0.821     168
+l_winpoint       0.550   0.588   0.569     102
+r-pass           0.573   0.762   0.654     210
+r_set            0.842   0.807   0.824     192
+r_spike          0.834   0.873   0.853     173
+r_winpoint       0.392   0.333   0.360      87
+
+confusion matrix (rows=true, cols=pred):
+  l-pass l-spik  l_set l_winp r-pass  r_set r_spik r_winp
+l-pass    147      3      7      0     65      2      0      2
+l-spik      4    143      7      0      3      1     21      0
+ l_set      7      5    133      0      7     14      1      1
+l_winp      1      0      0     60      6      1      1     33
+r-pass     31      3      1      1    160      6      1      7
+ r_set      0      1      6      0     22    155      6      2
+r_spik      0      9      1      1      8      3    151      0
+r_winp      0      0      1     47      8      2      0     29

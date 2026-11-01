@@ -4,25 +4,31 @@
 # Then a single LSTM over this 9-step sequence (image-level LSTM only, no
 # per-player LSTM1) -> 8-way scene class.
 # Paper target: 74.7% test accuracy.
-#
-# NOTE: an earlier version of this config incorrectly ran the B3-A backbone
-# (trained on person crops) over the WHOLE FRAME image. Fixed: B6 pools
-# PLAYER-level features per frame, same b3a_person cache as B5/B7/B8 -- it
-# does not need its own cache.
 cache_command: >
   .venv\Scripts\python.exe -m src.training.cache_features
   --level person --checkpoint outputs/checkpoints/person_finetune_b3a.pt
-  --name b3a_person
+  --name b3a_person_tracked --box-mode tracked
 script: src.training.train_temporal
 args:
   variant: b6
-  feature-name: b3a_person
+  feature-name: b3a_person_tracked
   epochs: 30
   batch-size: 16
   name: b6
 command: >
   .venv\Scripts\python.exe -m src.training.train_temporal
-  --variant b6 --feature-name b3a_person --epochs 30 --batch-size 16 --name b6
+  --variant b6 --feature-name b3a_person_tracked --epochs 30 --batch-size 16 --name b6
 checkpoint: outputs/checkpoints/b6.pt
 results: outputs/results/b6.json
-status: not_started
+status: done
+test_acc: 0.7315
+note: >
+  First 30-epoch run only reached 64.47% (train_acc stuck ~77%, barely
+  above B3's no-LSTM 65.67%). Needed 3 extra --resume rounds (65 epochs
+  total) to reach a genuine plateau at 73.15%. Along the way found that
+  --resume restarts the cosine LR schedule from the top each time,
+  causing an accuracy "shock"; fixed by passing a low --lr on resume and
+  by saving a <name>_last.pt checkpoint every epoch. See
+  outputs/results/RESULTS.md "B6 -- detail" for the full writeup.
+final_checkpoint: outputs/checkpoints/b6_extended3.pt
+final_results: outputs/results/b6_extended3.json

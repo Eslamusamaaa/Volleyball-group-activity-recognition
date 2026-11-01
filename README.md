@@ -303,6 +303,55 @@ chosen for B6/B7/B8 going forward, since matching the paper's actual
 methodology is the right default even when the net accuracy gain is small
 — full comparison in [`outputs/results/RESULTS.md`](outputs/results/RESULTS.md).
 
+## B6 — explained
+
+Same ingredients as B4 and B5 (players, time, pooling) but a different
+*order*: pool the players first, within each frame, then run a single LSTM
+over the pooled sequence — the reverse of B5, which runs a per-player LSTM
+first and pools only at the very end.
+
+1. For each of the 9 frames: take all players' B3-A features, max-pool
+   across players → one vector per frame.
+2. Feed the resulting 9-step sequence into a **single** LSTM (no
+   per-player LSTM here).
+3. Classify the final hidden state → 8-way scene class.
+
+**First attempt (30 epochs, standard settings) underperformed badly: 64.47%
+test accuracy** — below B4 (73.37%), B5 (78.98%), and the paper's 74.7%
+target. Oddly, train accuracy itself only reached ~77% (every other
+baseline hits ~99-100%), and 64.47% is barely above B3's 65.67% — a
+baseline with *no LSTM at all*. That comparison is the key clue: the added
+LSTM wasn't contributing much.
+
+**Why:** max-pooling raw per-player features *before* any temporal
+smoothing means the player whose value "wins" the max in a given feature
+dimension can change from frame to frame. The LSTM ends up looking at a
+sequence that jumps between different players' contributions rather than
+one coherent, smoothly-evolving signal — the opposite of what an LSTM is
+good at modeling. In B5, each player gets their own LSTM *before* pooling,
+so the thing being pooled is already a smooth per-player summary, not raw
+per-frame noise.
+
+Extended training (3 resumed runs, 65 epochs total) mostly closed the gap:
+
+![B6 full training history](outputs/results/b6_full_training_history.png)
+
+Along the way, a real bug surfaced: `--resume` loaded weights correctly but
+the cosine LR schedule restarted from the top on every resumed run, causing
+a visible accuracy "shock" right after each resume. Passing a low `--lr`
+explicitly for the third resume fixed it (confirmed: no shock, smooth
+continuation) — `train_temporal.py` now also saves a `<name>_last.pt`
+checkpoint every epoch so a future resume can continue from the exact last
+state instead of only the best-val snapshot.
+
+**Final result: 73.15% test accuracy** (−1.6 pts vs. the paper), after
+genuinely plateauing — train accuracy still crept up (95.9%) while val/test
+accuracy went flat across the last ~35 epochs. Close to B4, but still well
+below B5, consistent with the pool-before-LSTM structural handicap rather
+than a simple "needed more training" story.
+
+![B6 confusion matrix](outputs/results/b6_confusion_matrix.png)
+
 ## Baseline ladder
 
 Reproducing the paper's ablation study, from simplest to the full model.
@@ -319,7 +368,7 @@ quotes the exact mechanism for each one.
 | **B3** | Two steps. **(A)** fine-tune ResNet50 on individual player crops → 9-way *person action* class (this sub-step has no paper-reported accuracy of its own — it's an intermediate step, not the final metric). **(B+C)** freeze that backbone, extract a feature per player crop, max-pool across players, train a small classifier on the pooled vector → 8-way *scene* class — this is the number comparable to the paper's 68.1%. | 68.1% (scene, after B+C) | step A: 80.6% (9-way person-action, not comparable to 68.1%); **step B+C: 65.7%** ✅ |
 | **B4** | *"Implementation #1"* from the brief: run B1's fine-tuned backbone over 9 whole-image frames per clip → one LSTM over the 9-step sequence → 8-way scene class. Image-level only, no players. | 63.1% | **73.4%** ✅ (paper's own B1>B4 finding reversed — see note above) |
 | **B5** | *"Temporal on crops"*: one LSTM (LSTM1) per player over the 9-frame window using B3-A features → take each player's **last hidden state** → max-pool across players → small classifier (**no** scene-level LSTM) → 8-way scene class. | 67.6% | **79.0%** ✅ (real per-frame tracking, not the static-box simplification) |
-| **B6** | *"Same B3 steps A and B, repeated per frame"*: for **each of the 9 frames**, take all player crops, extract B3-A features, max-pool across players → one vector per frame → 9-step sequence → a **single** LSTM over that sequence (image-level LSTM only, no per-player LSTM1) → 8-way scene class. | 74.7% | not started |
+| **B6** | *"Same B3 steps A and B, repeated per frame"*: for **each of the 9 frames**, take all player crops, extract B3-A features, max-pool across players → one vector per frame → 9-step sequence → a **single** LSTM over that sequence (image-level LSTM only, no per-player LSTM1) → 8-way scene class. | 74.7% | **73.2%** ✅ (needed 65 epochs — see "needed far more training" note above) |
 | **B7** | Full two-stage model. LSTM1 (per player, over 9 frames) → for each frame, max-pool all players' LSTM1 outputs → LSTM2 (scene-level, over the resulting 9-step sequence) → 8-way scene class. | 80.2% | not started |
 | **B8** | Same as B7, but *"group-style"* pooling: X = max-pool team 1's 6 players, Y = max-pool team 2's 6 players, scene representation = concat(X, Y) instead of one pool over all 12. The paper's best config. | 81.9% | not started |
 | **B8-mt** | B8 + a per-player 9-way action head on LSTM1's output (before pooling), trained jointly: `loss = loss_scene + λ·loss_person_action` (Section 6, mandatory extension beyond the paper). | — (not a paper baseline) | not started |

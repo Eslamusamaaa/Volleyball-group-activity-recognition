@@ -11,7 +11,7 @@ per-player action accuracy (only applicable from B8-mt onward).
 | **B3 (B+C)** | B3-A backbone (v1), pooled → scene head | 59.8% | **65.67%** | 68.1% | ✅ done (−2.4 pts under paper) |
 | **B4** | Image-level LSTM (B1 features) | 72.0% | **73.37%** | 63.1% | ✅ done (+10.3 pts over paper) |
 | **B5** | Per-player LSTM, max-pooled (no scene LSTM) | 77.2% | **78.98%** | 67.6% | ✅ done (+11.4 pts over paper, real tracking) |
-| B6 | Image-level LSTM (B3-A features) | — | — | 74.7% | not started |
+| **B6** | Per-frame player pooling then single LSTM | 68.8% | **73.15%** | 74.7% | ✅ done (−1.6 pts under paper, needed 65 epochs — see note) |
 | B7 | Full hierarchical model (LSTM1 → pool → LSTM2) | — | — | 80.2% | not started |
 | B8 | B7 + team-separated pooling | — | — | 81.9% | not started |
 | B8-mt | B8 + per-player action multi-task head | — | — | — | not started |
@@ -258,3 +258,65 @@ correct choice (matches the paper's own tracking approach) and is a net
 positive on 6 of 8 classes, even though the aggregate accuracy gain is
 small. The static-box cache/results are kept in the repo for reference, not
 deleted.
+
+## B6 — detail (needed far more training than any other baseline)
+
+Per-frame player pooling then a single scene-level LSTM: for each of the 9
+frames, max-pool all players' B3-A features into one vector, then run a
+single LSTM over the resulting 9-step sequence -> 8-way scene class. No
+per-player LSTM (that's B5/B7/B8).
+
+**First run (30 epochs, standard settings): only 64.47% test accuracy**,
+well below B4 (73.37%) and B5 (78.98%) and the paper's 74.7% target, with
+train accuracy itself stuck around 77% (every other baseline reaches
+~99-100% train accuracy within 15-30 epochs). Hypothesis investigated and
+supported by evidence: B6 max-pools raw per-player features *before* any
+temporal smoothing, so which player's value "wins" the max in each feature
+dimension can flip from frame to frame — the LSTM receives a sequence that
+jumps between different players' contributions rather than one coherent,
+smoothly-evolving signal (unlike B5, where each player gets their own LSTM
+*before* pooling, so pooling happens on already-smoothed per-player
+summaries). Supporting evidence: B3 (single-frame pooling, no LSTM at all)
+scores 65.67% -- almost identical to B6's first-run 64.47%, meaning the
+added LSTM was contributing essentially nothing.
+
+**Extended training (3 resumed runs, 65 epochs total) closed most of the
+gap:**
+
+| run | epochs (cumulative) | train_acc | val_acc | test_acc |
+|---|---|---|---|---|
+| b6 | 30 | 77% | 61.4% | 64.47% |
+| b6_extended | 50 | 90% | 68.7% | 72.40% |
+| b6_extended2 | 70* | 94.5% | 68.5% | 73.07% |
+| b6_extended3 (lr lowered to 1e-4) | 85* | 95.9% | 67.6% | **73.15%** |
+
+*(`--resume` restarts the epoch counter per run rather than tracking a
+true global step count, so these are approximate cumulative totals, not
+exact.)*
+
+![B6 full training history](b6_full_training_history.png)
+
+**A real bug found and fixed along the way:** `--resume` loads model
+weights correctly, but the cosine LR schedule restarts from the top
+(`base_lr`) on every resumed run instead of continuing from wherever the
+previous run's schedule left off. This caused a visible "shock" -- train
+accuracy dropping at the start of `b6_extended` and `b6_extended2` right
+after resuming, before re-recovering. Explicitly passing a low `--lr`
+(1e-4) for `b6_extended3` confirmed the diagnosis: no shock, smooth
+continuation from the first epoch. `train_temporal.py` now also saves a
+`<name>_last.pt` checkpoint every epoch (not just the best-val one), so a
+future resume can continue from the literal most recent training state
+instead of the best-val snapshot.
+
+**Where it plateaued:** by `b6_extended3`, train accuracy (95.9%) was still
+inching up but val accuracy had gone flat (~68%) across the last ~35
+epochs, and test accuracy barely moved between the last two runs (73.07% ->
+73.15%) -- a genuine overfitting plateau, not a model still improving.
+**73.15% is the final B6 result**, 1.6 points under the paper's 74.7%
+target and roughly matching B4, but still well under B5 (78.98%) --
+consistent with this baseline's structural handicap (pooling before
+temporal smoothing) rather than just needing more epochs.
+
+![B6 confusion matrix](b6_confusion_matrix.png)
+
+Full confusion matrix: [`b6_extended3_test_report.txt`](b6_extended3_test_report.txt).
