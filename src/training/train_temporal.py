@@ -230,6 +230,8 @@ def main():
     ap.add_argument("--lam", type=float, default=1.0, help="person-action loss weight (b8mt only)")
     ap.add_argument("--out-dir", default=r"E:\volleyball datasets\outputs")
     ap.add_argument("--name", default=None)
+    ap.add_argument("--resume", default=None,
+                     help="path to an existing checkpoint to continue training from, for --epochs more epochs")
     args = ap.parse_args()
 
     name = args.name or args.variant
@@ -245,6 +247,10 @@ def main():
                               num_workers=0) for s in ("train", "val", "test")}
 
     model = model_fn().to(device) if callable(model_fn) and not isinstance(model_fn, type) else model_fn().to(device)
+    if args.resume:
+        prev = torch.load(args.resume, map_location=device, weights_only=False)
+        model.load_state_dict(prev["model"])
+        print(f"resumed from {args.resume} (val_acc {prev.get('val_acc', '?')}), training {args.epochs} more epochs")
     scene_weights = class_weights(EXPECTED_SCENE_COUNTS, SCENE_CLASSES).to(device)
     scene_criterion = nn.CrossEntropyLoss(weight=scene_weights)
     person_criterion = None
