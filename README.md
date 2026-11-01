@@ -19,6 +19,34 @@ Given a volleyball video clip, predict:
    (e.g. `standing`, `spiking`, `blocking`) — a mandatory extension beyond
    the original paper (see Section 6 of the project brief).
 
+## Why 8 baselines instead of one model (ablation study)
+
+This project doesn't just build one final model — it builds a **ladder of
+eight baselines (B1 → B8)**, each changing exactly one thing versus the
+one before it. This is called an **ablation study**: instead of guessing
+which architectural choices matter, every choice gets isolated and
+measured on its own, so the final numbers can be explained, not just
+reported.
+
+Each comparison in the ladder answers one specific question:
+
+| Comparison | Question it answers |
+|---|---|
+| B1 vs. B2/B3 | Does looking at **individual players** help more than looking at the whole image? |
+| B2 vs. B3 | Does **fine-tuning** the backbone on this task actually matter, or is a generic pretrained network enough? |
+| B1 vs. B4 | Does adding **time** (a 9-frame window + LSTM) help, with no player information? |
+| B3 vs. B5 | Does time help **once players are already in the picture**? |
+| B5 vs. B6 | Does the **order** of pooling vs. temporal modeling matter (pool-then-LSTM vs. LSTM-then-pool)? |
+| B5/B6 vs. B7 | Does adding a **second, scene-level LSTM** on top of the per-player one help? |
+| B7 vs. B8 | Does **separating the two teams** before pooling (instead of mixing all 12 players) reduce confusion? |
+
+Without this structure, a single high accuracy number would say *that*
+something works, not *why*. With it, every jump or drop in accuracy across
+the ladder points to one specific, isolated cause — e.g. B8's team-
+separated pooling fixing the `l_winpoint`/`r_winpoint` confusion that
+persisted through every earlier baseline (B1-B7) is a direct, traceable
+result of that one comparison, not a guess.
+
 ## Deviations from the original CVPR 2016 paper
 
 Verified directly from the paper's text (`ibrahim-cvpr16.pdf`, Sections 3.3
