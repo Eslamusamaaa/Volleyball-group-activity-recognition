@@ -4,17 +4,26 @@
 cache_command: >
   .venv\Scripts\python.exe -m src.training.cache_features
   --level person --checkpoint outputs/checkpoints/person_finetune_b3a.pt
-  --name b3a_person
+  --name b3a_person_tracked --box-mode tracked
 script: src.training.train_temporal
 args:
   variant: b5
-  feature-name: b3a_person
+  feature-name: b3a_person_tracked
   epochs: 30
   batch-size: 16
-  name: b5
+  name: b5_tracked
 command: >
   .venv\Scripts\python.exe -m src.training.train_temporal
-  --variant b5 --feature-name b3a_person --epochs 30 --batch-size 16 --name b5
-checkpoint: outputs/checkpoints/b5.pt
-results: outputs/results/b5.json
-status: not_started
+  --variant b5 --feature-name b3a_person_tracked --epochs 30 --batch-size 16 --name b5_tracked
+checkpoint: outputs/checkpoints/b5_tracked.pt
+results: outputs/results/b5_tracked.json
+status: done
+test_acc: 0.7898
+note: >
+  Also ran with the static-box simplification (--box-mode static, cache
+  name b3a_person, checkpoint b5_static.pt): test_acc 0.7883, almost
+  identical overall but redistributes per-class errors differently
+  (l_winpoint worse, r_winpoint better with tracking). Tracked boxes
+  selected for B6/B7/B8 -- see outputs/results/RESULTS.md "B5 -- detail".
+static_checkpoint: outputs/checkpoints/b5_static.pt
+static_results: outputs/results/b5_static.json

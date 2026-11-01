@@ -248,6 +248,61 @@ most likely because ResNet50's much richer per-frame features give the LSTM
 enough signal to overcome that camera-motion noise, where AlexNet's weaker
 features couldn't.
 
+## B5 — explained
+
+Players arrive here. First baseline with a per-player LSTM, and the first
+one where **how the player's box is tracked across the 9 frames actually
+matters**.
+
+![B5 pipeline](outputs/results/b5_pipeline.png)
+
+1. For each player, get their box in **each of the 9 frames individually**
+   (not one box reused nine times — see below).
+2. Run each crop through B3-A's backbone (frozen, cached) → a 2048-d feature
+   per player per frame.
+3. Feed each player's own 9-step sequence into **one LSTM** (shared weights
+   across players) → take the final hidden state.
+4. Max-pool the final hidden states across all players in the clip → linear
+   classifier → 8-way scene class. No scene-level LSTM yet (that's B7/B8).
+
+**Real tracking vs. the static-box simplification:** earlier baselines (and
+this project's own first B5 run) used the Section 7.2 choice (a)
+simplification — reuse the center frame's ground-truth box for all 9
+frames, since the paper's brief explicitly allows it. But the paper itself
+doesn't do this: it tracks real per-player tracklets with a Dlib tracker.
+This repo now does the same, using `volleyball_tracking_annotation`:
+
+![static vs tracked box](outputs/results/explainer_static_vs_tracked_box.png)
+
+Each ground-truth player (box only at the center frame) is matched to a
+track ID by IoU overlap at that frame (99.8% of players matched on a
+100-clip sample), then each frame's crop uses that player's *actual* box at
+that frame — not the center frame's box reused nine times. (Debugging note:
+the tracking files store box *corners* `x1 y1 x2 y2`, not `x y width
+height` despite the column layout looking similar — confirmed by comparing
+against ground-truth boxes for the same player; worth knowing if anyone
+else parses these files.)
+
+**Result: 78.98% test accuracy** with real tracking (static box got 78.83%
+— see below for why the two are so close despite the methodology being
+meaningfully different), far above the paper's 67.6% target either way.
+
+![B5 tracked vs static curve](outputs/results/b5_tracked_vs_static_curve.png)
+
+![B5 confusion matrix](outputs/results/b5_confusion_matrix.png)
+
+**Tracked vs. static, honestly:** the aggregate accuracy barely changes
+(+0.15 pts), but per-class recall tells a more interesting story — `l-pass`,
+`l-spike`, `l_set` all improve with real tracking (cleaner crops, less
+background noise, less of the player cut off), while the two `winpoint`
+classes move in *opposite* directions (`l_winpoint` −0.196, `r_winpoint`
++0.081). Likely explanation: `winpoint` moments involve unusual motion
+(falling, celebrating) where the tracker itself is less reliable, so a more
+"accurate" box isn't guaranteed to help there. Tracked boxes were still
+chosen for B6/B7/B8 going forward, since matching the paper's actual
+methodology is the right default even when the net accuracy gain is small
+— full comparison in [`outputs/results/RESULTS.md`](outputs/results/RESULTS.md).
+
 ## Baseline ladder
 
 Reproducing the paper's ablation study, from simplest to the full model.
@@ -263,7 +318,7 @@ quotes the exact mechanism for each one.
 | **B2** | Paper name *"Person Classification"*. Every player's crop → **frozen, never-fine-tuned** ImageNet ResNet50 → max-pool the per-player features → small *trained* classifier → 8-way scene class. Pure ablation control (isolates "does fine-tuning matter?" from "does person-level input matter?"). | 64.6% | **42.2%** (documented as-is, see note below) |
 | **B3** | Two steps. **(A)** fine-tune ResNet50 on individual player crops → 9-way *person action* class (this sub-step has no paper-reported accuracy of its own — it's an intermediate step, not the final metric). **(B+C)** freeze that backbone, extract a feature per player crop, max-pool across players, train a small classifier on the pooled vector → 8-way *scene* class — this is the number comparable to the paper's 68.1%. | 68.1% (scene, after B+C) | step A: 80.6% (9-way person-action, not comparable to 68.1%); **step B+C: 65.7%** ✅ |
 | **B4** | *"Implementation #1"* from the brief: run B1's fine-tuned backbone over 9 whole-image frames per clip → one LSTM over the 9-step sequence → 8-way scene class. Image-level only, no players. | 63.1% | **73.4%** ✅ (paper's own B1>B4 finding reversed — see note above) |
-| **B5** | *"Temporal on crops"*: one LSTM (LSTM1) per player over the 9-frame window using B3-A features → take each player's **last hidden state** → max-pool across players → small classifier (**no** scene-level LSTM) → 8-way scene class. | 67.6% | not started |
+| **B5** | *"Temporal on crops"*: one LSTM (LSTM1) per player over the 9-frame window using B3-A features → take each player's **last hidden state** → max-pool across players → small classifier (**no** scene-level LSTM) → 8-way scene class. | 67.6% | **79.0%** ✅ (real per-frame tracking, not the static-box simplification) |
 | **B6** | *"Same B3 steps A and B, repeated per frame"*: for **each of the 9 frames**, take all player crops, extract B3-A features, max-pool across players → one vector per frame → 9-step sequence → a **single** LSTM over that sequence (image-level LSTM only, no per-player LSTM1) → 8-way scene class. | 74.7% | not started |
 | **B7** | Full two-stage model. LSTM1 (per player, over 9 frames) → for each frame, max-pool all players' LSTM1 outputs → LSTM2 (scene-level, over the resulting 9-step sequence) → 8-way scene class. | 80.2% | not started |
 | **B8** | Same as B7, but *"group-style"* pooling: X = max-pool team 1's 6 players, Y = max-pool team 2's 6 players, scene representation = concat(X, Y) instead of one pool over all 12. The paper's best config. | 81.9% | not started |

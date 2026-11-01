@@ -10,7 +10,7 @@ per-player action accuracy (only applicable from B8-mt onward).
 | B3-A | Fine-tune ResNet50 on person crops, 9-way action (intermediate step, feeds B2/B3/B5/B6/B7/B8) | 69.6% | 80.6% (v1) / 72.8% (v2) | n/a (not paper-reported) | ✅ done, v1 selected for B+C |
 | **B3 (B+C)** | B3-A backbone (v1), pooled → scene head | 59.8% | **65.67%** | 68.1% | ✅ done (−2.4 pts under paper) |
 | **B4** | Image-level LSTM (B1 features) | 72.0% | **73.37%** | 63.1% | ✅ done (+10.3 pts over paper) |
-| B5 | Per-player LSTM, max-pooled (no scene LSTM) | — | — | 67.6% | not started |
+| **B5** | Per-player LSTM, max-pooled (no scene LSTM) | 77.2% | **78.98%** | 67.6% | ✅ done (+11.4 pts over paper, real tracking) |
 | B6 | Image-level LSTM (B3-A features) | — | — | 74.7% | not started |
 | B7 | Full hierarchical model (LSTM1 → pool → LSTM2) | — | — | 80.2% | not started |
 | B8 | B7 + team-separated pooling | — | — | 81.9% | not started |
@@ -206,3 +206,55 @@ corrupts frame-to-frame background dynamics more than it helps. Here B4
 so even noisy camera motion doesn't erase the signal the LSTM needs — the
 backbone upgrade changes not just the absolute numbers but this specific
 qualitative finding from the paper.
+
+## B5 — detail (real tracking vs. static-box comparison)
+
+Per-player LSTM: one LSTM runs over each player's 9-frame feature sequence
+(B3-A features), its final hidden state is taken per player, then max-pooled
+across all players in the clip -> linear classifier -> 8-way scene class.
+No scene-level LSTM (that's B7/B8).
+
+B5 is the first baseline where the choice between **real per-frame player
+tracking** (`volleyball_tracking_annotation`, matching the paper's Dlib
+tracker) and the **static box** (reusing the center frame's box for all 9
+frames, Section 7.2 choice (a)) actually matters, since it's the first one
+whose input sequence is built from per-player crops across multiple frames.
+
+- 30 epochs, batch size 16, AdamW, AMP, weighted cross-entropy, hidden_dim=512.
+- **Tracked**: best val_acc 77.2%, test accuracy **78.98%**. Checkpoint: `b5_tracked.pt`.
+- **Static** (original run, kept for comparison): best val_acc 75.2%, test accuracy 78.83%. Checkpoint: `b5_static.pt`.
+
+![B5 tracked vs static curve](b5_tracked_vs_static_curve.png)
+
+Per-class recall, tracked vs static:
+
+| class | static recall | tracked recall | Δ |
+|---|---|---|---|
+| l-pass | 0.779 | 0.819 | +0.040 |
+| l-spike | 0.877 | 0.899 | +0.022 |
+| l_set | 0.815 | 0.869 | +0.054 |
+| l_winpoint | **0.637** | 0.441 | **−0.196** |
+| r-pass | 0.848 | 0.824 | −0.024 |
+| r_set | 0.766 | 0.781 | +0.015 |
+| r_spike | 0.896 | 0.867 | −0.029 |
+| r_winpoint | 0.448 | **0.529** | **+0.081** |
+
+Full reports: [`b5_tracked_test_report.txt`](b5_tracked_test_report.txt),
+[`b5_static_test_report.txt`](b5_static_test_report.txt).
+
+**Finding:** the overall test accuracy barely moves (78.83% -> 78.98%,
++0.15 pts) -- real tracking is not a free accuracy win here. What it does
+is redistribute errors: `l-pass`/`l-spike`/`l_set` all improve with cleaner
+per-frame crops (as expected -- less background noise, less of the player
+cut off), but the two `winpoint` classes swing in opposite directions
+(`l_winpoint` gets notably worse, `r_winpoint` notably better). `winpoint`
+clips likely involve more unusual player motion (falling, celebrating)
+where the tracker itself is less reliable, so "more accurate" boxes aren't
+guaranteed to help there the way they help for normal rally actions.
+
+**Decision:** use **tracked** (real per-frame boxes) as the person-level
+feature source for B6, B7, and B8 going forward -- it's the methodologically
+correct choice (matches the paper's own tracking approach) and is a net
+positive on 6 of 8 classes, even though the aggregate accuracy gain is
+small. The static-box cache/results are kept in the repo for reference, not
+deleted.
