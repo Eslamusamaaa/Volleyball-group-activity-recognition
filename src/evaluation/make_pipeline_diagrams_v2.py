@@ -151,6 +151,17 @@ def img_player_crop(p, pad=6):
     return A["center_im"].crop(box)
 
 
+def img_tracked_crop_at(frame, pad=10):
+    """Crop the spiker's real tracked box at a specific frame (not necessarily
+    the clip's center frame) -- same real track, same ground-truth label
+    ('spiking' holds for every frame in this clip's track), just picked for
+    whichever frame actually shows the swing instead of the landing."""
+    x1, y1, x2, y2, _ = A["tracks"][A["spiker_tid"]][frame]
+    im = frame_im(frame)
+    box = (max(0, x1 - pad), max(0, y1 - pad), min(im.width, x2 + pad), min(im.height, y2 + pad))
+    return im.crop(box)
+
+
 def img_filmstrip():
     thumbs = []
     for fr in A["frames"]:
@@ -250,7 +261,10 @@ def img_all_players_grid():
 
 # pre-build the handful of real-image assets every baseline draws from
 ASSETS = {
-    "spiker_single": img_player_crop(next(p for p in A["players"] if p["action"] == "spiking")),
+    # frame 94538 (t=-2): mid-swing, arm cocked back -- the clearest "spiking"
+    # frame in this clip; the exact center frame (t=0) catches the landing
+    # instead, same real player, same real "spiking" ground-truth track.
+    "spiker_single": img_tracked_crop_at(94538),
     "player_grid": img_all_players_grid(),
     "filmstrip": img_filmstrip(),
     "spiker_seq": img_spiker_sequence(),
@@ -442,7 +456,7 @@ pipeline_diagram(
     [
         {"num": "1A", "label": "One player crop", "sub": ["Target for step A: 9-way", "PERSON action, not the",
                                                             "8-way scene class."],
-         "image": ASSETS["spiker_single"], "caption": 'ground-truth label: "spiking"',
+         "image": ASSETS["spiker_single"], "caption": 'ground-truth label: "spiking" (t = -2, mid-swing)',
          "photo_h": 230, "cover": True, "tag": "REAL CROP"},
         {"num": "2A", "label": "ResNet50 fine-tuned", "sub": ["On person-action labels", "(this sub-step = \"B3-A\"):",
                                                                 "80.6% 9-way accuracy."]},
@@ -552,7 +566,7 @@ pipeline_diagram(
                                                         "9-step output."]},
         {"num": "4a", "label": "Action head (per player)", "sub": ["Attached directly to LSTM1's", "output, before any pooling",
                                                                      "-> 9-way action per player."],
-         "image": ASSETS["spiker_single"], "caption": 'this player\'s own prediction -> "spiking"',
+         "image": ASSETS["spiker_single"], "caption": 'this player -> "spiking" (t = -2, mid-swing)',
          "photo_h": 185, "cover": True, "tag": "REAL CROP"},
         {"num": "4b", "label": "Team pool -> LSTM2", "sub": ["Identical to B8's branch,", "completely unchanged."],
          "image": ASSETS["team_split"], "caption": "B8's team-split pooling branch, reused as-is",
