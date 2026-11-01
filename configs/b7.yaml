@@ -5,17 +5,18 @@
 cache_command: >
   .venv\Scripts\python.exe -m src.training.cache_features
   --level person --checkpoint outputs/checkpoints/person_finetune_b3a.pt
-  --name b3a_person
+  --name b3a_person_tracked --box-mode tracked
 script: src.training.train_temporal
 args:
   variant: b7
-  feature-name: b3a_person
+  feature-name: b3a_person_tracked
   epochs: 30
   batch-size: 16
   name: b7
 command: >
   .venv\Scripts\python.exe -m src.training.train_temporal
-  --variant b7 --feature-name b3a_person --epochs 30 --batch-size 16 --name b7
+  --variant b7 --feature-name b3a_person_tracked --epochs 30 --batch-size 16 --name b7
 checkpoint: outputs/checkpoints/b7.pt
 results: outputs/results/b7.json
-status: not_started
+status: done
+test_acc: 0.7883

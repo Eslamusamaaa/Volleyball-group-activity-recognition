@@ -352,6 +352,50 @@ than a simple "needed more training" story.
 
 ![B6 confusion matrix](outputs/results/b6_confusion_matrix.png)
 
+## B7 — explained
+
+The full two-stage hierarchical model — the paper's main architecture,
+minus the team-separated pooling that makes it B8.
+
+![B7 pipeline](outputs/results/b7_pipeline.png)
+
+1. Each player, real tracked box per frame (same per-player sequences as B5).
+2. B3-A backbone (frozen, cached) → 2048-d feature per player per frame.
+3. **LSTM1** runs per player over the 9-frame sequence — but unlike B5,
+   which only keeps the *final* hidden state, B7 keeps the **full 9-step
+   output** (a hidden state for every frame, not just the last one).
+4. At **each** of the 9 frames, max-pool all players' LSTM1 hidden states
+   at that frame → a 9-step sequence of pooled scene vectors.
+5. **LSTM2** runs over that 9-step pooled sequence (scene-level temporal
+   model, on top of the person-level one).
+6. Classify LSTM2's final hidden state → 8-way scene class.
+
+This is the piece missing from every earlier baseline: B5 has LSTM1 but no
+LSTM2 (just pools once, at the end); B6 has an LSTM but no LSTM1 (pools
+before any temporal processing, which is also why it struggled — see
+above). B7 is the first baseline with **both** temporal stages, matching
+the paper's actual two-stage design.
+
+**Result: 78.83% test accuracy** (−1.4 pts vs. the paper's 80.2% target),
+training cleanly in a single 30-epoch run — train accuracy reached 99.8%
+by epoch 26 and val accuracy plateaued smoothly around 74-75% from epoch
+19 onward, no resume/LR issues like B6 needed.
+
+![B7 training curve](outputs/results/b7_training_curve.png)
+
+![B7 confusion matrix](outputs/results/b7_confusion_matrix.png)
+
+**Slightly below our own B5 (78.98%), not just the paper's target** —
+adding LSTM2 on top of B5's setup didn't help here, unlike the paper's own
+finding (B5=67.6% < B7=80.2%, a clear gain from adding the second LSTM).
+`l_set` recall actually improves a lot over B5 (0.887 vs ~0.7), but
+`r_winpoint` and `l_winpoint` stay the weakest classes by a wide margin
+(0.46-0.63 recall) — the same persistent left/right win-point confusion
+seen in every baseline so far, because pooling all 12 players into one
+vector (no team separation) loses the "which side of the court" signal
+that would make those two classes easy to tell apart. That's exactly what
+B8's team-separated pooling is designed to fix next.
+
 ## Baseline ladder
 
 Reproducing the paper's ablation study, from simplest to the full model.
@@ -369,7 +413,7 @@ quotes the exact mechanism for each one.
 | **B4** | *"Implementation #1"* from the brief: run B1's fine-tuned backbone over 9 whole-image frames per clip → one LSTM over the 9-step sequence → 8-way scene class. Image-level only, no players. | 63.1% | **73.4%** ✅ (paper's own B1>B4 finding reversed — see note above) |
 | **B5** | *"Temporal on crops"*: one LSTM (LSTM1) per player over the 9-frame window using B3-A features → take each player's **last hidden state** → max-pool across players → small classifier (**no** scene-level LSTM) → 8-way scene class. | 67.6% | **79.0%** ✅ (real per-frame tracking, not the static-box simplification) |
 | **B6** | *"Same B3 steps A and B, repeated per frame"*: for **each of the 9 frames**, take all player crops, extract B3-A features, max-pool across players → one vector per frame → 9-step sequence → a **single** LSTM over that sequence (image-level LSTM only, no per-player LSTM1) → 8-way scene class. | 74.7% | **73.2%** ✅ (needed 65 epochs — see "needed far more training" note above) |
-| **B7** | Full two-stage model. LSTM1 (per player, over 9 frames) → for each frame, max-pool all players' LSTM1 outputs → LSTM2 (scene-level, over the resulting 9-step sequence) → 8-way scene class. | 80.2% | not started |
+| **B7** | Full two-stage model. LSTM1 (per player, over 9 frames) → for each frame, max-pool all players' LSTM1 outputs → LSTM2 (scene-level, over the resulting 9-step sequence) → 8-way scene class. | 80.2% | **78.8%** ✅ (slightly under even our own B5 — see note above) |
 | **B8** | Same as B7, but *"group-style"* pooling: X = max-pool team 1's 6 players, Y = max-pool team 2's 6 players, scene representation = concat(X, Y) instead of one pool over all 12. The paper's best config. | 81.9% | not started |
 | **B8-mt** | B8 + a per-player 9-way action head on LSTM1's output (before pooling), trained jointly: `loss = loss_scene + λ·loss_person_action` (Section 6, mandatory extension beyond the paper). | — (not a paper baseline) | not started |
 
@@ -429,11 +473,20 @@ Exact command for every baseline lives in `configs/<id>.yaml`. Summary:
 
 # Phase B: cache features from a trained backbone (needed for B4-B8)
 .venv\Scripts\python.exe -m src.training.cache_features --level image --checkpoint outputs/checkpoints/scene_finetune_b1.pt --name b1_image
-.venv\Scripts\python.exe -m src.training.cache_features --level person --checkpoint outputs/checkpoints/person_finetune_b3a.pt --name b3a_person
+.venv\Scripts\python.exe -m src.training.cache_features --level person --checkpoint outputs/checkpoints/person_finetune_b3a.pt --name b3a_person_tracked --box-mode tracked
 
 # Phase C: train a temporal model on cached features (B4, B5, B6, B7, B8, B8-mt)
-.venv\Scripts\python.exe -m src.training.train_temporal --variant b7 --feature-name b3a_person
+.venv\Scripts\python.exe -m src.training.train_temporal --variant b7 --feature-name b3a_person_tracked
 ```
+
+Person-level caching defaults to **real per-frame player tracking**
+(`--box-mode tracked`, using `volleyball_tracking_annotation` — matches the
+paper's Dlib-tracker approach; IoU-matched to ground-truth players, ~99.8%
+match rate). Pass `--box-mode static` to reuse the Section 7.2 choice (a)
+simplification instead (center-frame box reused for all 9 frames) — kept
+for comparison, not the default; see the B5 section above for why tracked
+boxes barely change aggregate accuracy but meaningfully shift per-class
+errors.
 
 Handling severe class imbalance in the 9-way person-action labels (`standing`
 outnumbers `jumping` ~100:1): `train_backbone.py --task person` supports

@@ -12,7 +12,7 @@ per-player action accuracy (only applicable from B8-mt onward).
 | **B4** | Image-level LSTM (B1 features) | 72.0% | **73.37%** | 63.1% | ✅ done (+10.3 pts over paper) |
 | **B5** | Per-player LSTM, max-pooled (no scene LSTM) | 77.2% | **78.98%** | 67.6% | ✅ done (+11.4 pts over paper, real tracking) |
 | **B6** | Per-frame player pooling then single LSTM | 68.8% | **73.15%** | 74.7% | ✅ done (−1.6 pts under paper, needed 65 epochs — see note) |
-| B7 | Full hierarchical model (LSTM1 → pool → LSTM2) | — | — | 80.2% | not started |
+| **B7** | Full hierarchical model (LSTM1 → pool → LSTM2) | 75.2% | **78.83%** | 80.2% | ✅ done (−1.4 pts under paper, slightly under our own B5) |
 | B8 | B7 + team-separated pooling | — | — | 81.9% | not started |
 | B8-mt | B8 + per-player action multi-task head | — | — | — | not started |
 
@@ -320,3 +320,42 @@ temporal smoothing) rather than just needing more epochs.
 ![B6 confusion matrix](b6_confusion_matrix.png)
 
 Full confusion matrix: [`b6_extended3_test_report.txt`](b6_extended3_test_report.txt).
+
+## B7 — detail
+
+Full two-stage hierarchical model: LSTM1 per player over the 9-frame
+sequence (keeping the full per-frame output, not just the final state),
+max-pool all players' LSTM1 hidden states at each frame -> 9-step pooled
+sequence, LSTM2 over that sequence (scene-level) -> 8-way scene class.
+
+- 30 epochs, batch size 16, AdamW, AMP, weighted cross-entropy, hidden_dim=512.
+- Converged cleanly in one run: train_acc 99.8% by epoch 26, val_acc
+  plateaued ~74-75% from epoch 19 (best: 75.2% at epoch 20). No resume
+  needed, unlike B6.
+- Test accuracy: **78.83%**
+- Checkpoint: `outputs/checkpoints/b7.pt`
+
+Per-class test performance:
+
+| class | precision | recall | f1 | support |
+|---|---|---|---|---|
+| l-pass | 0.772 | 0.810 | 0.790 | 226 |
+| l-spike | 0.914 | 0.888 | 0.901 | 179 |
+| l_set | 0.764 | 0.887 | 0.821 | 168 |
+| l_winpoint | 0.587 | 0.627 | 0.607 | 102 |
+| r-pass | 0.768 | 0.743 | 0.755 | 210 |
+| r_set | 0.893 | 0.781 | 0.833 | 192 |
+| r_spike | 0.933 | 0.884 | 0.908 | 173 |
+| r_winpoint | 0.460 | 0.460 | 0.460 | 87 |
+
+Full confusion matrix: [`b7_test_report.txt`](b7_test_report.txt).
+
+**Below the paper's 80.2% target (-1.4 pts) and slightly below our own B5
+(78.98%)**, despite B7 adding the scene-level LSTM2 that B5 lacks -- the
+opposite of the paper's own finding (their B5=67.6% < B7=80.2%, a clear
+gain from LSTM2). `l_set` recall improves substantially over B5 (0.887 vs
+~0.7), but `l_winpoint`/`r_winpoint` remain the weakest classes by far
+(0.46-0.63 recall, same persistent left/right win-point confusion seen in
+every baseline) -- pooling all 12 players into one vector loses the
+"which side of the court" signal, which B8's team-separated pooling is
+designed to restore.
