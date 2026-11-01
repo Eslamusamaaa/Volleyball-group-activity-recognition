@@ -12,6 +12,7 @@ import sys
 
 import torch
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from src.data.annotations import load_or_cache, split_keys
@@ -22,7 +23,7 @@ from src.models.backbone import ResNetBackbone
 @torch.no_grad()
 def cache_image_level(model, device, root, data, keys, n_frames=9):
     cache = {}
-    for video, clip in keys:
+    for video, clip in tqdm(keys, desc="caching image-level features"):
         paths = frame_window(root, video, clip, n_frames)
         imgs = torch.stack([load_image(p, EVAL_TRANSFORM) for p in paths]).to(device)
         with torch.autocast(device_type="cuda", enabled=(device.type == "cuda")):
@@ -37,7 +38,7 @@ def cache_image_level(model, device, root, data, keys, n_frames=9):
 def cache_person_level(model, device, root, data, keys, n_frames=9, batch_size=64):
     from PIL import Image
     cache = {}
-    for video, clip in keys:
+    for video, clip in tqdm(keys, desc="caching person-level features"):
         paths = frame_window(root, video, clip, n_frames)
         frames = [Image.open(p).convert("RGB") for p in paths]
         players = data[(video, clip)]["players"][:MAX_PLAYERS]
