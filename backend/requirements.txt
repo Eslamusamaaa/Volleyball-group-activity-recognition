@@ -1,0 +1,13 @@
+# Backend deps for the Section 10 API (backend/app.py).
+# torch/torchvision here are CPU wheels by default -- fine for deployment on
+# a CPU-only host (inference still runs, just slower). For a GPU host,
+# install the matching CUDA wheel instead, e.g.:
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
+fastapi==0.162.0
+uvicorn[standard]==0.54.0
+python-multipart
+torch==2.6.0
+torchvision==0.21.0
+opencv-python-headless==5.0.0
+ultralytics==8.4.197
+tqdm

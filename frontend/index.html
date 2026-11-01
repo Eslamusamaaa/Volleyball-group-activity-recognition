@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Volleyball Event Timeline</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="wrap">
+    <h1>Volleyball Event Timeline</h1>
+    <p class="sub">Upload a volleyball match clip. The model finds the players, tracks them, and reports what each team is doing, second by second.</p>
+
+    <form id="upload-form">
+      <label class="dropzone" id="dropzone" for="file-input">
+        <span id="drop-label">Click to choose a video, or drag one here (.mp4, .avi, .mov, .mkv)</span>
+        <input id="file-input" type="file" name="video" accept=".mp4,.avi,.mov,.mkv" hidden>
+      </label>
+      <button type="submit" id="submit-btn" disabled>Analyze video</button>
+    </form>
+
+    <div id="status" class="status" hidden></div>
+    <div id="results" class="results" hidden>
+      <h2>Events</h2>
+      <div id="events-list"></div>
+    </div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

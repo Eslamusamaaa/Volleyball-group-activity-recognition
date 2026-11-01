@@ -1,0 +1,111 @@
+:root {
+  --bg: #0b0e14;
+  --panel: #12161f;
+  --line: #242c3a;
+  --text: #e7eaf1;
+  --sub: #8c96ab;
+  --accent: #4fd1c5;
+  --accent-dim: rgba(79, 209, 197, 0.15);
+  --good: #46c98a;
+  --bad: #ff6b7f;
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  padding-inline: 16px;
+}
+
+.wrap {
+  max-width: 720px;
+  margin: 0 auto;
+  padding-block: 48px;
+}
+
+h1 { font-size: 28px; margin: 0 0 8px; }
+.sub { color: var(--sub); margin: 0 0 32px; max-width: 60ch; }
+
+.dropzone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+  border: 2px dashed var(--line);
+  border-radius: 14px;
+  color: var(--sub);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.dropzone:hover, .dropzone.drag-over {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+.dropzone.has-file { color: var(--text); border-color: var(--accent); }
+
+button#submit-btn {
+  display: block;
+  width: 100%;
+  margin-top: 16px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #06201d;
+  cursor: pointer;
+}
+button#submit-btn:disabled {
+  background: var(--line);
+  color: var(--sub);
+  cursor: not-allowed;
+}
+
+.status {
+  margin-top: 24px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--sub);
+  font-size: 14px;
+}
+.status.error { color: var(--bad); border-color: var(--bad); }
+
+.results { margin-top: 32px; }
+.results h2 { font-size: 18px; margin-bottom: 12px; }
+
+.event {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  margin-bottom: 8px;
+}
+.event .time {
+  font-family: 'Consolas', monospace;
+  font-size: 13px;
+  color: var(--sub);
+  flex: 0 0 110px;
+}
+.event .badge {
+  flex: 0 0 auto;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.event .badge.left { background: rgba(255, 148, 74, 0.18); color: #ff944a; }
+.event .badge.right { background: rgba(66, 176, 255, 0.18); color: #42b0ff; }
+.event .label { flex: 1; font-size: 15px; }
+.event .conf { flex: 0 0 auto; font-size: 13px; color: var(--sub); }
