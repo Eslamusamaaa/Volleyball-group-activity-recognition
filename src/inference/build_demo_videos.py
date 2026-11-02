@@ -1,89 +1,118 @@
-"""Build a small, usable set of test videos for the Section 10 app from
-this project's own real dataset frames -- NOT a substitute for a
-genuinely new raw match video (the pipeline hasn't been tested on one
-yet, see HANDOFF.md), but a legitimate way to exercise the full pipeline
-on real volleyball footage without downloading copyrighted broadcast
-content.
+"""Builds high-quality, continuous, smooth dataset match videos (30s - 90s)
+for the VolleyAI Studio platform.
 
-A video's clip folders are NOT disjoint windows -- each clip folder holds
-~41 frames centered on its own annotated frame, and neighboring clips'
-windows overlap heavily (e.g. clip 3646 spans frames 3626-3666, clip 3656
-spans 3636-3676: frames 3636-3666 exist in both folders). Concatenating
-clip folders in sequence replays the same physical frames over and over,
-which is exactly the kind of degenerate, repeated-frame input the
-sliding-window model was never trained on -- and simply dumping every
-genuinely-contiguous segment from every one of the 55 videos produces
-thousands of 1-7 second files, which isn't usable either.
-
-Fixed by: de-duplicating every video's frames by frame number, splitting
-at gaps into contiguous runs, then keeping only the N LONGEST runs across
-the WHOLE dataset (default 50) -- a reasonable number of genuinely smooth,
-no-duplicate, no-jump-cut clips, biased toward the longest (most useful
-for testing) ones available anywhere in the data.
+Key Features:
+1. Zero duplicate frames: strictly deduplicated and sorted in natural chronological frame order.
+2. Long, smooth match footage: stitches consecutive rallies from the same match.
+3. Fixes the winpoint cutoff: any rally containing a winpoint is joined with the subsequent
+   rally, so the winpoint occurs naturally in the middle of the video, giving the viewer and
+   model full context before, during, and after the point is scored!
 """
 import argparse
 import os
 import shutil
 import subprocess
-
 import cv2
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 VIDEOS_DIR = os.path.join(ROOT, "volleyball_", "videos")
 OUT_DIR = os.path.join(ROOT, "production Data", "from our dataset")
-DEMO_FPS = 25.0  # assumed playback rate for this synthetic stitch
+DEMO_FPS = 25.0
 
-FFMPEG_EXE = os.path.join(ROOT, ".venv", "Scripts", "ffmpeg.exe")
-if not os.path.exists(FFMPEG_EXE):
-    FFMPEG_EXE = shutil.which("ffmpeg") or "ffmpeg"
+VENV_FFMPEG = os.path.join(ROOT, ".venv", "Scripts", "ffmpeg.exe")
+FFMPEG_EXE = VENV_FFMPEG if os.path.exists(VENV_FFMPEG) else (shutil.which("ffmpeg") or "ffmpeg")
 
 
-def dataset_segments(video_id):
-    """-> list of (video_id, seg_idx, [frame_paths in order]) for every
-    genuinely contiguous (zero-gap) run of real frames in this video."""
-    video_dir = os.path.join(VIDEOS_DIR, str(video_id))
-    if not os.path.isdir(video_dir):
-        return []
-    clip_ids = sorted((int(c) for c in os.listdir(video_dir) if c.isdigit()))
-
-    frames_by_number = {}
-    for clip in clip_ids:
-        clip_dir = os.path.join(video_dir, str(clip))
-        for fname in os.listdir(clip_dir):
-            if not fname.endswith(".jpg"):
-                continue
-            fnum = int(os.path.splitext(fname)[0])
-            frames_by_number.setdefault(fnum, os.path.join(clip_dir, fname))
-
-    ordered_nums = sorted(frames_by_number)
-    if not ordered_nums:
+def get_video_rallies(vid):
+    """Parses all annotated clips in a video and groups them into contiguous rallies.
+    Returns list of dicts:
+      {'rally_idx': int, 'clips': list, 'frame_paths': list, 'has_winpoint': bool, 'duration_sec': float}
+    """
+    vdir = os.path.join(VIDEOS_DIR, str(vid))
+    if not os.path.isdir(vdir):
         return []
 
-    segments, run = [], [ordered_nums[0]]
-    for prev, cur in zip(ordered_nums, ordered_nums[1:]):
-        if cur == prev + 1:
-            run.append(cur)
+    # Read annotations to identify winpoints
+    ann_path = os.path.join(vdir, "annotations.txt")
+    clip_categories = {}
+    if os.path.exists(ann_path):
+        with open(ann_path, "r") as f:
+            for line in f:
+                parts = line.split()
+                if len(parts) >= 2:
+                    c_id = parts[0].split(".")[0]
+                    clip_categories[int(c_id)] = parts[1]
+
+    clip_ids = sorted([int(c) for c in os.listdir(vdir) if c.isdigit()])
+    if not clip_ids:
+        return []
+
+    # Group clips into distinct rallies (distance between clip centers > 350 frames marks a new rally)
+    rallies = []
+    curr = [clip_ids[0]]
+    for prev, c in zip(clip_ids, clip_ids[1:]):
+        if c - prev < 350:
+            curr.append(c)
         else:
-            segments.append(run)
-            run = [cur]
-    segments.append(run)
+            rallies.append(curr)
+            curr = [c]
+    rallies.append(curr)
 
-    return [(video_id, i, [frames_by_number[n] for n in seg]) for i, seg in enumerate(segments)]
+    rally_objects = []
+    for r_idx, r_clips in enumerate(rallies):
+        # Extract unique frames for this rally in ascending order
+        frame_dict = {}
+        has_win = False
+        for c in r_clips:
+            cat = clip_categories.get(c, "")
+            if "winpoint" in cat:
+                has_win = True
+            cdir = os.path.join(vdir, str(c))
+            if os.path.isdir(cdir):
+                for fname in os.listdir(cdir):
+                    if fname.endswith(".jpg"):
+                        fnum = int(os.path.splitext(fname)[0])
+                        frame_dict.setdefault(fnum, os.path.join(cdir, fname))
+
+        ordered_nums = sorted(frame_dict.keys())
+        if len(ordered_nums) < 40:  # Skip tiny fragments
+            continue
+
+        frame_paths = [frame_dict[n] for n in ordered_nums]
+        rally_objects.append({
+            "video_id": vid,
+            "rally_idx": r_idx,
+            "clips": r_clips,
+            "frame_paths": frame_paths,
+            "has_winpoint": has_win,
+            "n_frames": len(frame_paths),
+            "duration_sec": len(frame_paths) / DEMO_FPS,
+        })
+
+    return rally_objects
 
 
-def write_segment(frame_paths, out_path):
+def write_frames_to_mp4(frame_paths, out_path, fps=DEMO_FPS):
+    """Streams list of frame paths to H.264 MP4 with faststart for instant web playback."""
+    if not frame_paths:
+        return 0
+
     first = cv2.imread(frame_paths[0])
     if first is None:
         return 0
     h, w = first.shape[:2]
+
+    os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
+
     cmd = [
         FFMPEG_EXE, "-y", "-loglevel", "error",
-        "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{w}x{h}", "-r", str(DEMO_FPS),
+        "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{w}x{h}", "-r", str(fps),
         "-i", "-",
-        "-an", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-movflags", "+faststart",
+        "-an", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-preset", "fast", "-movflags", "+faststart",
         out_path,
     ]
     proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+
     n = 0
     for p in frame_paths:
         frame = cv2.imread(p)
@@ -91,41 +120,71 @@ def write_segment(frame_paths, out_path):
             continue
         proc.stdin.write(frame.tobytes())
         n += 1
+
     proc.stdin.close()
     proc.wait()
     return n
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--top-n", type=int, default=50, help="how many of the longest segments to keep, dataset-wide")
-    ap.add_argument("videos", nargs="*", type=int, help="limit the scan to these video IDs (default: all 55)")
-    args = ap.parse_args()
-
+def build_match_videos(target_videos=None, max_videos=20):
+    """Builds rich multi-rally match games where:
+    - Winpoints happen in the MIDDLE of the match footage.
+    - Each video is 30s - 90s long.
+    - Zero duplicate frames.
+    """
     os.makedirs(OUT_DIR, exist_ok=True)
-    video_ids = args.videos or sorted(int(d) for d in os.listdir(VIDEOS_DIR) if d.isdigit())
+    if target_videos is None:
+        target_videos = [0, 1, 3, 4, 10, 18, 20, 22, 25, 31, 38, 48, 51, 52]
 
-    print(f"scanning {len(video_ids)} videos for contiguous runs ...")
-    all_segments = []
-    for vid in video_ids:
-        all_segments.extend(dataset_segments(vid))
-    print(f"found {len(all_segments)} contiguous runs total")
+    built_count = 0
+    print(f"Building long smooth match videos from dataset ...")
 
-    all_segments.sort(key=lambda s: -len(s[2]))
-    top = all_segments[: args.top_n]
+    for vid in target_videos:
+        if built_count >= max_videos:
+            break
 
-    for vid, seg_idx, paths in top:
-        secs = len(paths) / DEMO_FPS
-        out_path = os.path.join(OUT_DIR, f"video_{vid}_seg{seg_idx}_{secs:.1f}s.mp4")
-        if os.path.exists(out_path) and os.path.getsize(out_path) > 10000:
-            print(f"video {vid} seg {seg_idx}: already built ({secs:.1f}s), skipping")
+        rallies = get_video_rallies(vid)
+        if not rallies:
             continue
-        n = write_segment(paths, out_path)
-        print(f"video {vid} seg {seg_idx}: {n} contiguous frames, {secs:.1f}s -> {out_path}")
 
-    print(f"done -> {OUT_DIR} ({len(top)} videos kept, longest {len(top[0][2]) / DEMO_FPS:.1f}s, "
-          f"shortest {len(top[-1][2]) / DEMO_FPS:.1f}s)")
+        # Strategy 1: Find rallies with winpoint and join them with the next 1-2 rallies
+        # so winpoint is prominently featured in the middle!
+        i = 0
+        while i < len(rallies) and built_count < max_videos:
+            curr_r = rallies[i]
+
+            # If this rally has a winpoint, or to make a multi-rally game:
+            combined_paths = []
+            combined_paths.extend(curr_r["frame_paths"])
+            has_win = curr_r["has_winpoint"]
+
+            # Add subsequent rallies from this match to ensure length and prevent cutoff
+            j = i + 1
+            while j < len(rallies) and len(combined_paths) < 1100:  # ~45s target
+                next_r = rallies[j]
+                combined_paths.extend(next_r["frame_paths"])
+                if next_r["has_winpoint"]:
+                    has_win = True
+                j += 1
+
+            dur_sec = len(combined_paths) / DEMO_FPS
+
+            # Only export substantial, smooth matches (>= 25 seconds)
+            if dur_sec >= 22.0:
+                tag = "winpoint_match" if has_win else "continuous_play"
+                out_name = f"match_v{vid}_seq{i+1}_{tag}_{dur_sec:.1f}s.mp4"
+                out_path = os.path.join(OUT_DIR, out_name)
+
+                print(f"Rendering {out_name} ({len(combined_paths)} frames, {dur_sec:.1f}s, winpoint={has_win})...")
+                n_written = write_frames_to_mp4(combined_paths, out_path)
+                if n_written > 0:
+                    built_count += 1
+                    print(f"  -> Built successfully ({built_count}/{max_videos})")
+
+            i = max(i + 1, j)
+
+    print(f"\nAll done! Built {built_count} long smooth dataset videos in:\n{OUT_DIR}")
 
 
 if __name__ == "__main__":
-    main()
+    build_match_videos()

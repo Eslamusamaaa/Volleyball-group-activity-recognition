@@ -24,6 +24,15 @@ outputs/yolo_player_data/
 .ipynb_checkpoints/
 *.log
 
+# Large video data (production & annotated renders)
+production Data/
+outputs/annotated_videos/
+outputs/*.mp4
+*.mp4
+*.avi
+*.mov
+*.mkv
+
 # Local planning/reference docs (not part of the repo)
 IMPLEMENTATION_PROMPT.md
 INFERENCE_PIPELINE_AND_ROADMAP.md
