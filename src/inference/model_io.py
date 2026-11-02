@@ -11,7 +11,7 @@ from ..models.backbone import ResNetBackbone, FEATURE_DIM
 from ..models.temporal import PersonLSTM  # noqa: F401 (re-exported for callers)
 from ..training.train_temporal import B7B8Model
 
-ROOT = r"E:\volleyball datasets"
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 B3A_CKPT = os.path.join(ROOT, "outputs", "checkpoints", "person_finetune_b3a.pt")
 B8MT_CKPT = os.path.join(ROOT, "outputs", "checkpoints", "b8mt_lam1.0.pt")
 

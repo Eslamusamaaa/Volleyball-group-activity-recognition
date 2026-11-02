@@ -76,7 +76,12 @@ class WindowPredictor:
         crops = []  # flat list, P * n_frames, in (player, frame) order
         for tid in ordered_ids:
             for f_idx, frame_idx, frame_bgr, dets in [(i, fi, fb, d) for i, (fi, fb, d) in enumerate(frame_buffer)]:
-                det = next(d for d in dets if d["track_id"] == tid)
+                # Safely find detection — track may have temporarily vanished
+                det_list = [d for d in dets if d["track_id"] == tid]
+                if not det_list:
+                    crops.append(torch.zeros(3, 224, 224))
+                    continue
+                det = det_list[0]
                 rgb = crop_bgr(frame_bgr, det["bbox"])
                 crops.append(EVAL_TRANSFORM(rgb) if rgb is not None else torch.zeros(3, 224, 224))
 
