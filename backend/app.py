@@ -365,14 +365,55 @@ class YouTubeDownloadRequest(BaseModel):
     name: Optional[str] = None
 
 
-@app.post("/api/youtube/download")
-def download_youtube_video(req: YouTubeDownloadRequest, background_tasks: BackgroundTasks):
+@app.post("/api/analyze/url")
+def analyze_url(req: YouTubeDownloadRequest):
+    """Downloads a video from YouTube / web URL and immediately runs full AI analysis pipeline."""
     from src.inference.download_youtube_matches import download_url, search_and_download
 
     if not req.url and not req.query:
         raise HTTPException(400, "Provide either url or query")
 
     job_id = uuid.uuid4().hex
+    display_title = req.name or (req.url if req.url else req.query)
+    job = _new_job(display_title, 0, source_type="url")
+    job["job_id"] = job_id
+    job["status"] = "processing"
+    job["phase"] = "Downloading match footage from URL..."
+    job["progress"] = 5
+    _JOBS[job_id] = job
+
+    def _worker():
+        try:
+            if req.url:
+                res = download_url(req.url, out_name=req.name, out_dir=INTERNET_DATA_DIR, max_seconds=120)
+            else:
+                res = search_and_download(req.query, out_name=req.name, out_dir=INTERNET_DATA_DIR, max_seconds=120)
+
+            vpath = res["file"]
+            job["filename"] = res["filename"]
+            job["size_bytes"] = os.path.getsize(vpath) if os.path.exists(vpath) else 0
+            job["phase"] = "Detecting Players & Extracting Features"
+            job["progress"] = 10
+
+            _run_annotated_job(job_id, vpath, delete_input=False)
+        except Exception as e:
+            traceback.print_exc()
+            job["status"] = "error"
+            job["phase"] = "Failed to download / process URL"
+            job["error"] = str(e)
+            job["finished_at"] = time.time()
+
+    thread = threading.Thread(target=_worker, daemon=True)
+    thread.start()
+    return {"job_id": job_id, "title": display_title}
+
+
+@app.post("/api/youtube/download")
+def download_youtube_video(req: YouTubeDownloadRequest, background_tasks: BackgroundTasks):
+    from src.inference.download_youtube_matches import download_url, search_and_download
+
+    if not req.url and not req.query:
+        raise HTTPException(400, "Provide either url or query")
 
     def _bg_download():
         try:

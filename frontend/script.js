@@ -9,6 +9,12 @@ const dropLabel = document.getElementById("drop-label");
 const fileInput = document.getElementById("file-input");
 const submitBtn = document.getElementById("submit-btn");
 
+const tabModeFile = document.getElementById("tab-mode-file");
+const tabModeUrl = document.getElementById("tab-mode-url");
+const urlZone = document.getElementById("url-zone");
+const directUrlInput = document.getElementById("direct-url-input");
+let studioMode = "file"; // "file" or "url"
+
 const progressCard = document.getElementById("progress-card");
 const progressPhaseEl = document.getElementById("progress-phase");
 const progressPercentEl = document.getElementById("progress-percent");
@@ -113,46 +119,110 @@ dropzone.addEventListener("drop", (e) => {
 });
 dropzone.addEventListener("click", () => fileInput.click());
 
-// Form Submit: Upload Video
+// Studio Mode Toggles
+if (tabModeFile && tabModeUrl) {
+  tabModeFile.addEventListener("click", () => {
+    studioMode = "file";
+    tabModeFile.classList.add("active");
+    tabModeUrl.classList.remove("active");
+    dropzone.hidden = false;
+    urlZone.hidden = true;
+    submitBtn.disabled = !selectedFile;
+  });
+
+  tabModeUrl.addEventListener("click", () => {
+    studioMode = "url";
+    tabModeUrl.classList.add("active");
+    tabModeFile.classList.remove("active");
+    dropzone.hidden = true;
+    urlZone.hidden = false;
+    submitBtn.disabled = !directUrlInput.value.trim();
+  });
+}
+
+if (directUrlInput) {
+  directUrlInput.addEventListener("input", () => {
+    if (studioMode === "url") {
+      submitBtn.disabled = !directUrlInput.value.trim();
+    }
+  });
+}
+
+// Form Submit: Upload Video OR Analyze URL
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
-  if (!selectedFile) return;
-
   hideError();
-  submitBtn.disabled = true;
   resultsContainer.hidden = true;
-  showProgress("Uploading match footage...", 5, selectedFile.name);
 
-  const formData = new FormData();
-  formData.append("video", selectedFile);
+  if (studioMode === "file") {
+    if (!selectedFile) return;
+    submitBtn.disabled = true;
+    showProgress("Uploading match footage...", 5, selectedFile.name);
 
-  try {
-    const res = await fetch(`${API_BASE}/api/analyze`, {
-      method: "POST",
-      body: formData,
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || `Upload failed with status ${res.status}`);
+    const formData = new FormData();
+    formData.append("video", selectedFile);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/analyze`, {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Upload failed with status ${res.status}`);
+      }
+      const data = await res.json();
+      currentJobId = data.job_id;
+      startPolling(currentJobId, selectedFile.name);
+    } catch (err) {
+      showError(err.message);
+      hideProgress();
+      submitBtn.disabled = false;
     }
-    const data = await res.json();
-    currentJobId = data.job_id;
-    startPolling(currentJobId, selectedFile.name);
-  } catch (err) {
-    showError(err.message);
-    hideProgress();
-    submitBtn.disabled = false;
+  } else {
+    const url = directUrlInput.value.trim();
+    if (!url) return;
+    submitBtn.disabled = true;
+    showProgress("Fetching match footage from URL...", 5, url);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/analyze/url`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: url }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Request failed with status ${res.status}`);
+      }
+      const data = await res.json();
+      currentJobId = data.job_id;
+      startPolling(currentJobId, data.title || url);
+    } catch (err) {
+      showError(err.message);
+      hideProgress();
+      submitBtn.disabled = false;
+    }
   }
 });
 
-// Polling Job Status
+// Polling Job Status with graceful retry
 function startPolling(jobId, filename) {
   if (pollTimer) clearInterval(pollTimer);
+  hideError();
 
+  let retryCount = 0;
   pollTimer = setInterval(async () => {
     try {
       const res = await fetch(`${API_BASE}/api/jobs/${jobId}`);
-      if (!res.ok) throw new Error("Could not retrieve job status");
+      if (!res.ok) {
+        retryCount++;
+        if (retryCount > 10) {
+          throw new Error("Job session timed out or server restarted.");
+        }
+        return; // wait for next retry
+      }
+      retryCount = 0; // reset counter on successful fetch
       const job = await res.json();
 
       updateProgress(job.progress || 0, job.phase || "Processing...", filename);
@@ -170,8 +240,15 @@ function startPolling(jobId, filename) {
       }
     } catch (err) {
       console.warn("Polling retry...", err);
+      if (retryCount > 10) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+        showError(err.message || "Could not retrieve analysis status.");
+        hideProgress();
+        submitBtn.disabled = false;
+      }
     }
-  }, 1000);
+  }, 1200);
 }
 
 function showProgress(phase, percent, filename) {

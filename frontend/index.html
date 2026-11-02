@@ -130,6 +130,12 @@
           </div>
         </div>
 
+        <!-- Input Type Tabs -->
+        <div class="studio-tabs">
+          <button type="button" class="tab-btn active" id="tab-mode-file">📁 Upload Video File</button>
+          <button type="button" class="tab-btn" id="tab-mode-url">🔗 Paste YouTube / Match Link</button>
+        </div>
+
         <!-- Upload Form -->
         <form id="upload-form">
           <div class="dropzone" id="dropzone">
@@ -139,6 +145,15 @@
               <span class="dropzone-sub">Supports MP4, AVI, MOV, MKV up to 500 MB</span>
             </div>
             <input id="file-input" type="file" name="video" accept=".mp4,.avi,.mov,.mkv,.webm" hidden>
+          </div>
+
+          <!-- URL Input Zone (hidden by default) -->
+          <div class="url-zone" id="url-zone" hidden>
+            <div class="url-input-wrap">
+              <span class="url-icon">🔗</span>
+              <input type="text" id="direct-url-input" placeholder="Paste YouTube URL e.g. https://www.youtube.com/watch?v=... or match name">
+            </div>
+            <p class="url-hint">The engine will automatically fetch the match footage and initiate the full AI recognition pipeline.</p>
           </div>
 
           <div class="form-actions">
