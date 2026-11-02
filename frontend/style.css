@@ -850,6 +850,48 @@ body {
   color: var(--accent-cyan);
 }
 
+.yt-progress-container {
+  margin-top: 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--line-light);
+  border-radius: 8px;
+  padding: 14px 18px;
+}
+
+.yt-progress-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 8px;
+}
+
+.yt-progress-bar-wrap {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.yt-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #ff0055, #ff5500, #ffcc00);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.yt-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
 .library-tabs {
   display: flex;
   gap: 12px;

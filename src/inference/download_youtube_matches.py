@@ -41,7 +41,7 @@ CURATED_MATCHES = [
 ]
 
 
-def get_ydl_opts(out_template, max_seconds=60):
+def get_ydl_opts(out_template, max_seconds=60, progress_callback=None):
     opts = {
         # Best mp4 video up to 1080p + best audio, or best single file
         "format": "bestvideo[ext=mp4][height<=1080]+bestaudio[ext=m4a]/best[ext=mp4][height<=1080]/best",
@@ -54,10 +54,35 @@ def get_ydl_opts(out_template, max_seconds=60):
         "download_ranges": yt_dlp.utils.download_range_func(None, [(0, max_seconds)]),
         "force_keyframes_at_cuts": True,
     }
+    if progress_callback:
+        def _hook(d):
+            status = d.get("status")
+            if status == "downloading":
+                total = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
+                downloaded = d.get("downloaded_bytes", 0)
+                pct = round((downloaded / total) * 100, 1) if total > 0 else 0.0
+                speed = d.get("_speed_str", "").strip() or "-- KB/s"
+                eta = d.get("_eta_str", "").strip() or "--"
+                progress_callback({
+                    "status": "downloading",
+                    "percent": pct,
+                    "speed": speed,
+                    "eta": eta,
+                    "downloaded": downloaded,
+                    "total": total,
+                })
+            elif status == "finished":
+                progress_callback({
+                    "status": "processing",
+                    "percent": 99.0,
+                    "speed": "Merging audio & video",
+                    "eta": "Finalizing",
+                })
+        opts["progress_hooks"] = [_hook]
     return opts
 
 
-def download_url(url, out_name=None, out_dir=OUT_DIR, max_seconds=60):
+def download_url(url, out_name=None, out_dir=OUT_DIR, max_seconds=60, progress_callback=None):
     os.makedirs(out_dir, exist_ok=True)
     if out_name:
         if not out_name.endswith(".mp4"):
@@ -66,7 +91,7 @@ def download_url(url, out_name=None, out_dir=OUT_DIR, max_seconds=60):
     else:
         out_template = os.path.join(out_dir, "%(title).50s.%(ext)s")
 
-    opts = get_ydl_opts(out_template, max_seconds=max_seconds)
+    opts = get_ydl_opts(out_template, max_seconds=max_seconds, progress_callback=progress_callback)
     with yt_dlp.YoutubeDL(opts) as ydl:
         info = ydl.extract_info(url, download=True)
         filename = ydl.prepare_filename(info)
@@ -82,7 +107,7 @@ def download_url(url, out_name=None, out_dir=OUT_DIR, max_seconds=60):
         }
 
 
-def search_and_download(query, out_name=None, out_dir=OUT_DIR, max_seconds=60):
+def search_and_download(query, out_name=None, out_dir=OUT_DIR, max_seconds=60, progress_callback=None):
     os.makedirs(out_dir, exist_ok=True)
     if out_name:
         if not out_name.endswith(".mp4"):
@@ -91,7 +116,7 @@ def search_and_download(query, out_name=None, out_dir=OUT_DIR, max_seconds=60):
     else:
         out_template = os.path.join(out_dir, "%(title).50s.%(ext)s")
 
-    opts = get_ydl_opts(out_template, max_seconds=max_seconds)
+    opts = get_ydl_opts(out_template, max_seconds=max_seconds, progress_callback=progress_callback)
     search_str = f"ytsearch1:{query}"
     with yt_dlp.YoutubeDL(opts) as ydl:
         res = ydl.extract_info(search_str, download=True)

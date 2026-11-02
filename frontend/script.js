@@ -508,15 +508,27 @@ async function analyzeLibraryItem(item) {
   }
 }
 
-// YouTube Downloader Form
+const ytProgressContainer = document.getElementById("yt-progress-container");
+const ytProgressPhase = document.getElementById("yt-progress-phase");
+const ytProgressPercent = document.getElementById("yt-progress-percent");
+const ytProgressBar = document.getElementById("yt-progress-bar");
+const ytProgressSpeed = document.getElementById("yt-progress-speed");
+const ytProgressEta = document.getElementById("yt-progress-eta");
+
+// YouTube Downloader Form with Real-Time Progress Bar
 ytForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const input = ytUrlInput.value.trim();
   if (!input) return;
 
   ytSubmitBtn.disabled = true;
-  ytStatus.hidden = false;
-  ytStatus.textContent = "Initiating YouTube download in background...";
+  ytStatus.hidden = true;
+  if (ytProgressContainer) ytProgressContainer.hidden = false;
+  if (ytProgressBar) ytProgressBar.style.width = "0%";
+  if (ytProgressPercent) ytProgressPercent.textContent = "0%";
+  if (ytProgressPhase) ytProgressPhase.textContent = "Connecting to YouTube stream...";
+  if (ytProgressSpeed) ytProgressSpeed.textContent = "⚡ Initializing...";
+  if (ytProgressEta) ytProgressEta.textContent = "⏱ Estimating...";
 
   const payload = input.startsWith("http") ? { url: input } : { query: input };
 
@@ -527,12 +539,48 @@ ytForm.addEventListener("submit", async (e) => {
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error("YouTube download request failed");
-    ytStatus.textContent = "Download started! It will appear in your Match Library shortly.";
-    ytUrlInput.value = "";
-    setTimeout(loadLibrary, 5000);
+    const data = await res.json();
+    const downloadId = data.download_id;
+
+    // Poll Real-Time Progress from Backend
+    const pollInterval = setInterval(async () => {
+      try {
+        const pRes = await fetch(`${API_BASE}/api/youtube/progress/${downloadId}`);
+        if (!pRes.ok) return;
+        const pData = await pRes.json();
+
+        const pct = Math.min(100, Math.max(0, pData.percent || 0));
+        if (ytProgressBar) ytProgressBar.style.width = `${pct}%`;
+        if (ytProgressPercent) ytProgressPercent.textContent = `${pct.toFixed(0)}%`;
+        if (ytProgressSpeed) ytProgressSpeed.textContent = `⚡ Speed: ${pData.speed || "--"}`;
+        if (ytProgressEta) ytProgressEta.textContent = `⏱ ETA: ${pData.eta || "--"}`;
+
+        if (pData.status === "downloading") {
+          if (ytProgressPhase) ytProgressPhase.textContent = `Downloading: ${pct.toFixed(1)}%`;
+        } else if (pData.status === "processing") {
+          if (ytProgressPhase) ytProgressPhase.textContent = "Merging H.264 video & audio stream...";
+        } else if (pData.status === "finished") {
+          clearInterval(pollInterval);
+          if (ytProgressBar) ytProgressBar.style.width = "100%";
+          if (ytProgressPercent) ytProgressPercent.textContent = "100%";
+          if (ytProgressPhase) ytProgressPhase.textContent = "✔ Download complete! Added to library.";
+          ytUrlInput.value = "";
+          ytSubmitBtn.disabled = false;
+          loadLibrary();
+        } else if (pData.status === "error") {
+          clearInterval(pollInterval);
+          if (ytProgressPhase) ytProgressPhase.textContent = `❌ Error: ${pData.error || "Download failed"}`;
+          ytSubmitBtn.disabled = false;
+        }
+      } catch (err) {
+        console.warn("Download poll retry...", err);
+      }
+    }, 700);
+
   } catch (err) {
+    if (ytProgressContainer) ytProgressContainer.hidden = true;
+    ytStatus.hidden = false;
     ytStatus.textContent = `Error: ${err.message}`;
-  } finally {
     ytSubmitBtn.disabled = false;
   }
 });

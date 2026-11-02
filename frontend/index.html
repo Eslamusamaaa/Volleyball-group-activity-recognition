@@ -296,6 +296,22 @@
             <span>Download to Library</span>
           </button>
         </form>
+
+        <!-- Real-time Download Progress Bar -->
+        <div id="yt-progress-container" class="yt-progress-container" hidden>
+          <div class="yt-progress-header">
+            <span id="yt-progress-phase">Downloading match footage...</span>
+            <span id="yt-progress-percent">0%</span>
+          </div>
+          <div class="yt-progress-bar-wrap">
+            <div id="yt-progress-bar" class="yt-progress-bar"></div>
+          </div>
+          <div class="yt-progress-meta">
+            <span id="yt-progress-speed">⚡ Connecting...</span>
+            <span id="yt-progress-eta">⏱ ETA: --</span>
+          </div>
+        </div>
+
         <div id="yt-status" class="yt-status" hidden></div>
       </div>
 

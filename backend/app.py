@@ -408,6 +408,16 @@ def analyze_url(req: YouTubeDownloadRequest):
     return {"job_id": job_id, "title": display_title}
 
 
+_DOWNLOADS = {}  # download_id -> dict
+
+
+@app.get("/api/youtube/progress/{download_id}")
+def get_download_progress(download_id: str):
+    if download_id not in _DOWNLOADS:
+        raise HTTPException(404, "Download not found")
+    return _DOWNLOADS[download_id]
+
+
 @app.post("/api/youtube/download")
 def download_youtube_video(req: YouTubeDownloadRequest, background_tasks: BackgroundTasks):
     from src.inference.download_youtube_matches import download_url, search_and_download
@@ -415,17 +425,41 @@ def download_youtube_video(req: YouTubeDownloadRequest, background_tasks: Backgr
     if not req.url and not req.query:
         raise HTTPException(400, "Provide either url or query")
 
+    download_id = uuid.uuid4().hex
+    _DOWNLOADS[download_id] = {
+        "download_id": download_id,
+        "status": "starting",
+        "percent": 0.0,
+        "speed": "Connecting...",
+        "eta": "--",
+        "filename": None,
+        "error": None,
+    }
+
     def _bg_download():
+        def _prog(info):
+            _DOWNLOADS[download_id].update(info)
+
         try:
             if req.url:
-                download_url(req.url, out_name=req.name, out_dir=INTERNET_DATA_DIR)
+                res = download_url(req.url, out_name=req.name, out_dir=INTERNET_DATA_DIR, progress_callback=_prog)
             else:
-                search_and_download(req.query, out_name=req.name, out_dir=INTERNET_DATA_DIR)
+                res = search_and_download(req.query, out_name=req.name, out_dir=INTERNET_DATA_DIR, progress_callback=_prog)
+            _DOWNLOADS[download_id]["status"] = "finished"
+            _DOWNLOADS[download_id]["percent"] = 100.0
+            _DOWNLOADS[download_id]["filename"] = res["filename"]
+            _DOWNLOADS[download_id]["title"] = res.get("title", res["filename"])
         except Exception as e:
-            print(f"[YouTube Download Error] {e}")
+            traceback.print_exc()
+            _DOWNLOADS[download_id]["status"] = "error"
+            _DOWNLOADS[download_id]["error"] = str(e)
 
     background_tasks.add_task(_bg_download)
-    return {"status": "started", "message": "Downloading YouTube match in background to 'from internet'"}
+    return {
+        "status": "started",
+        "download_id": download_id,
+        "message": "Downloading YouTube match with real-time progress"
+    }
 
 
 # Mount static frontend
