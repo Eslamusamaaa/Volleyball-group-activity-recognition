@@ -510,18 +510,9 @@ body {
   color: var(--text-muted);
 }
 
-/* Error Card */
+/* Error Card (Removed per user request) */
 .error-card {
-  margin-top: 20px;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid var(--accent-red);
-  color: #fca5a5;
-  padding: 14px 18px;
-  border-radius: var(--radius);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 14px;
+  display: none !important;
 }
 
 /* Results Workspace */

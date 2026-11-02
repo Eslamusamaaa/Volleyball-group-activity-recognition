@@ -22,8 +22,8 @@ const progressBarEl = document.getElementById("progress-bar");
 const progressFilenameEl = document.getElementById("progress-filename");
 const progressStatusMsgEl = document.getElementById("progress-status-msg");
 
-const errorCard = document.getElementById("error-card");
-const errorMsgEl = document.getElementById("error-message");
+const errorCard = null;
+const errorMsgEl = null;
 
 const resultsContainer = document.getElementById("results");
 const videoWorkspace = document.getElementById("video-workspace");
@@ -65,15 +65,9 @@ let activeLibraryTab = "internet"; // "internet" or "dataset"
 
 // Init
 document.addEventListener("DOMContentLoaded", () => {
-  hideError();
   checkHealth();
   loadLibrary();
   setupViewToggles();
-
-  const errorCloseBtn = document.getElementById("error-close");
-  if (errorCloseBtn) {
-    errorCloseBtn.addEventListener("click", hideError);
-  }
 });
 
 // Check System Health
@@ -288,12 +282,11 @@ function hideProgress() {
 }
 
 function showError(msg) {
-  errorCard.hidden = false;
-  errorMsgEl.textContent = msg;
+  console.warn("[VolleyAI]", msg);
 }
 
 function hideError() {
-  errorCard.hidden = true;
+  // no-op: error card removed
 }
 
 // Job Completion: Populate UI
