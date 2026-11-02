@@ -272,6 +272,7 @@ def get_library():
                 p = os.path.join(INTERNET_DATA_DIR, f)
                 size_mb = round(os.path.getsize(p) / (1024 * 1024), 1)
                 info = _get_video_info(p)
+                mtime = os.path.getmtime(p)
                 internet_files.append({
                     "filename": f,
                     "category": "from internet",
@@ -279,6 +280,7 @@ def get_library():
                     "size_mb": size_mb,
                     "duration_sec": info["duration_sec"],
                     "fps": info["fps"],
+                    "mtime": mtime,
                     "stream_url": f"/api/library/stream/from_internet/{f}",
                 })
 
@@ -289,6 +291,7 @@ def get_library():
                 p = os.path.join(DATASET_DATA_DIR, f)
                 size_mb = round(os.path.getsize(p) / (1024 * 1024), 1)
                 info = _get_video_info(p)
+                mtime = os.path.getmtime(p)
                 dataset_files.append({
                     "filename": f,
                     "category": "from our dataset",
@@ -296,11 +299,12 @@ def get_library():
                     "size_mb": size_mb,
                     "duration_sec": info["duration_sec"],
                     "fps": info["fps"],
+                    "mtime": mtime,
                     "stream_url": f"/api/library/stream/from_dataset/{f}",
                 })
 
-    # Sort internet by duration desc, dataset by duration desc
-    internet_files.sort(key=lambda x: -x["duration_sec"])
+    # Sort internet by newest downloaded first (mtime desc), dataset by longest first
+    internet_files.sort(key=lambda x: -x["mtime"])
     dataset_files.sort(key=lambda x: -x["duration_sec"])
 
     return {

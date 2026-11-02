@@ -65,9 +65,15 @@ let activeLibraryTab = "internet"; // "internet" or "dataset"
 
 // Init
 document.addEventListener("DOMContentLoaded", () => {
+  hideError();
   checkHealth();
   loadLibrary();
   setupViewToggles();
+
+  const errorCloseBtn = document.getElementById("error-close");
+  if (errorCloseBtn) {
+    errorCloseBtn.addEventListener("click", hideError);
+  }
 });
 
 // Check System Health
@@ -216,11 +222,24 @@ function startPolling(jobId, filename) {
     try {
       const res = await fetch(`${API_BASE}/api/jobs/${jobId}`);
       if (!res.ok) {
-        retryCount++;
-        if (retryCount > 10) {
-          throw new Error("Job session timed out or server restarted.");
+        if (res.status === 404) {
+          // Stale job or server restart — cleanly stop polling without throwing error banner
+          clearInterval(pollTimer);
+          pollTimer = null;
+          hideProgress();
+          hideError();
+          submitBtn.disabled = false;
+          return;
         }
-        return; // wait for next retry
+        retryCount++;
+        if (retryCount > 8) {
+          clearInterval(pollTimer);
+          pollTimer = null;
+          hideProgress();
+          submitBtn.disabled = false;
+          return;
+        }
+        return;
       }
       retryCount = 0; // reset counter on successful fetch
       const job = await res.json();
@@ -240,10 +259,10 @@ function startPolling(jobId, filename) {
       }
     } catch (err) {
       console.warn("Polling retry...", err);
-      if (retryCount > 10) {
+      retryCount++;
+      if (retryCount > 8) {
         clearInterval(pollTimer);
         pollTimer = null;
-        showError(err.message || "Could not retrieve analysis status.");
         hideProgress();
         submitBtn.disabled = false;
       }
@@ -439,9 +458,13 @@ function renderLibraryGrid() {
     const durSecs = Math.floor(item.duration_sec % 60);
     const durStr = durMins > 0 ? `${durMins}m ${durSecs}s` : `${item.duration_sec.toFixed(1)}s`;
 
+    // Highlight items downloaded recently (within last 30 minutes)
+    const isNew = item.mtime && (Date.now() / 1000 - item.mtime) < 1800;
+    const newBadge = isNew ? `<span style="background: rgba(16, 185, 129, 0.2); color: #34d399; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 700; margin-left: 6px;">✨ NEW</span>` : "";
+
     card.innerHTML = `
       <div class="lib-card-top">
-        <h5>${item.title}</h5>
+        <h5>${item.title} ${newBadge}</h5>
         <div class="lib-meta">
           <span>⏱ ${durStr}</span>
           <span>💾 ${item.size_mb} MB</span>
@@ -563,7 +586,24 @@ ytForm.addEventListener("submit", async (e) => {
           clearInterval(pollInterval);
           if (ytProgressBar) ytProgressBar.style.width = "100%";
           if (ytProgressPercent) ytProgressPercent.textContent = "100%";
-          if (ytProgressPhase) ytProgressPhase.textContent = "✔ Download complete! Added to library.";
+          if (ytProgressPhase) {
+            ytProgressPhase.innerHTML = `
+              <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                <span>✔ <strong>${pData.title || pData.filename}</strong> added to library!</span>
+                <button type="button" class="btn primary-btn btn-analyze-now-yt" style="padding: 6px 14px; font-size: 13px;">⚡ Analyze This Video Now</button>
+              </div>
+            `;
+            const analyzeBtn = ytProgressPhase.querySelector(".btn-analyze-now-yt");
+            if (analyzeBtn) {
+              analyzeBtn.addEventListener("click", () => {
+                analyzeLibraryItem({
+                  category: "from internet",
+                  filename: pData.filename,
+                  stream_url: `/api/library/stream/from_internet/${pData.filename}`
+                });
+              });
+            }
+          }
           ytUrlInput.value = "";
           ytSubmitBtn.disabled = false;
           loadLibrary();
