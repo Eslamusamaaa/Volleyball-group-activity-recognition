@@ -295,6 +295,13 @@
         </div>
         <form id="yt-form" class="yt-input-row">
           <input type="text" id="yt-url-input" placeholder="https://www.youtube.com/watch?v=... or search query" required>
+          <select id="yt-duration-select" style="padding: 10px 14px; background: #161b26; border: 1px solid #2a3449; color: #f1f5f9; border-radius: 8px; font-weight: 500; font-size: 13px; cursor: pointer;">
+            <option value="0" selected>🎬 Full Video (100%)</option>
+            <option value="600">⏱ 10 Minutes</option>
+            <option value="300">⏱ 5 Minutes</option>
+            <option value="180">⏱ 3 Minutes</option>
+            <option value="60">⚡ 1 Minute (Quick)</option>
+          </select>
           <button type="submit" id="yt-submit-btn" class="btn primary-btn">
             <span>Download to Library</span>
           </button>

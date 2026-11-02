@@ -553,7 +553,10 @@ ytForm.addEventListener("submit", async (e) => {
   if (ytProgressSpeed) ytProgressSpeed.textContent = "⚡ Initializing...";
   if (ytProgressEta) ytProgressEta.textContent = "⏱ Estimating...";
 
-  const payload = input.startsWith("http") ? { url: input } : { query: input };
+  const durSec = parseInt(document.getElementById("yt-duration-select")?.value || "0", 10);
+  const payload = input.startsWith("http")
+    ? { url: input, max_duration_sec: durSec > 0 ? durSec : null }
+    : { query: input, max_duration_sec: durSec > 0 ? durSec : null };
 
   try {
     const res = await fetch(`${API_BASE}/api/youtube/download`, {

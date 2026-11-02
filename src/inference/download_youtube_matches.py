@@ -41,7 +41,7 @@ CURATED_MATCHES = [
 ]
 
 
-def get_ydl_opts(out_template, max_seconds=60, progress_callback=None):
+def get_ydl_opts(out_template, max_seconds=None, progress_callback=None):
     opts = {
         # Best mp4 video up to 1080p + best audio, or best single file
         "format": "bestvideo[ext=mp4][height<=1080]+bestaudio[ext=m4a]/best[ext=mp4][height<=1080]/best",
@@ -50,10 +50,12 @@ def get_ydl_opts(out_template, max_seconds=60, progress_callback=None):
         "no_warnings": False,
         "merge_output_format": "mp4",
         "ffmpeg_location": VENV_SCRIPTS if os.path.isdir(VENV_SCRIPTS) else None,
-        # Limit to first section if video is long to ensure rapid download of match action
-        "download_ranges": yt_dlp.utils.download_range_func(None, [(0, max_seconds)]),
-        "force_keyframes_at_cuts": True,
     }
+    # Only apply download range cut if max_seconds is explicitly provided and > 0
+    if max_seconds and max_seconds > 0:
+        opts["download_ranges"] = yt_dlp.utils.download_range_func(None, [(0, max_seconds)])
+        opts["force_keyframes_at_cuts"] = True
+
     if progress_callback:
         def _hook(d):
             status = d.get("status")
@@ -82,7 +84,7 @@ def get_ydl_opts(out_template, max_seconds=60, progress_callback=None):
     return opts
 
 
-def download_url(url, out_name=None, out_dir=OUT_DIR, max_seconds=60, progress_callback=None):
+def download_url(url, out_name=None, out_dir=OUT_DIR, max_seconds=None, progress_callback=None):
     os.makedirs(out_dir, exist_ok=True)
     if out_name:
         if not out_name.endswith(".mp4"):
@@ -99,15 +101,17 @@ def download_url(url, out_name=None, out_dir=OUT_DIR, max_seconds=60, progress_c
         mp4_file = base + ".mp4"
         if os.path.exists(mp4_file):
             filename = mp4_file
+        raw_dur = info.get("duration", 0) or 0
+        dur = min(raw_dur, max_seconds) if (max_seconds and max_seconds > 0 and raw_dur > 0) else raw_dur
         return {
             "title": info.get("title", "Match Video"),
-            "duration": min(info.get("duration", max_seconds) or max_seconds, max_seconds),
+            "duration": dur,
             "file": filename,
             "filename": os.path.basename(filename),
         }
 
 
-def search_and_download(query, out_name=None, out_dir=OUT_DIR, max_seconds=60, progress_callback=None):
+def search_and_download(query, out_name=None, out_dir=OUT_DIR, max_seconds=None, progress_callback=None):
     os.makedirs(out_dir, exist_ok=True)
     if out_name:
         if not out_name.endswith(".mp4"):
@@ -129,9 +133,11 @@ def search_and_download(query, out_name=None, out_dir=OUT_DIR, max_seconds=60, p
         mp4_file = base + ".mp4"
         if os.path.exists(mp4_file):
             filename = mp4_file
+        raw_dur = info.get("duration", 0) or 0
+        dur = min(raw_dur, max_seconds) if (max_seconds and max_seconds > 0 and raw_dur > 0) else raw_dur
         return {
             "title": info.get("title"),
-            "duration": min(info.get("duration", max_seconds) or max_seconds, max_seconds),
+            "duration": dur,
             "file": filename,
             "filename": os.path.basename(filename),
         }

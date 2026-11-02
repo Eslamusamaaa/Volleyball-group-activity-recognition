@@ -367,6 +367,7 @@ class YouTubeDownloadRequest(BaseModel):
     url: Optional[str] = None
     query: Optional[str] = None
     name: Optional[str] = None
+    max_duration_sec: Optional[int] = None
 
 
 @app.post("/api/analyze/url")
@@ -386,12 +387,14 @@ def analyze_url(req: YouTubeDownloadRequest):
     job["progress"] = 5
     _JOBS[job_id] = job
 
+    max_sec = req.max_duration_sec if (req.max_duration_sec is not None and req.max_duration_sec > 0) else None
+
     def _worker():
         try:
             if req.url:
-                res = download_url(req.url, out_name=req.name, out_dir=INTERNET_DATA_DIR, max_seconds=120)
+                res = download_url(req.url, out_name=req.name, out_dir=INTERNET_DATA_DIR, max_seconds=max_sec)
             else:
-                res = search_and_download(req.query, out_name=req.name, out_dir=INTERNET_DATA_DIR, max_seconds=120)
+                res = search_and_download(req.query, out_name=req.name, out_dir=INTERNET_DATA_DIR, max_seconds=max_sec)
 
             vpath = res["file"]
             job["filename"] = res["filename"]
@@ -440,15 +443,17 @@ def download_youtube_video(req: YouTubeDownloadRequest, background_tasks: Backgr
         "error": None,
     }
 
+    max_sec = req.max_duration_sec if (req.max_duration_sec is not None and req.max_duration_sec > 0) else None
+
     def _bg_download():
         def _prog(info):
             _DOWNLOADS[download_id].update(info)
 
         try:
             if req.url:
-                res = download_url(req.url, out_name=req.name, out_dir=INTERNET_DATA_DIR, progress_callback=_prog)
+                res = download_url(req.url, out_name=req.name, out_dir=INTERNET_DATA_DIR, max_seconds=max_sec, progress_callback=_prog)
             else:
-                res = search_and_download(req.query, out_name=req.name, out_dir=INTERNET_DATA_DIR, progress_callback=_prog)
+                res = search_and_download(req.query, out_name=req.name, out_dir=INTERNET_DATA_DIR, max_seconds=max_sec, progress_callback=_prog)
             _DOWNLOADS[download_id]["status"] = "finished"
             _DOWNLOADS[download_id]["percent"] = 100.0
             _DOWNLOADS[download_id]["filename"] = res["filename"]
