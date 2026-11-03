@@ -1,0 +1,45 @@
+/* Design tokens — VolleyAI research platform */
+:root {
+  color-scheme: dark;
+  --bg: #07090e;
+  --bg-2: #0b0f17;
+  --surface: #0f141e;
+  --surface-2: #141b27;
+  --surface-3: #1a2331;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.16);
+  --text: #e9eef6;
+  --text-2: #a7b2c4;
+  --text-3: #6f7c91;
+
+  --accent: #ff7a2f;          /* volleyball orange */
+  --accent-2: #35d0c4;        /* court teal */
+  --accent-soft: rgba(255, 122, 47, 0.14);
+  --ok: #4ade80;
+  --warn: #f5c542;
+  --bad: #ff5d6c;
+
+  /* activity classes — used consistently on timeline, charts, chips */
+  --c-pass: #35d0c4;
+  --c-set: #a78bfa;
+  --c-spike: #ff7a2f;
+  --c-winpoint: #f5c542;
+  --team-left: #5aa9ff;
+  --team-right: #ff7aa8;
+
+  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Consolas, monospace;
+
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-xl: 26px;
+  --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 12px 32px -12px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 0 1px rgba(255, 122, 47, 0.35), 0 12px 44px -12px rgba(255, 122, 47, 0.35);
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --nav-h: 64px;
+  --notice-h: 30px;
+  --nav-off: 94px;
+  --maxw: 1200px;
+}

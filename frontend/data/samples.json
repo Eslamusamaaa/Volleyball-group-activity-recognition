@@ -1,0 +1,1340 @@
+{
+ "group": [
+  {
+   "label": "r_spike",
+   "video": 9,
+   "clip": "42685",
+   "gt_scene": "r_spike",
+   "pred_scene": "r_spike",
+   "scene_conf": 0.999,
+   "image": "assets/samples/group_r_spike.webp",
+   "width": 1280,
+   "height": 720,
+   "players": [
+    {
+     "id": 5,
+     "action": "waiting",
+     "conf": 0.878,
+     "gt": "standing",
+     "correct": false,
+     "bbox": [
+      153.5,
+      430.7,
+      209.7,
+      554.6
+     ]
+    },
+    {
+     "id": 3,
+     "action": "moving",
+     "conf": 0.982,
+     "gt": "standing",
+     "correct": false,
+     "bbox": [
+      183.5,
+      453.9,
+      257.5,
+      604.3
+     ]
+    },
+    {
+     "id": 1,
+     "action": "standing",
+     "conf": 0.382,
+     "gt": "moving",
+     "correct": false,
+     "bbox": [
+      310.6,
+      372.3,
+      379.0,
+      478.3
+     ]
+    },
+    {
+     "id": 6,
+     "action": "standing",
+     "conf": 0.502,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      462.0,
+      467.2,
+      552.6,
+      608.3
+     ]
+    },
+    {
+     "id": 8,
+     "action": "standing",
+     "conf": 0.885,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      529.6,
+      448.1,
+      575.0,
+      590.4
+     ]
+    },
+    {
+     "id": 12,
+     "action": "blocking",
+     "conf": 0.999,
+     "gt": "blocking",
+     "correct": true,
+     "bbox": [
+      551.9,
+      309.1,
+      589.3,
+      474.6
+     ]
+    },
+    {
+     "id": 9,
+     "action": "spiking",
+     "conf": 0.999,
+     "gt": "spiking",
+     "correct": true,
+     "bbox": [
+      648.9,
+      307.2,
+      719.5,
+      443.6
+     ]
+    },
+    {
+     "id": 7,
+     "action": "falling",
+     "conf": 0.866,
+     "gt": "falling",
+     "correct": true,
+     "bbox": [
+      685.8,
+      411.7,
+      740.7,
+      520.2
+     ]
+    },
+    {
+     "id": 4,
+     "action": "standing",
+     "conf": 0.982,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      769.6,
+      365.4,
+      814.0,
+      480.3
+     ]
+    },
+    {
+     "id": 2,
+     "action": "moving",
+     "conf": 0.813,
+     "gt": "standing",
+     "correct": false,
+     "bbox": [
+      812.2,
+      500.2,
+      881.7,
+      661.4
+     ]
+    },
+    {
+     "id": 10,
+     "action": "moving",
+     "conf": 0.981,
+     "gt": null,
+     "correct": null,
+     "bbox": [
+      836.4,
+      413.3,
+      930.7,
+      533.6
+     ]
+    }
+   ],
+   "clip_video": "assets/group/r_spike.mp4"
+  },
+  {
+   "label": "l_set",
+   "video": 34,
+   "clip": "22085",
+   "gt_scene": "l_set",
+   "pred_scene": "l_set",
+   "scene_conf": 1.0,
+   "image": "assets/samples/group_l_set.webp",
+   "width": 1280,
+   "height": 720,
+   "players": [
+    {
+     "id": 1,
+     "action": "moving",
+     "conf": 0.994,
+     "gt": "moving",
+     "correct": true,
+     "bbox": [
+      300.8,
+      467.5,
+      392.4,
+      586.8
+     ]
+    },
+    {
+     "id": 2,
+     "action": "moving",
+     "conf": 0.938,
+     "gt": "moving",
+     "correct": true,
+     "bbox": [
+      332.3,
+      373.0,
+      407.4,
+      479.9
+     ]
+    },
+    {
+     "id": 8,
+     "action": "falling",
+     "conf": 1.0,
+     "gt": "falling",
+     "correct": true,
+     "bbox": [
+      433.5,
+      510.9,
+      537.7,
+      582.1
+     ]
+    },
+    {
+     "id": 7,
+     "action": "moving",
+     "conf": 0.99,
+     "gt": "moving",
+     "correct": true,
+     "bbox": [
+      507.6,
+      321.2,
+      573.7,
+      408.0
+     ]
+    },
+    {
+     "id": 10,
+     "action": "setting",
+     "conf": 0.999,
+     "gt": "setting",
+     "correct": true,
+     "bbox": [
+      598.9,
+      366.5,
+      647.1,
+      521.5
+     ]
+    },
+    {
+     "id": 9,
+     "action": "standing",
+     "conf": 0.74,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      630.6,
+      366.4,
+      673.7,
+      489.3
+     ]
+    },
+    {
+     "id": 12,
+     "action": "blocking",
+     "conf": 0.877,
+     "gt": "blocking",
+     "correct": true,
+     "bbox": [
+      731.7,
+      374.4,
+      782.1,
+      505.8
+     ]
+    },
+    {
+     "id": 6,
+     "action": "standing",
+     "conf": 0.942,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      731.8,
+      435.4,
+      778.3,
+      552.7
+     ]
+    },
+    {
+     "id": 11,
+     "action": "standing",
+     "conf": 0.918,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      756.9,
+      360.0,
+      800.1,
+      466.2
+     ]
+    },
+    {
+     "id": 4,
+     "action": "standing",
+     "conf": 0.704,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      904.5,
+      349.1,
+      959.8,
+      461.0
+     ]
+    },
+    {
+     "id": 5,
+     "action": "standing",
+     "conf": 0.867,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      1055.4,
+      459.5,
+      1107.0,
+      580.9
+     ]
+    },
+    {
+     "id": 3,
+     "action": "standing",
+     "conf": 0.987,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      1085.4,
+      390.4,
+      1141.0,
+      501.8
+     ]
+    }
+   ],
+   "clip_video": "assets/group/l_set.mp4"
+  },
+  {
+   "label": "r-pass",
+   "video": 35,
+   "clip": "35370",
+   "gt_scene": "r-pass",
+   "pred_scene": "r-pass",
+   "scene_conf": 0.999,
+   "image": "assets/samples/group_r_pass.webp",
+   "width": 1280,
+   "height": 720,
+   "players": [
+    {
+     "id": 2,
+     "action": "standing",
+     "conf": 0.997,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      93.4,
+      487.3,
+      164.8,
+      634.6
+     ]
+    },
+    {
+     "id": 6,
+     "action": "standing",
+     "conf": 0.95,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      107.9,
+      403.5,
+      148.6,
+      511.5
+     ]
+    },
+    {
+     "id": 4,
+     "action": "standing",
+     "conf": 0.994,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      282.6,
+      365.6,
+      326.4,
+      488.0
+     ]
+    },
+    {
+     "id": 5,
+     "action": "standing",
+     "conf": 0.987,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      326.0,
+      493.7,
+      378.9,
+      639.9
+     ]
+    },
+    {
+     "id": 11,
+     "action": "standing",
+     "conf": 0.996,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      366.3,
+      335.3,
+      416.0,
+      446.8
+     ]
+    },
+    {
+     "id": 7,
+     "action": "standing",
+     "conf": 0.922,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      390.1,
+      411.5,
+      431.1,
+      548.2
+     ]
+    },
+    {
+     "id": 12,
+     "action": "standing",
+     "conf": 0.903,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      421.3,
+      329.9,
+      454.7,
+      445.5
+     ]
+    },
+    {
+     "id": 9,
+     "action": "standing",
+     "conf": 0.89,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      450.5,
+      349.3,
+      504.3,
+      447.3
+     ]
+    },
+    {
+     "id": 1,
+     "action": "waiting",
+     "conf": 0.799,
+     "gt": "waiting",
+     "correct": true,
+     "bbox": [
+      543.4,
+      470.1,
+      629.5,
+      588.5
+     ]
+    },
+    {
+     "id": 3,
+     "action": "waiting",
+     "conf": 0.866,
+     "gt": "standing",
+     "correct": false,
+     "bbox": [
+      696.3,
+      351.4,
+      751.8,
+      443.0
+     ]
+    },
+    {
+     "id": 10,
+     "action": "falling",
+     "conf": 0.993,
+     "gt": "falling",
+     "correct": true,
+     "bbox": [
+      788.4,
+      449.9,
+      856.5,
+      508.9
+     ]
+    },
+    {
+     "id": 8,
+     "action": "waiting",
+     "conf": 0.991,
+     "gt": "waiting",
+     "correct": true,
+     "bbox": [
+      847.5,
+      453.9,
+      914.4,
+      554.0
+     ]
+    }
+   ],
+   "clip_video": "assets/group/r_pass.mp4"
+  },
+  {
+   "label": "l_winpoint",
+   "video": 5,
+   "clip": "34995",
+   "gt_scene": "l_winpoint",
+   "pred_scene": "l_winpoint",
+   "scene_conf": 1.0,
+   "image": "assets/samples/group_l_winpoint.webp",
+   "width": 1280,
+   "height": 720,
+   "players": [
+    {
+     "id": 7,
+     "action": "standing",
+     "conf": 0.938,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      291.5,
+      394.6,
+      363.8,
+      539.1
+     ]
+    },
+    {
+     "id": 11,
+     "action": "standing",
+     "conf": 0.879,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      341.6,
+      430.7,
+      381.2,
+      560.2
+     ]
+    },
+    {
+     "id": 8,
+     "action": "standing",
+     "conf": 0.941,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      372.5,
+      440.3,
+      428.6,
+      592.8
+     ]
+    },
+    {
+     "id": 9,
+     "action": "standing",
+     "conf": 0.954,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      409.5,
+      400.8,
+      486.5,
+      538.8
+     ]
+    },
+    {
+     "id": 10,
+     "action": "standing",
+     "conf": 0.758,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      435.7,
+      370.9,
+      496.1,
+      509.6
+     ]
+    },
+    {
+     "id": 12,
+     "action": "standing",
+     "conf": 0.513,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      529.8,
+      424.7,
+      566.2,
+      581.8
+     ]
+    },
+    {
+     "id": 2,
+     "action": "standing",
+     "conf": 0.997,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      601.8,
+      462.0,
+      657.5,
+      622.8
+     ]
+    },
+    {
+     "id": 4,
+     "action": "standing",
+     "conf": 0.989,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      668.5,
+      469.5,
+      750.1,
+      644.4
+     ]
+    },
+    {
+     "id": 5,
+     "action": "standing",
+     "conf": 0.957,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      742.4,
+      344.2,
+      791.3,
+      479.6
+     ]
+    },
+    {
+     "id": 1,
+     "action": "standing",
+     "conf": 0.998,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      893.9,
+      348.5,
+      948.6,
+      477.1
+     ]
+    },
+    {
+     "id": 6,
+     "action": "standing",
+     "conf": 0.998,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      936.9,
+      451.0,
+      979.1,
+      610.9
+     ]
+    },
+    {
+     "id": 3,
+     "action": "standing",
+     "conf": 0.997,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      1027.6,
+      385.1,
+      1073.8,
+      532.5
+     ]
+    }
+   ],
+   "clip_video": "assets/group/l_winpoint.mp4"
+  }
+ ],
+ "player": [
+  {
+   "label": "spiking",
+   "video": 9,
+   "clip": "31200",
+   "gt_scene": "r_spike",
+   "pred_scene": "r_spike",
+   "scene_conf": 0.993,
+   "featured": 10,
+   "image": "assets/samples/player_spiking.webp",
+   "width": 1280,
+   "height": 720,
+   "players": [
+    {
+     "id": 3,
+     "action": "standing",
+     "conf": 0.982,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      78.4,
+      391.3,
+      151.5,
+      532.7
+     ]
+    },
+    {
+     "id": 6,
+     "action": "moving",
+     "conf": 0.756,
+     "gt": "standing",
+     "correct": false,
+     "bbox": [
+      203.1,
+      355.2,
+      287.6,
+      460.7
+     ]
+    },
+    {
+     "id": 2,
+     "action": "standing",
+     "conf": 0.992,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      227.5,
+      422.9,
+      305.2,
+      567.8
+     ]
+    },
+    {
+     "id": 1,
+     "action": "standing",
+     "conf": 0.767,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      419.4,
+      436.0,
+      518.4,
+      573.7
+     ]
+    },
+    {
+     "id": 11,
+     "action": "blocking",
+     "conf": 0.997,
+     "gt": "blocking",
+     "correct": true,
+     "bbox": [
+      586.1,
+      307.9,
+      631.5,
+      477.4
+     ]
+    },
+    {
+     "id": 5,
+     "action": "standing",
+     "conf": 0.843,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      685.9,
+      385.5,
+      745.2,
+      514.7
+     ]
+    },
+    {
+     "id": 7,
+     "action": "standing",
+     "conf": 0.944,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      742.0,
+      446.3,
+      811.2,
+      612.0
+     ]
+    },
+    {
+     "id": 10,
+     "action": "spiking",
+     "conf": 1.0,
+     "gt": "spiking",
+     "correct": true,
+     "bbox": [
+      766.4,
+      282.6,
+      822.0,
+      428.0
+     ]
+    },
+    {
+     "id": 9,
+     "action": "standing",
+     "conf": 0.758,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      787.1,
+      412.9,
+      859.8,
+      562.1
+     ]
+    },
+    {
+     "id": 8,
+     "action": "standing",
+     "conf": 0.996,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      851.0,
+      357.4,
+      908.7,
+      483.7
+     ]
+    },
+    {
+     "id": 4,
+     "action": "standing",
+     "conf": 0.886,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      914.7,
+      382.9,
+      971.8,
+      519.2
+     ]
+    }
+   ]
+  },
+  {
+   "label": "blocking",
+   "video": 37,
+   "clip": "10664",
+   "gt_scene": "r_set",
+   "pred_scene": "r_set",
+   "scene_conf": 1.0,
+   "featured": 12,
+   "image": "assets/samples/player_blocking.webp",
+   "width": 1920,
+   "height": 1080,
+   "players": [
+    {
+     "id": 9,
+     "action": "standing",
+     "conf": 0.997,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      319.7,
+      499.8,
+      382.7,
+      693.5
+     ]
+    },
+    {
+     "id": 5,
+     "action": "waiting",
+     "conf": 0.996,
+     "gt": "waiting",
+     "correct": true,
+     "bbox": [
+      359.6,
+      649.1,
+      459.5,
+      841.8
+     ]
+    },
+    {
+     "id": 4,
+     "action": "standing",
+     "conf": 0.993,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      509.0,
+      442.4,
+      587.6,
+      616.4
+     ]
+    },
+    {
+     "id": 8,
+     "action": "standing",
+     "conf": 0.847,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      885.9,
+      613.7,
+      955.3,
+      794.9
+     ]
+    },
+    {
+     "id": 12,
+     "action": "blocking",
+     "conf": 0.996,
+     "gt": "blocking",
+     "correct": true,
+     "bbox": [
+      886.5,
+      516.8,
+      954.2,
+      698.5
+     ]
+    },
+    {
+     "id": 10,
+     "action": "standing",
+     "conf": 0.943,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      888.9,
+      467.7,
+      948.0,
+      634.1
+     ]
+    },
+    {
+     "id": 7,
+     "action": "digging",
+     "conf": 0.413,
+     "gt": "standing",
+     "correct": false,
+     "bbox": [
+      1072.4,
+      559.3,
+      1192.0,
+      749.1
+     ]
+    },
+    {
+     "id": 11,
+     "action": "setting",
+     "conf": 0.994,
+     "gt": "setting",
+     "correct": true,
+     "bbox": [
+      1136.7,
+      434.3,
+      1222.3,
+      652.3
+     ]
+    },
+    {
+     "id": 6,
+     "action": "moving",
+     "conf": 0.995,
+     "gt": "moving",
+     "correct": true,
+     "bbox": [
+      1178.3,
+      420.8,
+      1299.8,
+      551.8
+     ]
+    },
+    {
+     "id": 2,
+     "action": "moving",
+     "conf": 0.992,
+     "gt": "moving",
+     "correct": true,
+     "bbox": [
+      1264.8,
+      705.3,
+      1452.5,
+      892.2
+     ]
+    },
+    {
+     "id": 3,
+     "action": "moving",
+     "conf": 0.974,
+     "gt": "moving",
+     "correct": true,
+     "bbox": [
+      1473.3,
+      545.7,
+      1578.3,
+      719.3
+     ]
+    },
+    {
+     "id": 1,
+     "action": "standing",
+     "conf": 0.989,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      1604.3,
+      575.3,
+      1696.0,
+      762.1
+     ]
+    }
+   ]
+  },
+  {
+   "label": "setting",
+   "video": 44,
+   "clip": "40730",
+   "gt_scene": "l_set",
+   "pred_scene": "l_set",
+   "scene_conf": 1.0,
+   "featured": 10,
+   "image": "assets/samples/player_setting.webp",
+   "width": 1920,
+   "height": 1080,
+   "players": [
+    {
+     "id": 8,
+     "action": "moving",
+     "conf": 0.99,
+     "gt": "moving",
+     "correct": true,
+     "bbox": [
+      382.0,
+      659.2,
+      514.2,
+      801.1
+     ]
+    },
+    {
+     "id": 1,
+     "action": "moving",
+     "conf": 0.901,
+     "gt": "moving",
+     "correct": true,
+     "bbox": [
+      395.0,
+      716.5,
+      480.6,
+      876.4
+     ]
+    },
+    {
+     "id": 6,
+     "action": "moving",
+     "conf": 0.983,
+     "gt": "moving",
+     "correct": true,
+     "bbox": [
+      547.5,
+      494.1,
+      627.7,
+      614.6
+     ]
+    },
+    {
+     "id": 2,
+     "action": "moving",
+     "conf": 0.975,
+     "gt": "moving",
+     "correct": true,
+     "bbox": [
+      624.4,
+      575.2,
+      714.1,
+      701.2
+     ]
+    },
+    {
+     "id": 3,
+     "action": "moving",
+     "conf": 0.926,
+     "gt": "moving",
+     "correct": true,
+     "bbox": [
+      720.6,
+      687.7,
+      800.4,
+      843.8
+     ]
+    },
+    {
+     "id": 10,
+     "action": "setting",
+     "conf": 0.999,
+     "gt": "setting",
+     "correct": true,
+     "bbox": [
+      810.8,
+      630.1,
+      879.7,
+      816.4
+     ]
+    },
+    {
+     "id": 9,
+     "action": "standing",
+     "conf": 0.865,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      967.2,
+      527.5,
+      1031.7,
+      658.5
+     ]
+    },
+    {
+     "id": 12,
+     "action": "standing",
+     "conf": 0.797,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      969.9,
+      624.1,
+      1035.7,
+      777.0
+     ]
+    },
+    {
+     "id": 5,
+     "action": "standing",
+     "conf": 0.908,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      976.5,
+      702.1,
+      1043.1,
+      882.4
+     ]
+    },
+    {
+     "id": 4,
+     "action": "standing",
+     "conf": 0.507,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      1224.1,
+      583.3,
+      1280.6,
+      710.0
+     ]
+    },
+    {
+     "id": 7,
+     "action": "standing",
+     "conf": 0.91,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      1357.4,
+      599.2,
+      1441.7,
+      753.4
+     ]
+    },
+    {
+     "id": 11,
+     "action": "standing",
+     "conf": 0.988,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      1372.8,
+      675.2,
+      1440.2,
+      827.9
+     ]
+    }
+   ]
+  },
+  {
+   "label": "digging",
+   "video": 44,
+   "clip": "20235",
+   "gt_scene": "r-pass",
+   "pred_scene": "r-pass",
+   "scene_conf": 0.965,
+   "featured": 3,
+   "image": "assets/samples/player_digging.webp",
+   "width": 1920,
+   "height": 1080,
+   "players": [
+    {
+     "id": 7,
+     "action": "standing",
+     "conf": 0.998,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      481.7,
+      610.2,
+      539.7,
+      791.7
+     ]
+    },
+    {
+     "id": 11,
+     "action": "standing",
+     "conf": 0.998,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      530.0,
+      561.7,
+      586.4,
+      704.8
+     ]
+    },
+    {
+     "id": 1,
+     "action": "standing",
+     "conf": 0.988,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      635.4,
+      692.4,
+      739.7,
+      865.7
+     ]
+    },
+    {
+     "id": 9,
+     "action": "standing",
+     "conf": 0.991,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      734.3,
+      557.7,
+      786.4,
+      714.2
+     ]
+    },
+    {
+     "id": 12,
+     "action": "standing",
+     "conf": 0.755,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      737.9,
+      506.5,
+      784.7,
+      644.0
+     ]
+    },
+    {
+     "id": 8,
+     "action": "standing",
+     "conf": 0.996,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      903.0,
+      651.4,
+      978.8,
+      804.9
+     ]
+    },
+    {
+     "id": 6,
+     "action": "standing",
+     "conf": 0.998,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      1076.6,
+      506.2,
+      1129.4,
+      663.3
+     ]
+    },
+    {
+     "id": 10,
+     "action": "standing",
+     "conf": 0.845,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      1123.5,
+      628.5,
+      1210.4,
+      801.8
+     ]
+    },
+    {
+     "id": 4,
+     "action": "standing",
+     "conf": 0.917,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      1150.9,
+      707.2,
+      1224.9,
+      901.8
+     ]
+    },
+    {
+     "id": 2,
+     "action": "standing",
+     "conf": 0.998,
+     "gt": "standing",
+     "correct": true,
+     "bbox": [
+      1257.3,
+      541.7,
+      1321.7,
+      694.5
+     ]
+    },
+    {
+     "id": 3,
+     "action": "digging",
+     "conf": 1.0,
+     "gt": "digging",
+     "correct": true,
+     "bbox": [
+      1485.5,
+      687.4,
+      1576.7,
+      888.9
+     ]
+    },
+    {
+     "id": 5,
+     "action": "moving",
+     "conf": 0.935,
+     "gt": "moving",
+     "correct": true,
+     "bbox": [
+      1609.6,
+      816.9,
+      1697.3,
+      1041.4
+     ]
+    }
+   ]
+  }
+ ]
+}

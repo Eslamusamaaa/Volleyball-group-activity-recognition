@@ -3,391 +3,592 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VolleyAI Studio — Volleyball Group Activity Recognition & Match Analytics Platform</title>
+  <title>VolleyAI — Volleyball Group Activity Recognition</title>
+  <meta name="description" content="Recognise what each team and each player is doing in volleyball video: group activity, per-player actions, detection and tracking, with an analysis studio and full technical documentation.">
+  <meta name="theme-color" content="#07090e">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23ff7a2f'/%3E%3Cpath d='M4 12c8 0 14 4 18 14M10 4c0 9 6 14 18 14M2 20c9-1 15-6 17-16' stroke='%23170a02' stroke-width='1.8' fill='none'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/sections.css">
 </head>
 <body>
-  <!-- Top Navigation Bar -->
-  <header class="navbar">
-    <div class="nav-container">
-      <div class="brand">
-        <div class="brand-logo">🏐</div>
-        <div class="brand-text">
-          <span class="brand-title">VOLLEY<span class="accent-text">AI</span> STUDIO</span>
-          <span class="brand-sub">Group Activity Recognition & Match Intelligence</span>
-        </div>
-      </div>
-      <nav class="nav-links">
-        <a href="#studio" class="active">Analyze</a>
-        <a href="#library">Match Library</a>
-        <a href="#actions">Actions</a>
-        <a href="#tech">How It Works</a>
+  <a class="skip" href="#studio">Skip to the analysis studio</a>
+
+  <div class="notice" role="note">Educational and experimental project — not a commercial or for-profit product.</div>
+  <header class="nav">
+    <div class="container nav-inner">
+      <a class="brand" href="#top" aria-label="VolleyAI home">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="#ff7a2f"/><path d="M4 12c8 0 14 4 18 14M10 4c0 9 6 14 18 14M2 20c9-1 15-6 17-16" stroke="#170a02" stroke-width="1.8" fill="none"/></svg>
+        <span class="brand-name">Volley<b>AI</b></span>
+      </a>
+      <nav class="nav-links" id="nav-links" aria-label="Primary">
+        <a href="#overview">Overview</a>
+        <a href="#samples">Samples</a>
+        <a href="#studio">Studio</a>
+        <a href="#library">Library</a>
+        <a href="#technical">Technical</a>
+        <a href="#references">References</a>
+        <a href="https://eslamusamaaa.github.io/" target="_blank" rel="noopener">Portfolio ↗</a>
+        <a href="https://github.com/Eslamusamaaa/Volleyball-group-activity-recognition" target="_blank" rel="noopener">GitHub ↗</a>
       </nav>
-      <div class="nav-status">
-        <span class="status-dot"></span>
-        <span id="engine-status">Engine Online (CUDA)</span>
-      </div>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav-links">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h14M3 10h14M3 14h14"/></svg>
+      </button>
     </div>
   </header>
 
-  <!-- Hero Section -->
-  <section class="hero-section">
-    <div class="hero-banner" style="background-image: linear-gradient(180deg, rgba(11, 14, 20, 0.4) 0%, rgba(11, 14, 20, 0.95) 100%), url('assets/volleyball_hero.jpg');">
-      <div class="hero-content">
-        <div class="badge-pill">AI-Powered Match Analysis</div>
-        <h1 class="hero-title">AI-Powered Volleyball Match Analysis & Play Recognition</h1>
-        <p class="hero-desc">
-          Upload any volleyball match video to get back a fully annotated output — players tracked and labeled, team plays identified, and every key moment timestamped with a broadcast-style overlay.
-        </p>
-
-        <!-- KPI Metrics Ribbon -->
-        <div class="kpi-ribbon">
-          <div class="kpi-card">
-            <span class="kpi-val">87.4%</span>
-            <span class="kpi-lbl">Scene Recognition Accuracy</span>
-          </div>
-          <div class="kpi-card">
-            <span class="kpi-val">75.7%</span>
-            <span class="kpi-lbl">Player Action Accuracy</span>
-          </div>
-          <div class="kpi-card">
-            <span class="kpi-val">97.7%</span>
-            <span class="kpi-lbl">Player Tracking Accuracy</span>
-          </div>
-          <div class="kpi-card">
-            <span class="kpi-val">98.0%</span>
-            <span class="kpi-lbl">Player Detection Accuracy</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Player Action Showcase Cards -->
-  <section id="actions" class="actions-section">
-    <div class="section-header">
-      <h2>Classified Player & Group Actions</h2>
-      <p>Multi-task joint recognition of team-level tactical plays and individual player kinematic actions.</p>
-    </div>
-    <div class="action-grid">
-      <div class="action-card">
-        <div class="action-img-wrap">
-          <img src="assets/card_spike_boxes.jpg" alt="Volleyball Spike Detection" onerror="this.src='assets/court_spiking.jpg'">
-          <span class="action-tag spike">Attack Play</span>
-        </div>
-        <div class="action-info">
-          <h3>Spike / Attack</h3>
-          <p>Classifies hard-driven spikes, off-speed roll shots, and quick-middle attacks with player approach velocity.</p>
-        </div>
-      </div>
-
-      <div class="action-card">
-        <div class="action-img-wrap">
-          <img src="assets/card_block_boxes.jpg" alt="Volleyball Block Detection" onerror="this.src='assets/court_blocking.jpg'">
-          <span class="action-tag block">Net Defense</span>
-        </div>
-        <div class="action-info">
-          <h3>Block / Net Wall</h3>
-          <p>Identifies single, double, and triple block positioning above the net during opposition attack phases.</p>
-        </div>
-      </div>
-
-      <div class="action-card">
-        <div class="action-img-wrap">
-          <img src="assets/card_set_boxes.jpg" alt="Volleyball Set Detection" onerror="this.src='assets/court_setting.jpg'">
-          <span class="action-tag set">Playmaking</span>
-        </div>
-        <div class="action-info">
-          <h3>Set / Distribution</h3>
-          <p>Recognizes setter finger-action and overhead play distribution to outside, opposite, or pipe attackers.</p>
-        </div>
-      </div>
-
-      <div class="action-card">
-        <div class="action-img-wrap">
-          <img src="assets/card_dig_boxes.jpg" alt="Volleyball Dig Detection" onerror="this.src='assets/court_digging.jpg'">
-          <span class="action-tag pass">Floor Defense</span>
-        </div>
-        <div class="action-info">
-          <h3>Pass & Dig Recovery</h3>
-          <p>Detects serve receptions, back-row pancake saves, and diving digs that keep the rally alive.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Main Analysis Studio Workspace -->
-  <section id="studio" class="studio-section">
-    <div class="container">
-      <div class="studio-panel">
-        <div class="panel-header">
+  <main id="top">
+    <!-- ===== Hero ===== -->
+    <section class="hero" id="overview">
+      <div class="container">
+        <div class="hero-grid">
           <div>
-            <h2>Match Analysis Studio</h2>
-            <p>Upload a video or select any match from the library below. The engine will detect all players, track identities, classify team plays, and generate an AI-annotated video with burned-in broadcast HUD.</p>
+            <span class="badge-live"><b>CVPR 2016 reproduction</b> extended with ResNet50 + YOLOv8 + ByteTrack</span>
+            <h1>Understanding volleyball, <em>frame by frame.</em></h1>
+            <p class="lede">Upload a match and get back what each team is doing — pass, set, spike, point — and what every player on court is doing, with an annotated video and a navigable event timeline.</p>
+            <div class="hero-cta">
+              <a class="btn btn-primary" href="#studio">Analyse a video</a>
+              <a class="btn" href="#samples">See verified samples</a>
+            </div>
           </div>
+          <figure class="frame-card">
+            <img src="assets/samples/group_r_spike.webp" alt="Test-set frame: players tracked and labelled by action, group activity right team spike" width="1920" height="1080" fetchpriority="high">
+            <span class="scan" aria-hidden="true"></span>
+            <span class="hud-corner tl" aria-hidden="true"></span><span class="hud-corner tr" aria-hidden="true"></span>
+            <figcaption><span>Model output on a held-out test clip</span><span>group activity: right spike</span></figcaption>
+          </figure>
+        </div>
+        <div class="hero-stats" id="hero-stats" aria-label="Headline metrics">
+          <div class="stat"><b data-hero="scene">—</b><span>Group-activity accuracy <span class="term" data-tip="Test accuracy of B8-mt over 8 scene classes (team × pass / set / spike / winpoint) on the held-out test split of the Volleyball dataset.">(?)</span></span></div>
+          <div class="stat"><b data-hero="person">—</b><span>Per-player action accuracy <span class="term" data-tip="9-way action accuracy over every labelled player in the test split. Dominated by the 'standing' class; see Technical → Evaluation for per-class recall.">(?)</span></span></div>
+          <div class="stat"><b data-hero="map">—</b><span>Player detection mAP50 <span class="term" data-tip="Mean average precision at IoU 0.5 of the fine-tuned YOLOv8n on the held-out validation split.">(?)</span></span></div>
+          <div class="stat"><b data-hero="track">—</b><span>Tracker match with ground truth <span class="term" data-tip="Fraction of ground-truth players matched (IoU) by ByteTrack tracks at each clip's annotated frame, averaged over 18 validation clips.">(?)</span></span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== What the project does ===== -->
+    <section class="section" id="project">
+      <div class="container">
+        <div class="section-head reveal">
+          <div class="eyebrow">Project overview</div>
+          <h2>What this project does.</h2>
+          <p class="lede">It reproduces and extends a CVPR 2016 paper on group activity recognition, then turns the trained model into a working system that watches real match video: it finds every player, follows them, and reports what each player and each team is doing.</p>
+        </div>
+        <div class="steps reveal">
+          <div class="step"><span class="n">01</span><h3>Recognises group activity</h3><p>Which team is passing, setting, attacking or has just won the point — eight classes, <b data-hero="scene">—</b> test accuracy.</p></div>
+          <div class="step"><span class="n">02</span><h3>Recognises each player</h3><p>Nine individual actions such as spiking, blocking and digging for every tracked player, <b data-hero="person">—</b> test accuracy.</p></div>
+          <div class="step"><span class="n">03</span><h3>Works on raw video</h3><p>A fine-tuned detector (<b data-hero="map">—</b> mAP50) and tracker (<b data-hero="track">—</b> match) remove the need for hand-labelled boxes.</p></div>
+          <div class="step"><span class="n">04</span><h3>Explains its decisions</h3><p>An eight-model ablation ladder shows what each design choice is worth; the best baseline reaches <b data-hero="b8">—</b>.</p></div>
+          <div class="step"><span class="n">05</span><h3>Delivers a product</h3><p>Upload or import a match and receive an annotated video, event timeline and analytics through this studio.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Verified samples ===== -->
+    <section class="section" id="samples">
+      <div class="container">
+        <div class="section-head reveal">
+          <div class="eyebrow">Verified samples</div>
+          <h2>What the model sees and decides.</h2>
+          <p class="lede">Every sample is a frame from the <b>test split</b> — matches the model never trained on. The full pipeline (detector, tracker, player-action model, group-activity model) ran on a 9-frame window around the frame, and each prediction was checked against the dataset's annotations. A sample is shown only when the predicted group activity equals the ground-truth label.</p>
         </div>
 
-        <!-- Input Type Tabs -->
-        <div class="studio-tabs">
-          <button type="button" class="tab-btn active" id="tab-mode-file">📁 Upload Video File</button>
-          <button type="button" class="tab-btn" id="tab-mode-url">🔗 Paste YouTube / Match Link</button>
+        <div class="sub-block reveal">
+          <h3 class="sub-h">Group activity samples</h3>
+          <p class="muted" style="max-width:720px">One frame per group activity. The group label describes the whole team; the cards underneath list every tracked player in the frame.</p>
+          <div class="tabs" id="grp-tabs" role="tablist" aria-label="Group activity sample" style="margin-top:18px"></div>
+          <div id="grp-view" aria-live="polite"></div>
         </div>
 
-        <!-- Upload Form -->
-        <form id="upload-form">
-          <div class="dropzone" id="dropzone">
-            <div class="dropzone-icon">📁</div>
-            <div class="dropzone-text">
-              <span class="dropzone-main" id="drop-label">Click to browse or drag & drop volleyball video</span>
-              <span class="dropzone-sub">Supports MP4, AVI, MOV, MKV up to 500 MB</span>
-            </div>
-            <input id="file-input" type="file" name="video" accept=".mp4,.avi,.mov,.mkv,.webm" hidden>
-          </div>
+        <div class="sub-block reveal">
+          <h3 class="sub-h">Player activity samples</h3>
+          <p class="muted" style="max-width:720px">One frame per individual action. The featured player (★) was matched to a ground-truth box and the predicted action equals the annotation; every other player carries its own check mark or cross.</p>
+          <div class="tabs" id="ply-tabs" role="tablist" aria-label="Player activity sample" style="margin-top:18px"></div>
+          <div id="ply-view" aria-live="polite"></div>
+        </div>
+        <p class="note">Samples are selected for being correct, so they illustrate the output rather than measure accuracy. Overall accuracy is reported under Technical → Evaluation.</p>
+      </div>
+    </section>
 
-          <!-- URL Input Zone (hidden by default) -->
-          <div class="url-zone" id="url-zone" hidden>
-            <div class="url-input-wrap">
-              <span class="url-icon">🔗</span>
-              <input type="text" id="direct-url-input" placeholder="Paste YouTube URL e.g. https://www.youtube.com/watch?v=... or match name">
-            </div>
-            <p class="url-hint">The engine will automatically fetch the match footage and initiate the full AI recognition pipeline.</p>
-          </div>
-
-          <div class="form-actions">
-            <div class="config-row">
-              <label>Mode: <strong>AI Video Analysis</strong></label>
-              <label>Output: <strong>Annotated Video + Event Timeline</strong></label>
-            </div>
-            <button type="submit" id="submit-btn" class="btn primary-btn" disabled>
-              <span>⚡ Analyze Video</span>
-            </button>
-          </div>
-        </form>
-
-        <!-- Progress Card -->
-        <div id="progress-card" class="progress-card" hidden>
-          <div class="progress-header">
-            <div class="progress-title">
-              <span class="spinner"></span>
-              <span id="progress-phase">Processing Video...</span>
-            </div>
-            <span id="progress-percent" class="progress-percent">0%</span>
-          </div>
-          <div class="progress-bar-wrap">
-            <div id="progress-bar" class="progress-bar"></div>
-          </div>
-          <div class="progress-details">
-            <span id="progress-filename">Match Video</span>
-            <span id="progress-status-msg">Running detection and hierarchical temporal model...</span>
-          </div>
+    <!-- ===== Studio ===== -->
+    <section class="section" id="studio">
+      <div class="container">
+        <div class="section-head reveal">
+          <div class="eyebrow">Analysis studio</div>
+          <h2>Run the full pipeline on your own footage.</h2>
+          <p class="lede">Upload a match clip or paste a link. The engine detects and tracks the players, recognises group and individual activity, and renders an annotated video with a navigable event timeline.</p>
         </div>
 
-
-
-        <!-- Video Response & Results Section -->
-        <div id="results" class="results-container" hidden>
-          <!-- Results Top Bar -->
-          <div class="results-header">
-            <div class="results-title">
-              <h3>Match Intelligence Results</h3>
-              <span class="results-tag">AI Annotated Video Ready</span>
-            </div>
-            <div class="results-actions">
-              <div class="view-toggle">
-                <button type="button" class="toggle-btn active" id="btn-view-annotated">Annotated AI Video</button>
-                <button type="button" class="toggle-btn" id="btn-view-split">Side-by-Side</button>
-                <button type="button" class="toggle-btn" id="btn-view-source">Source Video</button>
+        <div class="studio reveal">
+          <div class="card">
+            <div class="card-head">
+              <div role="tablist" class="tabs" aria-label="Input source">
+                <button class="tab" role="tab" aria-selected="true" id="tab-file" aria-controls="panel-file">Upload file</button>
+                <button class="tab" role="tab" aria-selected="false" id="tab-url" aria-controls="panel-url" tabindex="-1">From link</button>
               </div>
-              <a id="btn-download-video" class="btn secondary-btn" download>
-                ⬇ Download Annotated Video (.mp4)
-              </a>
+              <span class="card-sub">MP4 · AVI · MOV · MKV · WEBM · ≤ 500 MB</span>
+            </div>
+            <form id="upload-form" novalidate>
+              <div id="panel-file" role="tabpanel" aria-labelledby="tab-file">
+                <button type="button" class="dropzone" id="dropzone">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+                  <strong id="drop-label">Drop a volleyball video here</strong>
+                  <small id="drop-sub">or click to browse your files</small>
+                </button>
+                <input id="file-input" type="file" accept=".mp4,.avi,.mov,.mkv,.webm,video/*" hidden>
+                <div class="preview-box" id="preview-box" hidden>
+                  <video id="preview-video" controls playsinline preload="metadata"></video>
+                </div>
+              </div>
+              <div id="panel-url" role="tabpanel" aria-labelledby="tab-url" hidden>
+                <label class="url-field">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>
+                  <span class="sr-only">Video URL</span>
+                  <input id="url-input" type="text" inputmode="url" placeholder="https://www.youtube.com/watch?v=…" autocomplete="off">
+                </label>
+                <p class="note">The engine downloads the footage, then runs the full pipeline. Long videos take a while — use the library importer to trim by duration.</p>
+              </div>
+              <div class="studio-actions">
+                <span class="hint">Output: annotated video · event timeline · analytics</span>
+                <button type="submit" class="btn btn-primary" id="submit-btn" disabled>Analyse video</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><div><h3>Live pipeline</h3><span class="card-sub" id="run-sub">Idle — waiting for a video</span></div></div>
+            <div class="run" id="run">
+              <div class="run-top"><span class="name" id="run-name">No job running</span><span class="run-pct" id="run-pct">0%</span></div>
+              <div class="pbar" id="run-bar"><i></i></div>
+              <div class="stages" id="stages">
+                <div class="stage" data-stage="input"><span class="ico">1</span><span>Input received</span><small></small></div>
+                <div class="stage" data-stage="recognise"><span class="ico">2</span><span>Detect · track · recognise</span><small></small></div>
+                <div class="stage" data-stage="merge"><span class="ico">3</span><span>Merge windows into events</span><small></small></div>
+                <div class="stage" data-stage="render"><span class="ico">4</span><span>Render annotated video</span><small></small></div>
+              </div>
+              <div class="state error" id="run-error" hidden role="alert">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5m0 3h.01"/></svg>
+                <strong>Analysis failed</strong>
+                <span id="run-error-msg" class="muted"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="results" id="results-panel" hidden>
+          <div class="card">
+            <div class="card-head">
+              <div><h3>Analysis results</h3><span class="card-sub" id="result-sub"></span></div>
+              <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center">
+                <div class="tabs" role="group" aria-label="Video view">
+                  <button class="tab active" data-view="annotated" aria-pressed="true">AI annotated</button>
+                  <button class="tab" data-view="split" aria-pressed="false">Side by side</button>
+                  <button class="tab" data-view="source" aria-pressed="false">Source</button>
+                </div>
+                <a class="btn btn-sm" id="download-btn" download hidden>Download .mp4</a>
+              </div>
+            </div>
+            <div class="vid-wrap" id="vid-wrap">
+              <div class="vid" id="vid-source" hidden><span class="tag">SOURCE</span><video id="source-video" controls playsinline preload="metadata"></video></div>
+              <div class="vid" id="vid-ai"><span class="tag ai">AI ANNOTATED</span><video id="annotated-video" controls playsinline preload="metadata"></video></div>
             </div>
           </div>
 
-          <!-- Video Players Container -->
-          <div id="video-workspace" class="video-workspace mode-annotated">
-            <!-- Source Video Player Card -->
-            <div class="player-card" id="source-player-card">
-              <div class="player-badge">Source Footage</div>
-              <video id="source-video" controls playsinline preload="metadata">
-                Your browser does not support HTML5 video.
-              </video>
-            </div>
+          <div class="kpis" id="kpis"></div>
 
-            <!-- Annotated Video Player Card -->
-            <div class="player-card" id="annotated-player-card">
-              <div class="player-badge ai-badge">AI Annotated Match Video</div>
-              <video id="annotated-video" controls playsinline autoplay preload="auto">
-                Your browser does not support HTML5 video.
-              </video>
+          <div class="card">
+            <div class="card-head">
+              <div><h3>Event timeline</h3><span class="card-sub">Click a segment, a row, or the track to seek. The playhead follows the video.</span></div>
             </div>
+            <div class="timeline" id="timeline"></div>
+            <div class="legend-row" id="timeline-legend"></div>
           </div>
 
-          <!-- Match Analytics Summary Row -->
-          <div class="analytics-row">
-            <div class="analytic-stat">
-              <span class="stat-number" id="stat-total-plays">0</span>
-              <span class="stat-label">Total Plays Detected</span>
-            </div>
-            <div class="analytic-stat">
-              <span class="stat-number" id="stat-duration">0.0s</span>
-              <span class="stat-label">Rally Duration</span>
-            </div>
-            <div class="analytic-stat">
-              <span class="stat-number" id="stat-spikes">0</span>
-              <span class="stat-label">Spikes</span>
-            </div>
-            <div class="analytic-stat">
-              <span class="stat-number" id="stat-sets">0</span>
-              <span class="stat-label">Sets</span>
-            </div>
-            <div class="analytic-stat">
-              <span class="stat-number" id="stat-passes">0</span>
-              <span class="stat-label">Passes</span>
-            </div>
-            <div class="analytic-stat highlight">
-              <span class="stat-number" id="stat-points">0</span>
-              <span class="stat-label">Win Points</span>
-            </div>
+          <div class="charts-row">
+            <div class="card"><div class="card-head"><div><h3>Activity distribution</h3><span class="card-sub">Detected events by class</span></div></div><div id="chart-dist"></div></div>
+            <div class="card"><div class="card-head"><div><h3>Prediction confidence</h3><span class="card-sub">One bar per event, in time order</span></div></div><div id="chart-conf"></div></div>
           </div>
 
-          <!-- Timeline Section -->
-          <div class="timeline-box">
-            <div class="timeline-header">
-              <h4>Timestamped Event Timeline (Click any play to jump video)</h4>
-              <span class="timeline-hint">Synchronized with player tracker</span>
+          <div class="card">
+            <div class="card-head"><div><h3>Events</h3><span class="card-sub">Sorted by time · confidence is the model's softmax probability for the merged window</span></div></div>
+            <div class="events" id="events"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Library ===== -->
+    <section class="section" id="library">
+      <div class="container">
+        <div class="section-head reveal">
+          <div class="eyebrow">Match library</div>
+          <h2>Footage already on the server.</h2>
+          <p class="lede">Real broadcast matches and continuous dataset rallies. Preview any clip, send it straight to the studio, or import a new one from YouTube.</p>
+        </div>
+
+        <div class="card yt reveal">
+          <div><h3>Import from YouTube</h3><span class="card-sub">Saved to <code>production Data/from internet</code></span></div>
+          <form id="yt-form" class="yt-row">
+            <label class="url-field"><span class="sr-only">YouTube URL or search query</span>
+              <input id="yt-input" type="text" placeholder="YouTube URL or search query" autocomplete="off" required></label>
+            <label><span class="sr-only">Duration limit</span>
+              <select class="select" id="yt-duration">
+                <option value="0">Full video</option>
+                <option value="600">First 10 min</option>
+                <option value="300">First 5 min</option>
+                <option value="180">First 3 min</option>
+                <option value="60">First 1 min</option>
+              </select></label>
+            <button class="btn btn-primary" id="yt-btn" type="submit">Download</button>
+          </form>
+          <div id="yt-progress" hidden>
+            <div style="display:flex; justify-content:space-between; font-size:13.5px; margin-bottom:8px"><span id="yt-phase"></span><span class="mono" id="yt-pct">0%</span></div>
+            <div class="pbar"><i id="yt-bar"></i></div>
+            <div style="display:flex; justify-content:space-between; margin-top:8px" class="mono dim"><span id="yt-speed"></span><span id="yt-eta"></span></div>
+          </div>
+        </div>
+
+        <div class="tabs reveal" role="tablist" aria-label="Library category">
+          <button class="tab" role="tab" aria-selected="true" id="lib-tab-internet">Broadcast matches<span class="count" id="count-internet">0</span></button>
+          <button class="tab" role="tab" aria-selected="false" id="lib-tab-dataset" tabindex="-1">Dataset rallies<span class="count" id="count-dataset">0</span></button>
+        </div>
+        <div class="lib-grid" id="lib-grid"></div>
+      </div>
+    </section>
+
+    <!-- ===== Technical implementation ===== -->
+    <section class="section" id="technical">
+      <div class="container">
+        <div class="section-head reveal">
+          <div class="eyebrow">Technical implementation</div>
+          <h2>How it is built.</h2>
+          <p class="lede">System architecture, data and preprocessing, model design, training and inference details, and evaluation methodology. All figures are generated from the experiment files in <code>outputs/results</code>.</p>
+        </div>
+
+        <nav class="tech-nav" id="tech-nav" aria-label="Technical sections">
+          <a href="#t-arch">Architecture</a><a href="#t-pipeline">ML pipeline</a><a href="#t-data">Data &amp; preprocessing</a><a href="#t-models">Models</a><a href="#t-baselines">Baselines</a><a href="#t-group">Group activity</a><a href="#t-player">Player activity</a><a href="#t-training">Training &amp; inference</a><a href="#t-eval">Evaluation</a><a href="#t-integration">Integration</a>
+        </nav>
+
+        <!-- 1. Architecture -->
+        <div class="tech-sec" id="t-arch">
+          <h3><span class="num">01</span>System architecture</h3>
+          <p class="lede">A static frontend talks to a FastAPI service. Models are loaded once at startup; each analysis runs as a background job that the browser polls.</p>
+          <div class="grid g2">
+            <div class="card">
+              <svg class="sysdiagram" viewBox="0 0 560 330" role="img" aria-label="Browser calls FastAPI, which starts a background job using the preloaded predictor and annotator, reading and writing video files">
+                <rect class="sd-box" x="10" y="20" width="130" height="80" rx="12"/><text class="t" x="75" y="55" text-anchor="middle">Browser UI</text><text x="75" y="73" text-anchor="middle">HTML · CSS · JS</text>
+                <path class="sd-link" d="M140 60H200"/>
+                <rect class="sd-box a" x="200" y="20" width="150" height="80" rx="12"/><text class="t" x="275" y="55" text-anchor="middle">FastAPI</text><text x="275" y="73" text-anchor="middle">backend/app.py</text>
+                <path class="sd-link" d="M350 60H410"/>
+                <rect class="sd-box" x="410" y="20" width="140" height="80" rx="12"/><text class="t" x="480" y="55" text-anchor="middle">Job thread</text><text x="480" y="73" text-anchor="middle">in-memory job table</text>
+                <path class="sd-link" d="M480 100V150"/>
+                <rect class="sd-box b" x="330" y="150" width="220" height="90" rx="12"/><text class="t" x="440" y="180" text-anchor="middle">WindowPredictor (loaded once)</text><text x="440" y="200" text-anchor="middle">YOLOv8n · ByteTrack</text><text x="440" y="218" text-anchor="middle">ResNet50 (B3-A) · B8-mt</text>
+                <path class="sd-link" d="M330 195H260"/>
+                <rect class="sd-box" x="60" y="150" width="200" height="90" rx="12"/><text class="t" x="160" y="180" text-anchor="middle">Annotator</text><text x="160" y="200" text-anchor="middle">events + HUD render</text><text x="160" y="218" text-anchor="middle">H.264 via ffmpeg</text>
+                <path class="sd-link" d="M160 240V275"/>
+                <rect class="sd-box" x="60" y="275" width="490" height="44" rx="12"/><text x="305" y="302" text-anchor="middle">production Data/ · outputs/annotated_videos/ · outputs/checkpoints/</text>
+              </svg>
             </div>
-            <div id="events-list" class="events-list">
-              <!-- Dynamically populated -->
+            <div class="card">
+              <h3>Design decisions</h3>
+              <ul class="spec-list">
+                <li>Models load at server startup (<code>get_predictor()</code>), not per request.</li>
+                <li>One daemon thread per job; progress lives in an in-memory dict and is polled every 1.2 s.</li>
+                <li>Uploads stream to a temp file, capped at 500 MB, and are deleted after processing. Library files are never deleted.</li>
+                <li>The frontend is mounted at <code>/</code> as static files, so no build step or CORS setup is required.</li>
+                <li>Device is chosen automatically: CUDA when available, otherwise CPU.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. ML pipeline -->
+        <div class="tech-sec" id="t-pipeline">
+          <h3><span class="num">02</span>ML pipeline and workflow</h3>
+          <p class="lede">Training clips came with ground-truth player boxes; a new video has none. The inference pipeline first finds and tracks the players, then hands their 9-frame sequences to the temporal model. Select a stage to inspect it.</p>
+          <div class="card">
+            <div class="flow" id="flow" role="tablist" aria-label="Pipeline stages"></div>
+            <div class="flow-detail" id="flow-detail" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <!-- 3. Data -->
+        <div class="tech-sec" id="t-data">
+          <h3><span class="num">03</span>Dataset and preprocessing</h3>
+          <p class="lede">The Volleyball dataset: annotated broadcast footage of high-level matches. Each sample is a window centred on an annotated frame, with a group label and a box plus action label per player. Splits are by video, so no match appears in more than one split.</p>
+          <div class="dataset-stats">
+            <div class="card stat"><b>4,830</b><span>annotated clips</span></div>
+            <div class="card stat"><b>55</b><span>source videos</span></div>
+            <div class="card stat"><b>9</b><span>frames per window</span></div>
+            <div class="card stat"><b>24 / 15 / 16</b><span>train / val / test videos</span></div>
+          </div>
+          <div class="grid g2">
+            <div class="card"><div class="card-head"><div><h3>Group activity support (test)</h3><span class="card-sub">Clips per class</span></div></div><div id="chart-scene-support"></div></div>
+            <div class="card"><div class="card-head"><div><h3>Player action support (test)</h3><span class="card-sub">Player instances per class · log scale</span></div></div><div id="chart-action-support"></div>
+              <p class="note"><b>Severe imbalance:</b> <code>standing</code> is ≈ 115× more frequent than <code>jumping</code> in the training set, which is why per-class recall matters more than headline accuracy here.</p></div>
+          </div>
+          <div class="grid g2" style="margin-top:20px">
+            <div class="card">
+              <h3>Frame extraction strategy</h3>
+              <ul class="spec-list">
+                <li>Each clip is stored as 41 consecutive frames; the annotated centre frame carries the labels.</li>
+                <li><b>Training:</b> a 9-frame window centred on the annotated frame (centre ± 4).</li>
+                <li><b>Inference:</b> a 9-frame window slides over the video with stride 9 (non-overlapping) by default; the video's own FPS converts frame ranges into seconds.</li>
+                <li>Only players tracked in every frame of a window are used, because LSTM1 needs a complete 9-step sequence per player.</li>
+              </ul>
+              <figure class="fig" style="margin-top:14px"><img src="assets/research/explainer_9_of_41_frames.webp" alt="Nine frames sampled from a 41-frame clip" loading="lazy" width="800" height="240"><figcaption>9 of the 41 frames of one clip.</figcaption></figure>
+            </div>
+            <div class="card">
+              <h3>Preprocessing</h3>
+              <ul class="spec-list">
+                <li>Each player is cropped from their box and resized to 224 × 224, then normalised with ImageNet mean and standard deviation.</li>
+                <li>Up to 12 players per window, zero-padded with a validity mask.</li>
+                <li>Team side is assigned by player x-position relative to the midpoint of all players, the same convention used in training.</li>
+                <li>Class-imbalance handled with weighted cross-entropy; a focal-loss + balanced-sampler variant was tried and rejected.</li>
+                <li>Backbone features for B4–B8 are cached once and reused across experiments.</li>
+              </ul>
+              <figure class="fig" style="margin-top:14px"><img src="assets/research/explainer_static_vs_tracked_box.webp" alt="Static versus tracked bounding boxes over the 9-frame window" loading="lazy" width="1200" height="700"><figcaption>Static centre-frame box vs real per-frame tracking: the two crop strategies compared at B5.</figcaption></figure>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Models -->
+        <div class="tech-sec" id="t-models">
+          <h3><span class="num">04</span>Model architectures</h3>
+          <p class="lede">The deployed model is B8-mt: a ResNet50 per-player feature extractor, a per-player LSTM, team-separated max-pooling, a scene-level LSTM, and two heads.</p>
+          <div class="grid g2">
+            <figure class="fig"><img src="assets/research/b8mt_pipeline.webp" alt="B8-mt architecture diagram using real player crops" loading="lazy" width="1512" height="862"><figcaption>B8-mt drawn on a real test clip (Brazil vs France, FIVB World League 2015, label <code>r_spike</code>).</figcaption></figure>
+            <div>
+              <details class="disclose" open><summary>1 · Per-player features (ResNet50, B3-A)</summary><div class="body"><p>Each tracked player is cropped in every frame of the window and passed through a ResNet50 fine-tuned to classify the nine player actions, yielding a 2048-d feature per player per frame.</p></div></details>
+              <details class="disclose"><summary>2 · LSTM1 — per-player temporal model</summary><div class="body"><p>One LSTM (hidden size 512) runs over each player's 9-step feature sequence. Its full per-step output is kept, not just the final state.</p></div></details>
+              <details class="disclose"><summary>3 · Team-separated pooling</summary><div class="body"><p>Players are split by court side. Each team's players are <span class="term" data-tip="Element-wise maximum over the players of a team, giving an order-invariant team descriptor.">max-pooled</span> separately and the two vectors concatenated.</p></div></details>
+              <details class="disclose"><summary>4 · LSTM2 — scene-level temporal model</summary><div class="body"><p>A second LSTM runs over the 9-step sequence of pooled team vectors and a linear head predicts the 8-way group activity.</p></div></details>
+              <details class="disclose"><summary>5 · Joint multi-task loss</summary><div class="body"><p><code>loss = loss_scene + λ · loss_person_action</code> with λ = 1.0. A per-player action head sits on LSTM1's output before pooling, so one forward pass yields the scene label and every player's action.</p></div></details>
+            </div>
+          </div>
+          <div class="card" style="margin-top:20px">
+            <div class="card-head"><div><h3>Deviations from the CVPR 2016 paper</h3><span class="card-sub">Verified against the paper's text</span></div></div>
+            <div class="table-wrap"><table class="data"><thead><tr><th>Aspect</th><th>Paper</th><th>This project</th></tr></thead><tbody>
+              <tr><td>Backbone</td><td>AlexNet (Caffe)</td><td>ResNet50 (PyTorch)</td></tr>
+              <tr><td>Optimiser</td><td>SGD, fixed / step LR</td><td>AdamW, cosine schedule</td></tr>
+              <tr><td>LSTM size</td><td>3000 hidden (LSTM1)</td><td>512 hidden (both LSTMs)</td></tr>
+              <tr><td>Pooling</td><td>Max-pooling</td><td>Max-pooling</td></tr>
+              <tr><td>Player tracking</td><td>Dlib tracker</td><td>Dataset tracklets for training; ByteTrack at inference</td></tr>
+              <tr><td>Player-action head</td><td>Separate first stage</td><td>Joint multi-task head (B8-mt)</td></tr>
+            </tbody></table></div>
+          </div>
+        </div>
+
+        <!-- 5. Baselines -->
+        <div class="tech-sec" id="t-baselines">
+          <h3><span class="num">05</span>Baseline approaches</h3>
+          <p class="lede">Rather than reporting a single number, every architectural choice is isolated and measured. Bars show scene test accuracy; the white marker is the paper's reference target where one exists. Select a rung to see what it changes.</p>
+          <div class="card">
+            <div class="ladder" id="ladder"></div>
+            <div class="chart-legend"><span><i style="--c:var(--accent-2)"></i>Baseline</span><span><i style="--c:var(--accent)"></i>Final model (B8-mt)</span><span><i style="--c:#fff"></i>Paper target</span></div>
+            <div class="model-detail" id="model-detail"></div>
+          </div>
+        </div>
+
+        <!-- 6. Group activity -->
+        <div class="tech-sec" id="t-group">
+          <h3><span class="num">06</span>Group activity recognition methodology</h3>
+          <p class="lede">A group label such as <code>r_spike</code> is not visible in any single player. It emerges from who is where, what each player is doing, and how that changes over the 9-frame window. The model builds the decision bottom-up and keeps the two teams apart until the very end.</p>
+          <div class="card" style="margin-bottom:20px"><h3>The 8 group-activity classes</h3><p class="muted">Team (left / right of the net) × phase of play.</p><div class="class-group" id="scene-classes"></div></div>
+          <div class="grid g2">
+            <div class="card">
+              <div class="card-head"><div><h3>How the decision is built</h3><span class="card-sub">Per-player → per-team → scene</span></div></div>
+              <svg class="gdiagram" viewBox="0 0 560 290" role="img" aria-label="Players feed per-player LSTMs, are max-pooled per team, concatenated, and passed to a scene LSTM that outputs the group activity">
+                <g fill="var(--team-left)"><circle cx="40" cy="40" r="9"/><circle cx="40" cy="75" r="9"/><circle cx="40" cy="110" r="9"/></g>
+                <g fill="var(--team-right)"><circle cx="40" cy="150" r="9"/><circle cx="40" cy="185" r="9"/><circle cx="40" cy="220" r="9"/></g>
+                <path class="gd-link" d="M52 40H90M52 75H90M52 110H90M52 150H90M52 185H90M52 220H90"/>
+                <rect class="gd-box" x="90" y="24" width="90" height="210" rx="12"/>
+                <text x="135" y="126" text-anchor="middle" class="gd-t">LSTM1</text><text x="135" y="144" text-anchor="middle">per player</text>
+                <path class="gd-link" d="M180 75H220M180 185H220M300 75L340 115M300 185L340 135"/>
+                <rect class="gd-box left" x="220" y="45" width="80" height="60" rx="12"/><text x="260" y="71" text-anchor="middle" class="gd-t">Pool X</text><text x="260" y="89" text-anchor="middle">left team</text>
+                <rect class="gd-box right" x="220" y="155" width="80" height="60" rx="12"/><text x="260" y="181" text-anchor="middle" class="gd-t">Pool Y</text><text x="260" y="199" text-anchor="middle">right team</text>
+                <rect class="gd-box" x="340" y="90" width="80" height="70" rx="12"/><text x="380" y="122" text-anchor="middle" class="gd-t">concat</text><text x="380" y="140" text-anchor="middle">[X ; Y]</text>
+                <path class="gd-link" d="M420 125H450"/>
+                <rect class="gd-box accent" x="450" y="80" width="90" height="90" rx="12"/><text x="495" y="118" text-anchor="middle" class="gd-t">LSTM2</text><text x="495" y="136" text-anchor="middle">scene</text><text x="495" y="152" text-anchor="middle">8 classes</text>
+                <text x="40" y="268" class="gd-note">3 + 3 players drawn for clarity; the model pools each team's 6 players over 9 time steps</text>
+              </svg>
+              <div style="margin-top:14px">
+                <details class="disclose" open><summary>Why separate the teams?</summary><div class="body"><p>Pooling all 12 players into one vector (B7) hides which side of the net a signal came from, so a left win-point and a right win-point look alike. Pooling each team separately (B8) keeps that information. <span id="gd-delta"></span></p></div></details>
+                <details class="disclose"><summary>Why a second LSTM?</summary><div class="body"><p>LSTM1 summarises each player over time. LSTM2 then models how the team-level summaries evolve across the window, for example a set building into a spike. Without it (B5) there is no scene-level temporal reasoning.</p></div></details>
+                <details class="disclose"><summary>Why max-pooling?</summary><div class="body"><p>Max-pooling is order-invariant, so player order does not matter, and it keeps the strongest signal in each feature. The CVPR paper found it better than sum or average pooling, and this repository uses it throughout.</p></div></details>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-head"><div><h3>Explore a group activity</h3><span class="card-sub">B8-mt on the test split</span></div></div>
+              <div class="class-group" id="group-chips" role="group" aria-label="Group activity class"></div>
+              <div id="group-detail" style="margin-top:20px" aria-live="polite"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7. Player activity -->
+        <div class="tech-sec" id="t-player">
+          <h3><span class="num">07</span>Individual player activity methodology</h3>
+          <p class="lede">Player actions come from two places. A ResNet50 (B3-A) is fine-tuned on single player crops, and B8-mt adds an action head on each player's LSTM1 output so that motion over the window informs the label.</p>
+          <div class="card" style="margin-bottom:20px"><h3>The 9 player-action classes</h3><p class="muted">Hover a class for its meaning.</p><div class="class-group" id="action-classes"></div></div>
+          <div class="grid g2">
+            <div class="card">
+              <div class="card-head"><div><h3>Per-player action recall</h3><span class="card-sub">Standalone B3-A vs jointly trained B8-mt</span></div></div>
+              <div id="chart-recall"></div>
+              <div class="chart-legend"><span><i style="--c:var(--text-3)"></i>B3-A standalone</span><span><i style="--c:var(--accent)"></i>B8-mt joint</span></div>
+            </div>
+            <div class="card">
+              <details class="disclose" open><summary>Why joint training helps the hard classes</summary><div class="body"><p>The scene loss pushes LSTM1 to encode game-phase dynamics, not just a static pose. That helps motion-defined actions: recall on <code>jumping</code>, <code>digging</code> and <code>waiting</code> improves over standalone B3-A, while the easy static class <code>standing</code> gives some up.</p></div></details>
+              <details class="disclose"><summary>Why accuracy is misleading here</summary><div class="body"><p><code>standing</code> is 68.6% of all player labels, so aggregate accuracy tracks that one class. Per-class recall on rare actions is the number that matters.</p></div></details>
+              <details class="disclose"><summary>Follow-up experiments</summary><div class="body"><p>λ = 2.0 raised aggregate accuracy but lowered <code>jumping</code> recall. Adding 4-d box-motion features lowered aggregate accuracy yet improved recall on <code>jumping</code> and <code>digging</code>. Neither replaced λ = 1.0 as the final model.</p></div></details>
+              <div class="table-wrap" style="margin-top:12px"><table class="data" id="followup-table"></table></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 8. Training & inference -->
+        <div class="tech-sec" id="t-training">
+          <h3><span class="num">08</span>Training and inference details</h3>
+          <p class="lede">All training ran on a single RTX 3050 (4 GB), which sets the batch sizes below.</p>
+          <div class="grid g2">
+            <div class="card"><h3>Training</h3>
+              <div class="table-wrap"><table class="data"><thead><tr><th>Model</th><th>Setup</th></tr></thead><tbody>
+                <tr><td>B1 (whole image)</td><td>ResNet50 fine-tuned · 15 epochs · batch 24 · AdamW 1e-4 · cosine · weighted CE · AMP</td></tr>
+                <tr><td>B2 / B3 heads</td><td>Small classifier on pooled features · 15 epochs · AdamW 1e-3 · weighted CE</td></tr>
+                <tr><td>B3-A backbone</td><td>ResNet50 on player crops, 9-way · weighted CE (selected) vs focal + balanced sampler (rejected)</td></tr>
+                <tr><td>B4–B8, B8-mt</td><td>LSTMs on cached features · 30 epochs · batch 16 · AdamW · weighted CE · hidden 512 · AMP</td></tr>
+                <tr><td>B6</td><td>Needed 65 epochs across resumed runs; LR lowered to 1e-4 for the last run</td></tr>
+                <tr><td>Detector</td><td>YOLOv8n single class · 30 epochs · batch 16 · image size 640 · ~2,150 train clips' centre frames</td></tr>
+              </tbody></table></div>
+            </div>
+            <div class="card"><h3>Inference</h3>
+              <ul class="spec-list">
+                <li>Detect players per frame, track with ByteTrack, keep players present in all 9 frames of a window.</li>
+                <li>One B8-mt forward pass per window: group activity plus an action for every player.</li>
+                <li>Consecutive windows with the same group class are merged into one event; windows under 0.40 confidence are discarded; win-point events are capped at about 100 frames.</li>
+                <li>Defaults: 9-frame windows, stride 9. A smaller stride gives finer event boundaries at higher compute cost.</li>
+                <li>A second pass renders boxes, track IDs, per-player actions and a group-activity banner into an H.264 MP4.</li>
+              </ul>
+              <p class="note">CPU inference is slow; a CUDA GPU is recommended for full matches.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 9. Evaluation -->
+        <div class="tech-sec" id="t-eval">
+          <h3><span class="num">09</span>Evaluation methodology and results</h3>
+          <p class="lede">The best validation checkpoint is selected per model and evaluated once on the held-out test split (16 videos, never used for training or model selection). Metrics: accuracy, per-class precision, recall and F1, and confusion matrices. Choose a model to explore it.</p>
+          <div style="margin-bottom:20px"><div class="tabs" id="results-model-tabs" role="tablist" aria-label="Model"></div></div>
+          <div class="grid g2">
+            <div class="card">
+              <div class="card-head"><div><h3>Confusion matrix <span class="term" data-tip="Rows are the true class, columns the predicted class. Each cell shows how many test samples fell there; colour is the share of the true class (row-normalised). A bright diagonal means few errors.">(?)</span></h3><span class="card-sub" id="cm-sub"></span></div>
+                <div class="tabs" id="cm-task" role="group" aria-label="Task"></div></div>
+              <div id="chart-cm"></div>
+            </div>
+            <div class="card">
+              <div class="card-head"><div><h3>Per-class metrics</h3><span class="card-sub">Precision · recall · F1 · support</span></div></div>
+              <div class="table-wrap"><table class="data" id="class-table"></table></div>
+            </div>
+          </div>
+          <div class="grid g2" style="margin-top:20px">
+            <div class="card">
+              <div class="card-head"><div><h3>Training curves</h3><span class="card-sub" id="curve-sub"></span></div></div>
+              <div id="chart-curve"></div>
+              <div class="chart-legend"><span><i style="--c:var(--accent-2)"></i>Train accuracy</span><span><i style="--c:var(--accent)"></i>Validation accuracy</span></div>
+            </div>
+            <div class="card">
+              <div class="card-head"><div><h3>Detector &amp; tracker</h3><span class="card-sub">Validated individually before use on unseen video</span></div></div>
+              <div class="grid g2" id="det-stats" style="margin-bottom:18px"></div>
+              <div id="chart-detector"></div>
+              <p class="note">Tracker: fraction of ground-truth players matched by IoU at each clip's annotated frame (18 validation clips). With the stock COCO YOLOv8n this was 72.1%.</p>
+            </div>
+          </div>
+          <div style="margin-top:36px">
+            <h3 style="margin-bottom:6px; font-size:20px">Known limitations</h3>
+            <div class="limits" style="margin-top:14px">
+              <div class="card"><h4><i></i>Rare player actions</h4><p class="muted"><code>jumping</code> reaches only 28% recall (precision 18%) in B8-mt; <code>digging</code> 51%. Player-action accuracy of 75.7% is dominated by <code>standing</code>.</p></div>
+              <div class="card"><h4><i></i>No end-to-end video benchmark</h4><p class="muted">Detector and tracker are validated individually and the pipeline passed an end-to-end smoke test, but there is no dataset-scale accuracy number for raw-video inference. Studio output on new footage is unevaluated.</p></div>
+              <div class="card"><h4><i></i>Domain shift</h4><p class="muted">The model was trained on broadcast volleyball with a full-court view. Other camera angles, or partially visible courts, are outside the training distribution.</p></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 10. Integration -->
+        <div class="tech-sec" id="t-integration">
+          <h3><span class="num">10</span>Backend and frontend integration</h3>
+          <p class="lede">The frontend is plain HTML, CSS and ES modules with no build step. It uses the endpoints below and reads research figures from a JSON file generated from the real experiment outputs.</p>
+          <div class="grid g2">
+            <div class="card"><h3>API endpoints</h3>
+              <div class="table-wrap"><table class="data"><thead><tr><th>Method</th><th>Path</th><th>Purpose</th></tr></thead><tbody>
+                <tr><td>POST</td><td>/api/analyze</td><td>Upload a video, start a job</td></tr>
+                <tr><td>POST</td><td>/api/analyze/url</td><td>Download from a link, then analyse</td></tr>
+                <tr><td>POST</td><td>/api/library/analyze</td><td>Analyse a library video</td></tr>
+                <tr><td>GET</td><td>/api/jobs/{id}</td><td>Status, progress, events</td></tr>
+                <tr><td>GET</td><td>/api/jobs/{id}/video</td><td>Annotated MP4</td></tr>
+                <tr><td>GET</td><td>/api/library</td><td>List library videos</td></tr>
+                <tr><td>POST</td><td>/api/youtube/download</td><td>Import a match</td></tr>
+                <tr><td>GET</td><td>/api/youtube/progress/{id}</td><td>Download progress</td></tr>
+                <tr><td>GET</td><td>/api/health · /api/stats</td><td>Engine state and model summary</td></tr>
+              </tbody></table></div>
+            </div>
+            <div class="card"><h3>Frontend structure</h3>
+              <ul class="spec-list">
+                <li><code>js/studio.js</code> — upload, job polling, timeline and charts.</li>
+                <li><code>js/library.js</code> — library and YouTube importer.</li>
+                <li><code>js/samples.js</code> — verified sample viewer.</li>
+                <li><code>js/research.js</code>, <code>js/charts.js</code> — technical figures (dependency-free SVG).</li>
+                <li><code>data/research.json</code>, <code>data/samples.json</code> — built by <code>scripts/build_frontend_data.py</code> and <code>scripts/build_sample_data.py</code> from the repository's results and annotations.</li>
+              </ul>
+              <p class="note">A job moves through <code>queued → processing → done | error</code>; the browser polls <code>/api/jobs/{id}</code> and shows live stage progress, then renders the returned events as a timeline.</p>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Video Library Browser Section -->
-  <section id="library" class="library-section">
-    <div class="container">
-      <div class="section-header">
-        <h2>Volleyball Match Video Library</h2>
-        <p>Explore real 3-to-5-minute YouTube championship matches or continuous smooth dataset plays. Click any video to instantly load and analyze!</p>
-      </div>
-
-      <!-- YouTube URL Downloader Tool -->
-      <div class="yt-downloader-card">
-        <div class="yt-header">
-          <span class="yt-icon">▶</span>
-          <div>
-            <h4>Import Real Match From YouTube</h4>
-            <p>Paste any YouTube volleyball match or rally link to download it directly to the <code>production Data/from internet</code> directory.</p>
-          </div>
+    <!-- ===== References ===== -->
+    <section class="section" id="references">
+      <div class="container">
+        <div class="section-head reveal">
+          <div class="eyebrow">References</div>
+          <h2>Built on prior work.</h2>
         </div>
-        <form id="yt-form" class="yt-input-row">
-          <input type="text" id="yt-url-input" placeholder="https://www.youtube.com/watch?v=... or search query" required>
-          <select id="yt-duration-select" style="padding: 10px 14px; background: #161b26; border: 1px solid #2a3449; color: #f1f5f9; border-radius: 8px; font-weight: 500; font-size: 13px; cursor: pointer;">
-            <option value="0" selected>🎬 Full Video (100%)</option>
-            <option value="600">⏱ 10 Minutes</option>
-            <option value="300">⏱ 5 Minutes</option>
-            <option value="180">⏱ 3 Minutes</option>
-            <option value="60">⚡ 1 Minute (Quick)</option>
-          </select>
-          <button type="submit" id="yt-submit-btn" class="btn primary-btn">
-            <span>Download to Library</span>
-          </button>
-        </form>
-
-        <!-- Real-time Download Progress Bar -->
-        <div id="yt-progress-container" class="yt-progress-container" hidden>
-          <div class="yt-progress-header">
-            <span id="yt-progress-phase">Downloading match footage...</span>
-            <span id="yt-progress-percent">0%</span>
-          </div>
-          <div class="yt-progress-bar-wrap">
-            <div id="yt-progress-bar" class="yt-progress-bar"></div>
-          </div>
-          <div class="yt-progress-meta">
-            <span id="yt-progress-speed">⚡ Connecting...</span>
-            <span id="yt-progress-eta">⏱ ETA: --</span>
-          </div>
-        </div>
-
-        <div id="yt-status" class="yt-status" hidden></div>
-      </div>
-
-      <!-- Library Tabs -->
-      <div class="library-tabs">
-        <button class="tab-btn active" id="tab-internet">
-          🌐 Real YouTube Matches (3–5 min continuous)
-          <span class="tab-count" id="count-internet">0</span>
-        </button>
-        <button class="tab-btn" id="tab-dataset">
-          📊 Dataset Continuous Plays (Zero repeated frames)
-          <span class="tab-count" id="count-dataset">0</span>
-        </button>
-      </div>
-
-      <!-- Video Grid -->
-      <div id="library-grid" class="library-grid">
-        <div class="loading-placeholder">Loading available match footage...</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- How It Works Section -->
-  <section id="tech" class="tech-section">
-    <div class="container">
-      <div class="section-header">
-        <h2>How It Works</h2>
-        <p>Upload a volleyball match video and the AI engine processes it in real-time to produce a fully annotated broadcast-quality output.</p>
-      </div>
-
-      <div class="pipeline-flow">
-        <div class="pipeline-step">
-          <div class="step-num">01</div>
-          <h4>Upload Match Video</h4>
-          <p>Upload an MP4, AVI, MOV, or MKV file. Supports clips from 10 seconds up to full 90-minute matches.</p>
-        </div>
-        <div class="pipeline-step">
-          <div class="step-num">02</div>
-          <h4>Player Detection</h4>
-          <p>Every player on court is detected in each frame with 98% accuracy, filtering out staff, referees, and spectators.</p>
-        </div>
-        <div class="pipeline-step">
-          <div class="step-num">03</div>
-          <h4>Multi-Player Tracking</h4>
-          <p>Players are continuously tracked across frames with consistent IDs, even through occlusions and fast movements.</p>
-        </div>
-        <div class="pipeline-step">
-          <div class="step-num">04</div>
-          <h4>Action Recognition</h4>
-          <p>The AI classifies every player's action — spike, block, set, pass — and the team's overall play at every moment.</p>
-        </div>
-        <div class="pipeline-step">
-          <div class="step-num">05</div>
-          <h4>Event Timeline</h4>
-          <p>Key match events are assembled into a timestamped timeline you can click to jump directly to any moment.</p>
-        </div>
-        <div class="pipeline-step">
-          <div class="step-num">06</div>
-          <h4>Annotated Video Output</h4>
-          <p>The result is streamed back as a broadcast-quality video with bounding boxes and live HUD overlay burned in.</p>
+        <div class="refs reveal">
+          <a class="ref" href="https://openaccess.thecvf.com/content_cvpr_2016/papers/Ibrahim_A_Hierarchical_Deep_CVPR_2016_paper.pdf" target="_blank" rel="noopener"><div><b>A Hierarchical Deep Temporal Model for Group Activity Recognition</b><span>Ibrahim, Muralidharan, Deng, Vahdat, Mori · CVPR 2016</span></div><span class="chip">PDF ↗</span></a>
+          <a class="ref" href="https://arxiv.org/abs/1607.02643" target="_blank" rel="noopener"><div><b>Hierarchical deep temporal models for group activity recognition</b><span>Extended journal version with group-style pooling · arXiv:1607.02643</span></div><span class="chip">arXiv ↗</span></a>
+          <a class="ref" href="https://github.com/mostafa-saad/deep-activity-rec" target="_blank" rel="noopener"><div><b>deep-activity-rec</b><span>Official dataset and reference implementation (Caffe)</span></div><span class="chip">GitHub ↗</span></a>
+          <a class="ref" href="https://github.com/Eslamusamaaa/Volleyball-group-activity-recognition" target="_blank" rel="noopener"><div><b>This repository</b><span>PyTorch reproduction: baselines B1–B8-mt, YOLOv8 detector, ByteTrack, FastAPI backend</span></div><span class="chip">GitHub ↗</span></a>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
+  </main>
 
-  <!-- Footer -->
   <footer class="footer">
-    <div class="container footer-content">
-      <p>VolleyAI Studio — Volleyball Group Activity Recognition Platform</p>
-      <p class="footer-sub">Based on Ibrahim et al. CVPR 2016 hierarchical temporal model reproduced & extended on the Volleyball dataset.</p>
+    <div class="container footer-grid">
+      <div>
+        <strong class="footer-title">VolleyAI · Volleyball Group Activity Recognition</strong>
+        <p class="footer-note">An educational and experimental research project. It is not a commercial product, is not offered for profit, and its predictions are unevaluated on new footage. Based on a reproduction and extension of Ibrahim et al., CVPR 2016.</p>
+      </div>
+      <div class="footer-links">
+        <a class="btn btn-sm" href="https://github.com/Eslamusamaaa/Volleyball-group-activity-recognition" target="_blank" rel="noopener">GitHub repository ↗</a>
+        <a class="btn btn-sm" href="https://github.com/Eslamusamaaa" target="_blank" rel="noopener">GitHub profile ↗</a>
+        <a class="btn btn-sm" href="https://eslamusamaaa.github.io/" target="_blank" rel="noopener">Portfolio ↗</a>
+      </div>
     </div>
   </footer>
 
-  <script src="script.js"></script>
+  <dialog class="preview-dialog" id="preview-dialog" aria-label="Video preview">
+    <div class="dlg-head"><strong id="preview-title"></strong><button class="btn btn-sm" id="preview-close" type="button">Close</button></div>
+    <video id="preview-dialog-video" controls playsinline preload="metadata"></video>
+  </dialog>
+  <div class="tipbox" id="tipbox" role="tooltip"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>
