@@ -592,9 +592,85 @@ features) and the full per-class breakdown.
 
 Live results table: [`outputs/results/RESULTS.md`](outputs/results/RESULTS.md).
 
+## Web platform (FastAPI backend + frontend)
+
+> **Educational and experimental project.** It is not a commercial product and
+> is not offered for profit. Predictions on new footage are unevaluated (see
+> "Known limitations" below).
+
+A web app that exposes the trained pipeline: upload or import a match video and
+get an annotated video, a clickable event timeline and analytics. Run it with:
+
+```bash
+.venv\Scripts\python.exe -m uvicorn backend.app:app --port 8000
+# then open http://localhost:8000
+```
+
+Models are loaded once at startup (YOLOv8n detector, ByteTrack, ResNet50 B3-A
+backbone, B8-mt). Each analysis runs as a background job the browser polls.
+
+### Frontend
+
+Plain HTML, CSS and ES modules served by FastAPI as static files — no build
+step, no framework, no charting library (all charts are hand-written SVG).
+
+| Section | What it shows |
+|---|---|
+| **Overview** | Headline metrics (read from the experiment files), what the project does |
+| **Verified samples** | Group-activity and player-activity samples: test-split frames, tracked players with IDs and predicted actions, and a ✓/✗ per player against the dataset annotation |
+| **Studio** | Drag-and-drop upload or link, live pipeline stages, annotated video (annotated / side-by-side / source), synced event timeline, activity-distribution and confidence charts, processing time |
+| **Library** | Browse server videos, preview, one-click analysis, YouTube importer with progress |
+| **Technical** | System architecture, ML pipeline explorer, dataset and preprocessing, model architectures, B1–B8-mt baseline ladder, group- and player-activity methodology, training/inference details, evaluation (confusion matrices, per-class metrics, training curves, detector/tracker), API and frontend integration |
+| **References** | Papers, dataset, repository; links to the author's GitHub and portfolio |
+
+Studio endpoints used: `POST /api/analyze`, `/api/analyze/url`,
+`/api/library/analyze`, `GET /api/jobs/{id}`, `/api/jobs/{id}/video`,
+`/api/library`, `POST /api/youtube/download`, `GET /api/youtube/progress/{id}`.
+
+### How the sample frames are verified
+
+No label is typed by hand. `scripts/build_sample_data.py` takes test-split clips
+(videos never used for training), runs the full pipeline on the 9-frame window
+around the annotated frame, matches each tracked player to the dataset's
+ground-truth box (IoU ≥ 0.5) and keeps a clip only if the predicted group
+activity equals the ground-truth label (and, for player samples, the featured
+player's action is correct). Players that the model gets wrong are still shown,
+marked ✗. `scripts/render_group_clips.py` then renders the annotated clip for
+each group sample and attaches it only if the pipeline's banner at the centre
+frame agrees with the ground truth. The samples illustrate the output; they are
+selected for being correct and are not an accuracy measurement.
+
+### Regenerating frontend data and assets
+
+```bash
+python scripts/build_frontend_data.py   # frontend/data/research.json + optimised figures, from outputs/results
+python scripts/build_sample_data.py     # frontend/assets/samples/*.webp + frontend/data/samples.json
+python scripts/render_group_clips.py    # frontend/assets/group/*.mp4 (needs the dataset on disk)
+```
+
+`research.json` is parsed from `outputs/results/*.json` and `*_test_report.txt`,
+`tracker_validation.json` and the YOLO `results.csv`, so every number on the
+site matches the reports in this repo.
+
+### Known limitations
+
+- `jumping` has only ~28% recall (precision ~18%) and `digging` ~51% in B8-mt;
+  the 75.7% player-action accuracy is dominated by `standing`.
+- No dataset-scale accuracy number exists for raw-video inference; the detector
+  and tracker are validated individually, and the full pipeline passed an
+  end-to-end smoke test.
+- Trained on broadcast footage with a full-court view; other camera angles are
+  out of distribution.
+- CPU inference is slow; use a CUDA GPU for full matches.
+
 ## Repo structure
 
 ```
+backend/        FastAPI app (jobs, library, YouTube import, static frontend)
+frontend/       index.html, css/ (design system), js/ (studio, library, samples,
+                research, charts), data/ (research.json, samples.json),
+                assets/ (research figures, verified samples, group clips)
+scripts/        frontend data/sample builders and helper scripts
 src/
   data/         dataset loading, splits, PyTorch Dataset classes
   models/       ResNet50 backbone, LSTM1/LSTM2/pooling, classification heads
