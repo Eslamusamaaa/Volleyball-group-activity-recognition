@@ -143,8 +143,13 @@ def main():
                       "confidence": c["confidence"]})
         print("group", c["label"], "slowed", round(duration(mp4), 1), "s", flush=True)
 
+    kept = {p["label"]: p for p in json.load(open(OUT_JSON))["player"]} if os.path.exists(OUT_JSON) else {}
     player = []
     for action in ACTIONS:
+        if action in kept and os.path.exists(os.path.join(PLAYER_DIR, f"{action}.mp4")):
+            player.append(kept[action])
+            print("player", action, "kept", flush=True)
+            continue
         cands = []
         if action in old:
             cands.append((old[action]["video"], str(old[action]["clip"])))
