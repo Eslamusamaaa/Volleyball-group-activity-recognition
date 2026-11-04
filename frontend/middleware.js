@@ -1,6 +1,6 @@
 // Vercel Routing Middleware: nothing on this site is served without a valid Google sign-in.
 // The visitor signs in on /login.html; POST /__login verifies the Google ID token and sets it
-// as an HttpOnly cookie. Every other request must carry a cookie with a token that still
+// as a cookie (readable by the page, so a new tab needs no second sign-in). Every other request must carry a cookie with a token that still
 // verifies (signature against Google's keys, issuer, audience, expiry, verified email).
 // Without it, pages get the login page and other files get 401. The pages needed to sign in,
 // and the privacy policy that Google requires to be public, stay open.
@@ -61,7 +61,7 @@ export default async function middleware(req, ctx, getKeys) {
     if (!c) return new Response(JSON.stringify({ detail: "Your Google sign-in is invalid or expired." }), { status: 401, headers: { "content-type": "application/json" } });
     const maxAge = Math.max(60, Math.floor(c.exp - Date.now() / 1000));
     return new Response(JSON.stringify({ email: c.email }), {
-      headers: { "content-type": "application/json", "set-cookie": `${COOKIE}=${credential}; Max-Age=${maxAge}; Path=/; HttpOnly; Secure; SameSite=Lax` },
+      headers: { "content-type": "application/json", "set-cookie": `${COOKIE}=${credential}; Max-Age=${maxAge}; Path=/; Secure; SameSite=Lax` },
     });
   }
 

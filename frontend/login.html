@@ -40,8 +40,9 @@
     const s = document.createElement("script");
     s.src = "https://accounts.google.com/gsi/client"; s.async = true; s.defer = true;
     s.onload = () => {
-      google.accounts.id.initialize({ client_id: window.GOOGLE_CLIENT_ID, callback: onCredential });
+      google.accounts.id.initialize({ client_id: window.GOOGLE_CLIENT_ID, callback: onCredential, auto_select: true });
       google.accounts.id.renderButton(document.getElementById("btn"), { theme: "filled_black", size: "large", shape: "pill" });
+      google.accounts.id.prompt();
     };
     s.onerror = () => msg("Google sign-in could not be loaded. Check your connection and reload.");
     document.head.appendChild(s);
