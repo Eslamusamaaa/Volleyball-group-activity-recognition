@@ -6,7 +6,7 @@ import { initResearch } from "./research.js";
 import { initSamples } from "./samples.js";
 import { initShowcase } from "./showcase.js";
 import { initVideos } from "./videos.js";
-import { initAuth, isAdmin } from "./auth.js";
+import { initAuth, adminReady } from "./auth.js";
 import { initAdmin } from "./admin.js";
 
 initAuth().then(() => {
@@ -19,5 +19,5 @@ initAuth().then(() => {
   initSamples();
   initShowcase();
   initVideos();
-  initAdmin(isAdmin);
+  adminReady.then(initAdmin);
 });
