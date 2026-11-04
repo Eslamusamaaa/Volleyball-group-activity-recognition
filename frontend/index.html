@@ -14,8 +14,19 @@
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/sections.css">
+  <script src="config.js"></script>
+  <script>if (window.GOOGLE_CLIENT_ID) document.documentElement.classList.add("locked");</script>
 </head>
 <body>
+  <div class="gate" id="gate">
+    <div class="gate-card">
+      <h1>Volley<b>AI</b></h1>
+      <p>Sign in with your Google account to enter. Your email address is recorded when you sign in.</p>
+      <div id="gate-btn"></div>
+      <p class="gate-msg" id="gate-msg" role="alert"></p>
+    </div>
+  </div>
+
   <a class="skip" href="#studio">Skip to the analysis studio</a>
 
   <div class="notice" role="note">Educational and experimental project — not a commercial or for-profit product.</div>
@@ -628,7 +639,6 @@
   <div class="tipbox" id="tipbox" role="tooltip"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="config.js"></script>
   <script type="module" src="js/main.js"></script>
 </body>
 </html>

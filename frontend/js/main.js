@@ -8,13 +8,14 @@ import { initShowcase } from "./showcase.js";
 import { initVideos } from "./videos.js";
 import { initAuth } from "./auth.js";
 
-initNav();
-initTooltips();
-initPipeline();
-initAuth();
-initStudio();
-initLibrary();
-initResearch().finally(initReveal);
-initSamples();
-initShowcase();
-initVideos();
+initAuth().then(() => {
+  initNav();
+  initTooltips();
+  initPipeline();
+  initStudio();
+  initLibrary();
+  initResearch().finally(initReveal);
+  initSamples();
+  initShowcase();
+  initVideos();
+});

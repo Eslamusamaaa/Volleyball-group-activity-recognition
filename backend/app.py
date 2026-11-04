@@ -30,7 +30,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from backend.auth import require_user  # noqa: E402
+from backend.auth import record, require_admin, require_user, visitors  # noqa: E402
 
 FRONTEND_DIR = os.path.join(ROOT, "frontend")
 OUTPUTS_DIR = os.path.join(ROOT, "outputs")
@@ -229,6 +229,7 @@ async def analyze_upload(
             os.remove(tmp_path)
         raise
 
+    record(_user, "analyze", f"upload {video.filename}")
     job_id = uuid.uuid4().hex
     job = _new_job(video.filename, total, source_type="upload")
     job["job_id"] = job_id
@@ -241,6 +242,18 @@ async def analyze_upload(
     )
     thread.start()
     return {"job_id": job_id, "filename": video.filename}
+
+
+@app.post("/api/session")
+def start_session(user: Optional[str] = Depends(require_user)):
+    """Called once after Google sign-in: records who entered the site."""
+    record(user, "visit")
+    return {"email": user}
+
+
+@app.get("/api/visitors")
+def list_visitors(_admin: str = Depends(require_admin)):
+    return {"visitors": visitors()}
 
 
 @app.get("/api/jobs/{job_id}")
@@ -346,6 +359,7 @@ class AnalyzeLibraryRequest(BaseModel):
 
 @app.post("/api/library/analyze")
 def analyze_library_video(req: AnalyzeLibraryRequest, _user: Optional[str] = Depends(require_user)):
+    record(_user, "analyze", f"library {req.filename}")
     if req.category == "from internet" or req.category == "from_internet":
         vpath = os.path.join(INTERNET_DATA_DIR, req.filename)
     elif req.category == "from our dataset" or req.category == "from_dataset":
