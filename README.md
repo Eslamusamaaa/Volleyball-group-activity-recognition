@@ -212,8 +212,9 @@ Then set the same `GOOGLE_CLIENT_ID` and the Modal URL in [`frontend/config.js`]
 No label is typed by hand. [`scripts/build_sample_data.py`](scripts/build_sample_data.py) takes test-split clips
 (videos never used for training), runs the full pipeline on the 9-frame window around the annotated frame,
 matches each tracked player to the dataset's ground-truth box (IoU ≥ 0.5) and keeps a clip only if the predicted
-group activity equals the ground-truth label. The rendered clips follow the same rule at the middle frame
-([`render_showcase_clips.py`](scripts/render_showcase_clips.py)); player clips additionally require the ringed
+group activity equals the ground-truth label. The group clips go further: [`find_clear_clips.py`](scripts/find_clear_clips.py)
+scores many test clips by how long the model's own banner shows the dataset label, and
+[`render_clear_clips.py`](scripts/render_clear_clips.py) renders the best one per class, trimmed to that stretch; player clips additionally require the ringed
 player's predicted action to equal the annotation ([`render_sample_videos.py`](scripts/render_sample_videos.py)).
 Samples illustrate the output; they are selected for being correct and are **not** an accuracy measurement.
 

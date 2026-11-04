@@ -6,9 +6,9 @@
    "event": "spike",
    "video_file": "assets/group/r_spike.mp4",
    "poster": "assets/group/r_spike_poster.webp",
-   "source_video": 9,
-   "source_clip": "42685",
-   "confidence": 0.999
+   "source_video": 4,
+   "source_clip": "94540",
+   "confidence": 0.989
   },
   {
    "label": "l_set",
@@ -16,9 +16,9 @@
    "event": "set",
    "video_file": "assets/group/l_set.mp4",
    "poster": "assets/group/l_set_poster.webp",
-   "source_video": 34,
-   "source_clip": "22085",
-   "confidence": 1.0
+   "source_video": 4,
+   "source_clip": "49115",
+   "confidence": 0.998
   },
   {
    "label": "r-pass",
@@ -26,9 +26,9 @@
    "event": "pass",
    "video_file": "assets/group/r_pass.mp4",
    "poster": "assets/group/r_pass_poster.webp",
-   "source_video": 35,
-   "source_clip": "35370",
-   "confidence": 0.999
+   "source_video": 29,
+   "source_clip": "30275",
+   "confidence": 0.997
   },
   {
    "label": "l_winpoint",
@@ -36,9 +36,9 @@
    "event": "winpoint",
    "video_file": "assets/group/l_winpoint.mp4",
    "poster": "assets/group/l_winpoint_poster.webp",
-   "source_video": 5,
-   "source_clip": "34995",
-   "confidence": 1.0
+   "source_video": 25,
+   "source_clip": "36225",
+   "confidence": 0.976
   },
   {
    "label": "l-pass",
@@ -46,9 +46,9 @@
    "event": "pass",
    "video_file": "assets/group/l_pass.mp4",
    "poster": "assets/group/l_pass_poster.webp",
-   "source_video": 9,
-   "source_clip": "57475",
-   "confidence": 0.999
+   "source_video": 44,
+   "source_clip": "20300",
+   "confidence": 0.998
   },
   {
    "label": "r_set",
@@ -56,9 +56,9 @@
    "event": "set",
    "video_file": "assets/group/r_set.mp4",
    "poster": "assets/group/r_set_poster.webp",
-   "source_video": 5,
-   "source_clip": "44085",
-   "confidence": 1.0
+   "source_video": 25,
+   "source_clip": "66355",
+   "confidence": 0.999
   },
   {
    "label": "l-spike",
@@ -66,9 +66,9 @@
    "event": "spike",
    "video_file": "assets/group/l_spike.mp4",
    "poster": "assets/group/l_spike_poster.webp",
-   "source_video": 11,
-   "source_clip": "76780",
-   "confidence": 0.988
+   "source_video": 5,
+   "source_clip": "36100",
+   "confidence": 0.998
   },
   {
    "label": "r_winpoint",
@@ -76,8 +76,8 @@
    "event": "winpoint",
    "video_file": "assets/group/r_winpoint.mp4",
    "poster": "assets/group/r_winpoint_poster.webp",
-   "source_video": 4,
-   "source_clip": "34395",
+   "source_video": 14,
+   "source_clip": "43230",
    "confidence": 1.0
   }
  ],

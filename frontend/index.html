@@ -76,7 +76,7 @@
               <figcaption><span>Model output on a held-out test clip, slowed down</span><span id="hero-cap">group activity: right spike</span></figcaption>
             </figure>
             <div class="clip-switch" id="hero-switch" role="group" aria-label="Choose a group activity clip"></div>
-            <p class="note">The caption is the dataset's annotation for the middle frame, which the model predicts correctly. Before and after it, the banner shows the model's own predictions on neighbouring frames, which the dataset does not annotate.</p>
+            <p class="note">Held-out test clips the model never trained on. Each one is trimmed to the stretch where the model's own banner shows the class, and that class matches the dataset's label at the clip's middle frame.</p>
           </div>
         </div>
         <div class="hero-stats" id="hero-stats" aria-label="Headline metrics">
@@ -138,7 +138,7 @@
         <div class="section-head reveal">
           <div class="eyebrow">Sample videos</div>
           <h2>The pipeline in motion.</h2>
-          <p class="lede">The same verified test clips as above, played as the full annotated output: tracked players, their predicted actions and the group-activity banner. They loop on their own, slowed to about 12 seconds so each movement can be followed. All clips come from the dataset's held-out test split.</p>
+          <p class="lede">The same verified test clips as above, played as the annotated output: tracked players, their predicted actions and the group-activity banner. Each group clip is trimmed to the stretch where the banner shows the class. They loop on their own, slowed to about 12 seconds so each movement can be followed. All clips come from the dataset's held-out test split.</p>
         </div>
 
         <div class="sub-block reveal">
