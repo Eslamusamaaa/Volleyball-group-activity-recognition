@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-label="Volleyball Group Activity Recognition">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b0f1a"/><stop offset="0.6" stop-color="#111a2e"/><stop offset="1" stop-color="#1b1030"/>
+    </linearGradient>
+    <linearGradient id="title" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ff8a45"/><stop offset="0.55" stop-color="#ffc46b"/><stop offset="1" stop-color="#5eead4"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.85" cy="0.2" r="0.6">
+      <stop offset="0" stop-color="#ff7a2f" stop-opacity="0.35"/><stop offset="1" stop-color="#ff7a2f" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="300" rx="18" fill="url(#bg)"/>
+  <rect width="1200" height="300" rx="18" fill="url(#glow)"/>
+  <g transform="translate(1010 150)" opacity="0.95">
+    <circle r="88" fill="#ff7a2f"/>
+    <g fill="none" stroke="#170a02" stroke-width="7" stroke-linecap="round">
+      <path d="M-84 -26C-40 -26 -2 -8 22 84"/><path d="M-30 -84C-30 -30 8 -4 84 14"/><path d="M-88 38C-34 32 4 6 18 -84"/>
+    </g>
+  </g>
+  <text x="64" y="112" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="22" font-weight="600" letter-spacing="4" fill="#5eead4">CVPR 2016 REPRODUCTION AND EXTENSION</text>
+  <text x="64" y="176" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="58" font-weight="800" fill="url(#title)">Volleyball Group</text>
+  <text x="64" y="238" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="58" font-weight="800" fill="url(#title)">Activity Recognition</text>
+  <text x="64" y="274" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="18" fill="#9aa8c7">YOLOv8 + ByteTrack + ResNet50 + hierarchical LSTM  ·  PyTorch  ·  FastAPI</text>
+</svg>
