@@ -335,3 +335,4 @@ html.locked .gate { display: grid; place-items: center; min-height: 100vh; paddi
 .admin-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .admin-table th, .admin-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 .admin-table th { color: var(--muted, #9aa3b2); font-weight: 500; }
+.admin-table tr.anon-never td { color: #ffc46b; }

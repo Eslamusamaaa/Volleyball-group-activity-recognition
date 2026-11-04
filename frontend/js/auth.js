@@ -49,10 +49,18 @@ export const adminReady = new Promise((r) => { resolveAdmin = r; });
 
 // The visitor already holds a valid token, so the site opens at once; the API is told in the
 // background (it records the email and reports admin status) and is retried if it is still waking up.
+function visitorId() {
+  try {
+    let v = localStorage.getItem("volleyai.vid") || "";
+    if (!v) { v = crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now(); localStorage.setItem("volleyai.vid", v); }
+    return v;
+  } catch { return ""; }
+}
+
 async function registerVisit(tries = 4) {
   for (let i = 0; i < tries; i++) {
     try {
-      resolveAdmin(!!(await getJSON("/api/session", { method: "POST" })).is_admin);
+      resolveAdmin(!!(await getJSON("/api/session", { method: "POST", headers: { "X-Visitor-Id": visitorId() } })).is_admin);
       return;
     } catch (e) {
       if (e.status === 401 || e.status === 403) { if (e.status === 401) sessionExpired(); else { msg(e.message); setToken(""); location.reload(); } return; }

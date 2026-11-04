@@ -616,6 +616,17 @@
             <tbody id="admin-rows"></tbody>
           </table>
         </div>
+        <div class="section-head reveal" style="margin-top:36px">
+          <h3 class="sub-h">Opened the site, no sign-in</h3>
+          <p class="muted" style="max-width:720px">Browsers that reached the login page, with device, approximate place (from the connection), shortened IP and where they came from. The last column shows the email they signed in as, or that they never did.</p>
+        </div>
+        <div class="card reveal" style="overflow-x:auto">
+          <table class="admin-table">
+            <thead><tr><th>Last seen</th><th>Device</th><th>Place</th><th>IP (shortened)</th><th>Came from</th><th>Visits</th><th>Signed in as</th></tr></thead>
+            <tbody id="admin-anon-rows"></tbody>
+          </table>
+        </div>
+        <p class="note" id="admin-anon-note">Loading…</p>
         <p class="note" style="display:flex;gap:14px;align-items:center"><span id="admin-note">Loading…</span><button type="button" class="btn btn-sm" id="admin-refresh">Refresh</button></p>
       </div>
     </section>

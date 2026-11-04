@@ -37,6 +37,15 @@
         location.reload();
       } catch (e) { msg("Could not reach the server. Try again."); }
     }
+    // Tell the server a browser reached the login page (even if it never signs in).
+    (async () => {
+      let vid = ""; try { vid = localStorage.getItem("volleyai.vid") || ""; if (!vid) { vid = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now()); localStorage.setItem("volleyai.vid", vid); } } catch (e) { /* storage blocked */ }
+      let geo = {}; try { geo = await fetch("/__geo").then((r) => r.json()); } catch (e) { /* no geo */ }
+      try {
+        await fetch((window.API_BASE || "").replace(/\/$/, "") + "/api/hit", { method: "POST", keepalive: true, headers: { "content-type": "application/json" },
+          body: JSON.stringify({ vid, ref: document.referrer || "", country: geo.country || "", city: geo.city || "" }) });
+      } catch (e) { /* the beacon is best effort */ }
+    })();
     const s = document.createElement("script");
     s.src = "https://accounts.google.com/gsi/client"; s.async = true; s.defer = true;
     s.onload = () => {

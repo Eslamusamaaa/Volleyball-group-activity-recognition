@@ -65,6 +65,14 @@ export default async function middleware(req, ctx, getKeys) {
     });
   }
 
+  // Approximate place of the visitor (Vercel's edge headers); the login page forwards it with its visit beacon.
+  if (pathname === "/__geo") {
+    const h = (k) => req.headers.get(k) || "";
+    let city = h("x-vercel-ip-city");
+    try { city = decodeURIComponent(city); } catch { /* keep raw */ }
+    return new Response(JSON.stringify({ country: h("x-vercel-ip-country"), city }), { headers: { "content-type": "application/json", "cache-control": "no-store" } });
+  }
+
   if (PUBLIC.has(pathname) || PUBLIC_PREFIX.some((p) => pathname.startsWith(p))) return next();
 
   if (await verify(cookieOf(req), Date.now(), getKeys)) return next();

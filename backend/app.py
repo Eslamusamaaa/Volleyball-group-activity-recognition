@@ -19,7 +19,7 @@ import uuid
 import cv2
 from typing import Optional
 
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, BackgroundTasks
+from fastapi import Depends, FastAPI, File, Header, HTTPException, Request, UploadFile, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 
 from fastapi.responses import FileResponse, JSONResponse
@@ -30,7 +30,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from backend.auth import ADMIN_EMAILS, record, require_admin, require_user, visitors  # noqa: E402
+from backend.auth import ADMIN_EMAILS, anonymous, record, record_hit, require_admin, require_user, visitors  # noqa: E402
 
 FRONTEND_DIR = os.path.join(ROOT, "frontend")
 OUTPUTS_DIR = os.path.join(ROOT, "outputs")
@@ -245,15 +245,30 @@ async def analyze_upload(
 
 
 @app.post("/api/session")
-def start_session(user: Optional[str] = Depends(require_user)):
+def start_session(user: Optional[str] = Depends(require_user), x_visitor_id: str = Header(default="")):
     """Called once after Google sign-in: records who entered the site."""
-    record(user, "visit")
+    record(user, "visit", vid=x_visitor_id)
     return {"email": user, "is_admin": bool(user and user in ADMIN_EMAILS)}
+
+
+class HitBody(BaseModel):
+    vid: str = ""
+    ref: str = ""
+    country: str = ""
+    city: str = ""
+
+
+@app.post("/api/hit")
+def log_hit(body: HitBody, request: Request):
+    """Called by the login page: someone opened the site and has not signed in (yet)."""
+    ip = (request.headers.get("x-forwarded-for", "").split(",")[0].strip()) or (request.client.host if request.client else "")
+    record_hit(ip, request.headers.get("user-agent", ""), body.vid, body.country, body.city, body.ref)
+    return {"ok": True}
 
 
 @app.get("/api/visitors")
 def list_visitors(_admin: str = Depends(require_admin)):
-    return {"visitors": visitors()}
+    return {"visitors": visitors(), "anonymous": anonymous()}
 
 
 @app.get("/api/jobs/{job_id}")
