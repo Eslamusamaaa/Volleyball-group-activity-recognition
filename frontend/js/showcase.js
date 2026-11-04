@@ -1,7 +1,8 @@
 // Hero showcase: the first thing a visitor sees is the model's annotated output
-// playing on its own (muted, looping, already slowed down), with a switch to
+// playing on its own (muted, looping, no controls, slowed to about 12 s), with a switch to
 // move between one verified clip per group activity.
 import { $, esc, getJSON, pct } from "./util.js";
+import { loopVideo } from "./videos.js";
 
 const nice = (c) => `${c.team} ${c.event}`;
 
@@ -14,11 +15,10 @@ export async function initShowcase() {
 
   const img = $("img", card);
   const vid = document.createElement("video");
-  vid.muted = true; vid.loop = true; vid.autoplay = true; vid.playsInline = true;
+  loopVideo(vid);
   vid.setAttribute("aria-label", "Annotated model output on a held-out test clip");
   vid.preload = "auto";
   img.after(vid);
-  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const show = (i) => {
     const c = clips[i];
@@ -29,11 +29,11 @@ export async function initShowcase() {
       b.classList.toggle("active", j === i);
       b.setAttribute("aria-pressed", String(j === i));
     });
-    if (!reduce) vid.play().catch(() => {});
+    vid.play().catch(() => {});
   };
 
   bar.innerHTML = clips.map((c, i) => `<button type="button" class="chip-btn" aria-pressed="false" data-i="${i}">${esc(nice(c))}</button>`).join("");
   bar.addEventListener("click", (e) => { const b = e.target.closest("button[data-i]"); if (b) show(+b.dataset.i); });
-  vid.addEventListener("loadeddata", () => { img.hidden = true; });
+  vid.addEventListener("loadeddata", () => { img.hidden = true; vid.play().catch(() => {}); });
   show(Math.max(0, clips.findIndex((c) => c.label === "r_spike")));
 }

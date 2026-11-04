@@ -28,6 +28,7 @@
       <nav class="nav-links" id="nav-links" aria-label="Primary">
         <a href="#overview">Overview</a>
         <a href="#samples">Samples</a>
+        <a href="#videos">Videos</a>
         <a href="#studio">Studio</a>
         <a href="#library">Library</a>
         <a href="#technical">Technical</a>
@@ -116,6 +117,30 @@
           <div id="ply-view" aria-live="polite"></div>
         </div>
         <p class="note">Samples are selected for being correct, so they illustrate the output rather than measure accuracy. Overall accuracy is reported under Technical → Evaluation.</p>
+      </div>
+    </section>
+
+    <!-- ===== Sample videos ===== -->
+    <section class="section" id="videos">
+      <div class="container">
+        <div class="section-head reveal">
+          <div class="eyebrow">Sample videos</div>
+          <h2>The pipeline in motion.</h2>
+          <p class="lede">The same verified test clips as above, played as the full annotated output: tracked players, their predicted actions and the group-activity banner. They loop on their own, slowed to about 12 seconds so each movement can be followed. All clips come from the dataset's held-out test split.</p>
+        </div>
+
+        <div class="sub-block reveal">
+          <h3 class="sub-h">Group activity samples</h3>
+          <div class="tabs" id="vgrp-tabs" role="tablist" aria-label="Group activity video" style="margin-top:18px"></div>
+          <div id="vgrp-view" aria-live="polite"></div>
+        </div>
+
+        <div class="sub-block reveal">
+          <h3 class="sub-h">Player activity samples</h3>
+          <p class="muted" style="max-width:720px">The player being checked is ringed in yellow; its predicted action equals the dataset's annotation at the middle frame.</p>
+          <div class="tabs" id="vply-tabs" role="tablist" aria-label="Player activity video" style="margin-top:18px"></div>
+          <div id="vply-view" aria-live="polite"></div>
+        </div>
       </div>
     </section>
 
