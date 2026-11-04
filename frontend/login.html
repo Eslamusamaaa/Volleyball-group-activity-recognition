@@ -33,7 +33,7 @@
         const res = await fetch("/__login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ credential: r.credential }) });
         const body = await res.json().catch(() => ({}));
         if (!res.ok) return msg(body.detail || "Sign-in failed.");
-        try { sessionStorage.setItem("volleyai.idtoken", r.credential); } catch (e) { /* storage blocked */ }
+        try { localStorage.setItem("volleyai.idtoken", r.credential); } catch (e) { /* storage blocked */ }
         location.reload();
       } catch (e) { msg("Could not reach the server. Try again."); }
     }

@@ -29,11 +29,12 @@
     const note = document.getElementById("note");
     const when = (t) => new Date(t * 1000).toLocaleString();
     (async () => {
-      let token = ""; try { token = sessionStorage.getItem("volleyai.idtoken") || ""; } catch (e) { /* storage blocked */ }
-      if (!token) { note.textContent = "Open the site, sign in, then come back to this page."; return; }
+      let token = ""; try { token = localStorage.getItem("volleyai.idtoken") || ""; } catch (e) { /* storage blocked */ }
+      if (!token) { note.textContent = "No sign-in found in this browser. Open the site, sign in, then reload this page."; return; }
       try {
         const res = await fetch((window.API_BASE || "").replace(/\/$/, "") + "/api/visitors", { headers: { Authorization: "Bearer " + token } });
         const body = await res.json().catch(() => ({}));
+        if (res.status === 401) { try { localStorage.removeItem("volleyai.idtoken"); } catch (e) { /* storage blocked */ } note.innerHTML = 'Your sign-in expired. <a href="/">Open the site</a>, sign in again, then reload this page.'; return; }
         if (!res.ok) { note.textContent = body.detail || "Could not load the list."; return; }
         const rows = body.visitors.map((v) => { const tr = document.createElement("tr");
           [v.email, when(v.first_seen), when(v.last_seen), v.visits, v.analyses].forEach((x) => { const td = document.createElement("td"); td.textContent = x; tr.appendChild(td); }); return tr; });

@@ -21,11 +21,11 @@ function setToken(token) {
   const c = token && claims(token);
   if (!c || c.exp * 1000 < Date.now() + 30000) {
     email = ""; setAuthToken("");
-    try { sessionStorage.removeItem(KEY); } catch { /* storage blocked */ }
+    try { localStorage.removeItem(KEY); } catch { /* storage blocked */ }
     return false;
   }
   email = c.email || ""; setAuthToken(token);
-  try { sessionStorage.setItem(KEY, token); } catch { /* storage blocked */ }
+  try { localStorage.setItem(KEY, token); } catch { /* storage blocked */ }
   return true;
 }
 
@@ -57,7 +57,7 @@ export function initAuth() {
         msg(e.status ? e.message : "The server is starting up or unreachable. Wait a moment and try again.");
       }
     };
-    let saved = ""; try { saved = sessionStorage.getItem(KEY) || ""; } catch { /* storage blocked */ }
+    let saved = ""; try { saved = localStorage.getItem(KEY) || ""; } catch { /* storage blocked */ }
     const restored = setToken(saved);
     const s = document.createElement("script");
     s.src = "https://accounts.google.com/gsi/client"; s.async = true; s.defer = true;
