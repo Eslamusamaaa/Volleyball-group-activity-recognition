@@ -31,12 +31,19 @@ image = (
     .env({"DISABLE_YOUTUBE": "1"})
     .add_local_dir(os.path.join(ROOT, "backend"), f"{REMOTE}/backend", ignore=IGNORE)
     .add_local_dir(os.path.join(ROOT, "src"), f"{REMOTE}/src", ignore=IGNORE)
-    # Dataset rallies only: the broadcast matches in "from internet" are not shipped.
-    .add_local_dir(os.path.join(ROOT, "production Data", "from our dataset"),
-                   f"{REMOTE}/production Data/from our dataset")
 )
 for w in WEIGHTS:
     image = image.add_local_file(os.path.join(ROOT, w), f"{REMOTE}/{w}")
+
+# Dataset rallies only (the broadcast matches in "from internet" are not shipped),
+# and only the smaller ones, to keep the upload small on a slow connection.
+RALLY_DIR = os.path.join(ROOT, "production Data", "from our dataset")
+MAX_RALLY_BYTES = 5_000_000
+if modal.is_local():  # this module is imported inside the container too, where the folder does not exist
+    for name in sorted(os.listdir(RALLY_DIR)):
+        path = os.path.join(RALLY_DIR, name)
+        if name.endswith(".mp4") and os.path.getsize(path) <= MAX_RALLY_BYTES:
+            image = image.add_local_file(path, f"{REMOTE}/production Data/from our dataset/{name}")
 
 app = modal.App("volleyball-api")
 
