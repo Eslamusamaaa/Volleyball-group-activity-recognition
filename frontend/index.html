@@ -100,14 +100,14 @@
 
         <div class="sub-block reveal">
           <h3 class="sub-h">Group activity samples</h3>
-          <p class="muted" style="max-width:720px">One frame per group activity. The group label describes the whole team; the cards underneath list every tracked player in the frame.</p>
+          <p class="muted" style="max-width:720px">One frame per group activity. The group label describes the whole team; boxes show every tracked player with their predicted action.</p>
           <div class="tabs" id="grp-tabs" role="tablist" aria-label="Group activity sample" style="margin-top:18px"></div>
           <div id="grp-view" aria-live="polite"></div>
         </div>
 
         <div class="sub-block reveal">
           <h3 class="sub-h">Player activity samples</h3>
-          <p class="muted" style="max-width:720px">One frame per individual action. The featured player (★) was matched to a ground-truth box and the predicted action equals the annotation; every other player carries its own check mark or cross.</p>
+          <p class="muted" style="max-width:720px">One frame per individual action. The highlighted player was matched to a ground-truth box and the predicted action equals the annotation.</p>
           <div class="tabs" id="ply-tabs" role="tablist" aria-label="Player activity sample" style="margin-top:18px"></div>
           <div id="ply-view" aria-live="polite"></div>
         </div>
@@ -152,6 +152,10 @@
                   <input id="url-input" type="text" inputmode="url" placeholder="https://www.youtube.com/watch?v=…" autocomplete="off">
                 </label>
                 <p class="note">The engine downloads the footage, then runs the full pipeline. Long videos take a while — use the library importer to trim by duration.</p>
+                <div class="callout warn" role="note">
+                  <strong>Experimental: results on YouTube matches are not yet accurate.</strong>
+                  <p>The model was trained on the Volleyball dataset (CVPR 2016): a fixed, elevated camera with the left team on the left, and clips that contain live play only. Full YouTube matches also contain crowd shots, celebrations, referee close-ups, replays and slow motion, camera cuts and zooms, and cameras behind a team or at the side. The pipeline has no "not gameplay" class, so on those scenes it can still output a confident but wrong activity, and left/right team assignment can be wrong from other angles. A gameplay-detection stage that filters these scenes before analysis is in progress.</p>
+                </div>
               </div>
               <div class="studio-actions">
                 <span class="hint">Output: annotated video · event timeline · analytics</span>
@@ -246,6 +250,10 @@
               </select></label>
             <button class="btn btn-primary" id="yt-btn" type="submit">Download</button>
           </form>
+          <div class="callout warn" role="note">
+            <strong>Experimental: results on YouTube matches are not yet accurate.</strong>
+            <p>The model was trained on footage from one fixed, elevated camera showing live play only. Full matches add crowd shots, celebrations, referee close-ups, replays, camera cuts and other camera angles, and the pipeline has no "not gameplay" class, so it can label those scenes with a confident but wrong activity. A gameplay-detection stage that filters them before analysis is in progress.</p>
+          </div>
           <div id="yt-progress" hidden>
             <div style="display:flex; justify-content:space-between; font-size:13.5px; margin-bottom:8px"><span id="yt-phase"></span><span class="mono" id="yt-pct">0%</span></div>
             <div class="pbar"><i id="yt-bar"></i></div>

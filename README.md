@@ -617,7 +617,7 @@ step, no framework, no charting library (all charts are hand-written SVG).
 | Section | What it shows |
 |---|---|
 | **Overview** | Headline metrics (read from the experiment files), what the project does |
-| **Verified samples** | Group-activity and player-activity samples: test-split frames, tracked players with IDs and predicted actions, and a ✓/✗ per player against the dataset annotation |
+| **Verified samples** | Group-activity and player-activity samples: test-split frames, tracked players with IDs and predicted actions drawn on the frame |
 | **Studio** | Drag-and-drop upload or link, live pipeline stages, annotated video (annotated / side-by-side / source), synced event timeline, activity-distribution and confidence charts, processing time |
 | **Library** | Browse server videos, preview, one-click analysis, YouTube importer with progress |
 | **Technical** | System architecture, ML pipeline explorer, dataset and preprocessing, model architectures, B1–B8-mt baseline ladder, group- and player-activity methodology, training/inference details, evaluation (confusion matrices, per-class metrics, training curves, detector/tracker), API and frontend integration |
@@ -634,8 +634,7 @@ No label is typed by hand. `scripts/build_sample_data.py` takes test-split clips
 around the annotated frame, matches each tracked player to the dataset's
 ground-truth box (IoU ≥ 0.5) and keeps a clip only if the predicted group
 activity equals the ground-truth label (and, for player samples, the featured
-player's action is correct). Players that the model gets wrong are still shown,
-marked ✗. `scripts/render_group_clips.py` then renders the annotated clip for
+player's action is correct). `scripts/render_group_clips.py` then renders the annotated clip for
 each group sample and attaches it only if the pipeline's banner at the centre
 frame agrees with the ground truth. The samples illustrate the output; they are
 selected for being correct and are not an accuracy measurement.

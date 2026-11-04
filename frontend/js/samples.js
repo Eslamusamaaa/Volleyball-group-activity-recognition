@@ -5,18 +5,6 @@ import { $, esc, getJSON, tabGroup, pct } from "./util.js";
 
 const nice = (s) => s.replace(/^([lr])[-_]/, (_, t) => (t === "l" ? "left " : "right "));
 
-function playerCard(p, featured) {
-  const gt = p.correct === null
-    ? `<span class="gtb na" data-tip="No ground-truth box overlaps this track (IoU < 0.5), so its action cannot be checked.">no GT match</span>`
-    : p.correct
-      ? `<span class="gtb ok" data-tip="Ground-truth action: ${esc(p.gt)}">✓ GT ${esc(p.gt)}</span>`
-      : `<span class="gtb bad" data-tip="Ground-truth action: ${esc(p.gt)}. The model predicted ${esc(p.action)}.">✗ GT ${esc(p.gt)}</span>`;
-  return `<div class="pcard act-${esc(p.action)}${featured === p.id ? " feat" : ""}">
-    <div class="pid"><span>#${p.id}</span>${featured === p.id ? '<span class="star" aria-label="featured player">★</span>' : ""}</div>
-    <span class="pact">${esc(p.action)}</span>
-    <div class="pmeta"><span>${pct(p.conf, 0)}</span>${gt}</div></div>`;
-}
-
 function render(box, s, kind) {
   const checked = s.players.filter((p) => p.correct !== null);
   const right = checked.filter((p) => p.correct).length;
@@ -41,9 +29,7 @@ function render(box, s, kind) {
         <p class="note" style="margin-top:0">${hasClip ? "The clip is the pipeline's full annotated output for this 41-frame sequence, slowed to 8 fps. " : ""}Tracked IDs (#) are assigned by ByteTrack.</p>
       </div>
     </div>
-    <div class="players-head"><h4>Players in this frame <span class="muted" style="font-weight:400">· ${s.players.length} tracked</span></h4>
-      <span class="card-sub">✓ / ✗ compares each prediction with the dataset annotation</span></div>
-    <div class="players-grid">${s.players.slice().sort((a, b) => a.bbox[0] - b.bbox[0]).map((p) => playerCard(p, s.featured)).join("")}</div>`;
+  `;
 
   if (hasClip) {
     const img = $("img", box), vid = $("video", box);
