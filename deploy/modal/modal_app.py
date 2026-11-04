@@ -28,8 +28,12 @@ image = (
                  index_url="https://download.pytorch.org/whl/cpu")
     .pip_install("fastapi", "uvicorn[standard]", "python-multipart",
                  "opencv-python-headless", "ultralytics", "yt-dlp", "tqdm", "numpy")
+    .env({"DISABLE_YOUTUBE": "1"})
     .add_local_dir(os.path.join(ROOT, "backend"), f"{REMOTE}/backend", ignore=IGNORE)
     .add_local_dir(os.path.join(ROOT, "src"), f"{REMOTE}/src", ignore=IGNORE)
+    # Dataset rallies only: the broadcast matches in "from internet" are not shipped.
+    .add_local_dir(os.path.join(ROOT, "production Data", "from our dataset"),
+                   f"{REMOTE}/production Data/from our dataset")
 )
 for w in WEIGHTS:
     image = image.add_local_file(os.path.join(ROOT, w), f"{REMOTE}/{w}")
