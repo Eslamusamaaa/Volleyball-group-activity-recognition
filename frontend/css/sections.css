@@ -316,3 +316,6 @@
 .chip-btn:hover { color: var(--text); border-color: var(--text-3); }
 .chip-btn.active { color: var(--text); border-color: var(--accent); background: var(--accent-soft); }
 .chip-btn:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+
+.loop-video, .frame-card video { pointer-events: none; }
+.loop-video::-webkit-media-controls, .frame-card video::-webkit-media-controls { display: none !important; }

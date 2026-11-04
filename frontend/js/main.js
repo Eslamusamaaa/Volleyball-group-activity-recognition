@@ -5,6 +5,7 @@ import { initPipeline } from "./pipeline.js";
 import { initResearch } from "./research.js";
 import { initSamples } from "./samples.js";
 import { initShowcase } from "./showcase.js";
+import { initVideos } from "./videos.js";
 
 initNav();
 initTooltips();
@@ -14,3 +15,4 @@ initLibrary();
 initResearch().finally(initReveal);
 initSamples();
 initShowcase();
+initVideos();
