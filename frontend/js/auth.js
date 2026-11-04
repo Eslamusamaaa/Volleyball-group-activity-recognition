@@ -8,6 +8,7 @@ const KEY = "volleyai.idtoken";
 let email = "";
 
 export const authEnabled = !!CLIENT_ID;
+export let isAdmin = false;
 export const signedIn = () => !authEnabled || !!email;
 
 const root = document.documentElement;
@@ -50,7 +51,7 @@ export function initAuth() {
     const enter = async () => {
       msg("Signing you in…");
       try {
-        await getJSON("/api/session", { method: "POST" });
+        isAdmin = !!(await getJSON("/api/session", { method: "POST" })).is_admin;
         root.classList.remove("locked"); showIdentity(); resolve();
       } catch (e) {
         setToken("");

@@ -6,7 +6,8 @@ import { initResearch } from "./research.js";
 import { initSamples } from "./samples.js";
 import { initShowcase } from "./showcase.js";
 import { initVideos } from "./videos.js";
-import { initAuth } from "./auth.js";
+import { initAuth, isAdmin } from "./auth.js";
+import { initAdmin } from "./admin.js";
 
 initAuth().then(() => {
   initNav();
@@ -18,4 +19,5 @@ initAuth().then(() => {
   initSamples();
   initShowcase();
   initVideos();
+  initAdmin(isAdmin);
 });
