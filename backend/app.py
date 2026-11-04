@@ -9,6 +9,7 @@ Features:
 - Integrated YouTube downloader for custom matches.
 - Serves the frontend platform as static files at root "/".
 """
+import json
 import os
 import sys
 import tempfile
@@ -30,7 +31,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from backend.auth import ADMIN_EMAILS, anonymous, record, record_hit, require_admin, require_user, visitors  # noqa: E402
+from backend.auth import ADMIN_EMAILS, browsers, record, record_event, require_admin, require_user, totals, visitors  # noqa: E402
 
 FRONTEND_DIR = os.path.join(ROOT, "frontend")
 OUTPUTS_DIR = os.path.join(ROOT, "outputs")
@@ -209,6 +210,7 @@ async def analyze_upload(
     stride: int = 9,
     n_frames: int = 9,
     _user: Optional[str] = Depends(require_user),
+    x_visitor_id: str = Header(default=""),
 ):
     ext = os.path.splitext(video.filename or "")[1].lower()
     if ext not in ALLOWED_EXTENSIONS:
@@ -229,7 +231,7 @@ async def analyze_upload(
             os.remove(tmp_path)
         raise
 
-    record(_user, "analyze", f"upload {video.filename}")
+    record(_user, "analyze", f"upload {video.filename}", vid=x_visitor_id)
     job_id = uuid.uuid4().hex
     job = _new_job(video.filename, total, source_type="upload")
     job["job_id"] = job_id
@@ -251,24 +253,27 @@ def start_session(user: Optional[str] = Depends(require_user), x_visitor_id: str
     return {"email": user, "is_admin": bool(user and user in ADMIN_EMAILS)}
 
 
-class HitBody(BaseModel):
-    vid: str = ""
-    ref: str = ""
-    country: str = ""
-    city: str = ""
-
-
-@app.post("/api/hit")
-def log_hit(body: HitBody, request: Request):
-    """Called by the login page: someone opened the site and has not signed in (yet)."""
+@app.post("/api/track")
+async def track(request: Request):
+    """Page events from the site (a visit on load, a summary on leave). Sent as text/plain so the browser
+    can use sendBeacon without a CORS preflight."""
+    raw = await request.body()
+    if len(raw) > 4096:
+        return {"ok": False}
+    try:
+        payload = json.loads(raw)
+    except ValueError:
+        return {"ok": False}
+    if not isinstance(payload, dict):
+        return {"ok": False}
     ip = (request.headers.get("x-forwarded-for", "").split(",")[0].strip()) or (request.client.host if request.client else "")
-    record_hit(ip, request.headers.get("user-agent", ""), body.vid, body.country, body.city, body.ref)
-    return {"ok": True}
+    return {"ok": record_event(ip, request.headers.get("user-agent", ""), payload)}
 
 
 @app.get("/api/visitors")
 def list_visitors(_admin: str = Depends(require_admin)):
-    return {"visitors": visitors(), "anonymous": anonymous()}
+    people, brs = visitors(), browsers()
+    return {"visitors": people, "browsers": brs, "totals": totals(people, brs)}
 
 
 @app.get("/api/jobs/{job_id}")
@@ -373,8 +378,8 @@ class AnalyzeLibraryRequest(BaseModel):
 
 
 @app.post("/api/library/analyze")
-def analyze_library_video(req: AnalyzeLibraryRequest, _user: Optional[str] = Depends(require_user)):
-    record(_user, "analyze", f"library {req.filename}")
+def analyze_library_video(req: AnalyzeLibraryRequest, _user: Optional[str] = Depends(require_user), x_visitor_id: str = Header(default="")):
+    record(_user, "analyze", f"library {req.filename}", vid=x_visitor_id)
     if req.category == "from internet" or req.category == "from_internet":
         vpath = os.path.join(INTERNET_DATA_DIR, req.filename)
     elif req.category == "from our dataset" or req.category == "from_dataset":

@@ -36,9 +36,9 @@
    "event": "winpoint",
    "video_file": "assets/group/l_winpoint.mp4",
    "poster": "assets/group/l_winpoint_poster.webp",
-   "source_video": 25,
-   "source_clip": "36225",
-   "confidence": 0.976
+   "source_video": 14,
+   "source_clip": "43860",
+   "confidence": 0.998
   },
   {
    "label": "l-pass",
@@ -76,8 +76,8 @@
    "event": "winpoint",
    "video_file": "assets/group/r_winpoint.mp4",
    "poster": "assets/group/r_winpoint_poster.webp",
-   "source_video": 14,
-   "source_clip": "43230",
+   "source_video": 20,
+   "source_clip": "32685",
    "confidence": 1.0
   }
  ],

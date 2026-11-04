@@ -1,5 +1,5 @@
 // Hero showcase: the first thing a visitor sees is the model's annotated output
-// playing on its own (muted, looping, no controls, slowed to about 12 s), with a switch to
+// playing on its own (muted, looping, no controls, slowed to about 8 s), with a switch to
 // move between one verified clip per group activity.
 import { $, esc, getJSON, pct } from "./util.js";
 import { loopVideo } from "./videos.js";

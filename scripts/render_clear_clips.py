@@ -3,7 +3,7 @@
 For each of the 8 classes the chosen test clip is the one whose model banner agrees with the dataset
 label across the longest run of 9-frame windows that includes the annotated middle frame. The clip is
 rendered with the full pipeline, trimmed to exactly that run (so the banner shows the class from the
-first frame to the last) and slowed to about 12 s with motion interpolation. Also writes the posters,
+first frame to the last) and slowed to about 8 s with motion interpolation. Also writes the posters,
 frontend/data/showcase.json and the group list of frontend/data/videos.json.
 
     python scripts/render_clear_clips.py
@@ -29,14 +29,15 @@ SCAN = os.path.join(ROOT, "outputs", "clear_clips.json")
 SHOWCASE = os.path.join(FRONT, "data", "showcase.json")
 VIDEOS = os.path.join(FRONT, "data", "videos.json")
 FFMPEG = annotator.FFMPEG_EXE
-TARGET_SEC = 12.0
+TARGET_SEC = 8.0
 MAX_SLOW = 4.5
 MIN_CONF = 0.9
 ORDER = ["r_spike", "l_set", "r-pass", "l_winpoint", "l-pass", "r_set", "l-spike", "r_winpoint"]
 norm = lambda s: s.replace("-", "_")
-# Hand-picked clips where the scan's best choice is not the most readable on screen (the best-agreeing
-# l_winpoint clip showed players standing still; this one shows the left team celebrating the point).
-OVERRIDE = {"l_winpoint": ("25", "36225")}
+# Hand-picked clips where the scan's best choice is not the most readable on screen. Both winpoint classes
+# show the point itself: a defender diving as the ball lands (left) and the opponent on the floor while the
+# scoring team reacts (right), not just players standing or celebrating.
+OVERRIDE = {"l_winpoint": ("14", "43860"), "r_winpoint": ("20", "32685")}
 ONLY = [x for x in os.environ.get("ONLY", "").split(",") if x]
 
 

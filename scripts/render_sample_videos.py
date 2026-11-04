@@ -5,7 +5,7 @@
   training) and keeps a clip only when the detection that overlaps the dataset's
   ground-truth player (IoU >= 0.5) at the annotated centre frame is predicted with
   the ground-truth action. That player is ringed in the final render.
-* Every clip is slowed to about 12 s (motion-interpolated) so it can be read.
+* Every clip is brought to about 8 s: raw clips are slowed with motion interpolation, longer ones are sped up.
 
     python scripts/render_sample_videos.py
 """
@@ -36,7 +36,7 @@ SHOWCASE = os.path.join(FRONT, "data", "showcase.json")
 OUT_JSON = os.path.join(FRONT, "data", "videos.json")
 FFMPEG = annotator.FFMPEG_EXE
 ACTIONS = ["spiking", "blocking", "setting", "digging"]
-TARGET_SEC = 12.3
+TARGET_SEC = 8.0
 TRIES = 12
 
 
@@ -48,16 +48,20 @@ def duration(path):
 
 
 def slow(src, dst):
-    """Stretch to ~TARGET_SEC with motion interpolation; no-op if already slow."""
+    """Bring a clip to about TARGET_SEC: stretch short raw clips with motion interpolation, speed up clips that
+    are already longer than 10 s, leave the rest alone."""
     d = duration(src)
-    if d >= 8:
+    tmp = dst + ".tmp.mp4"
+    if d < 6:
+        vf = f"setpts={TARGET_SEC / d:.4f}*PTS,minterpolate=fps=25:mi_mode=mci:mc_mode=aobmc:vsbmc=1"
+    elif d > 10:
+        vf = f"setpts={TARGET_SEC / d:.4f}*PTS,fps=25"
+    else:
         if src != dst:
             shutil.copy(src, dst)
         return
-    tmp = dst + ".tmp.mp4"
-    vf = f"setpts={TARGET_SEC / d:.4f}*PTS,minterpolate=fps=25:mi_mode=mci:mc_mode=aobmc:vsbmc=1"
     subprocess.run([FFMPEG, "-v", "error", "-y", "-i", src, "-vf", vf, "-an", "-c:v", "libx264",
-                    "-pix_fmt", "yuv420p", "-crf", "24", "-preset", "medium", "-movflags", "+faststart", tmp], check=True)
+                    "-pix_fmt", "yuv420p", "-crf", "22", "-preset", "medium", "-movflags", "+faststart", tmp], check=True)
     os.replace(tmp, dst)
 
 

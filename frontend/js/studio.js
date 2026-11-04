@@ -48,7 +48,7 @@ function setFile(f) {
 }
 
 /* ---------- live tracker ---------- */
-import { signedIn, sessionExpired } from "./auth.js";
+import { requireSignIn, sessionExpired } from "./auth.js";
 
 const STAGE_BY_PHASE = [[/render/i, 3], [/track|recogni|detect|extract|process/i, 1], [/upload|download|fetch|initiali|queue|prob/i, 0]];
 function stageIndex(phase, status) {
@@ -101,7 +101,7 @@ function fail(msg) {
 
 /* ---------- job lifecycle ---------- */
 function begin(name) {
-  if (!signedIn()) throw new Error("Sign in with Google (button above) to run an analysis.");
+  if (!requireSignIn()) throw new Error("Sign in with Google to run an analysis. Everything else on the site is open.");
   busy = true; refreshSubmit();
   els.runError.hidden = true;
   els.results.hidden = true;

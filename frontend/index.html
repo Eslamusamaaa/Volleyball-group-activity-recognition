@@ -15,17 +15,12 @@
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/sections.css">
   <script src="config.js"></script>
-  <script>if (window.GOOGLE_CLIENT_ID) document.documentElement.classList.add("locked");</script>
 </head>
 <body>
-  <div class="gate" id="gate">
-    <div class="gate-card">
-      <h1>Volley<b>AI</b></h1>
-      <p>Sign in with your Google account to enter. Your email address is recorded when you sign in.</p>
-      <div id="gate-btn"></div>
-      <p class="gate-msg" id="gate-msg" role="alert"></p>
-    </div>
-  </div>
+  <dialog class="signin-dialog" id="signin-dialog" aria-label="Sign in">
+    <button type="button" class="dlg-x" aria-label="Close">&times;</button>
+    <div id="signin-body"></div>
+  </dialog>
 
   <a class="skip" href="#studio">Skip to the analysis studio</a>
 
@@ -48,6 +43,7 @@
         <a href="https://eslamusamaaa.github.io/" target="_blank" rel="noopener">Portfolio ↗</a>
         <a href="https://github.com/Eslamusamaaa/Volleyball-group-activity-recognition" target="_blank" rel="noopener">GitHub ↗</a>
       </nav>
+      <button class="btn btn-sm nav-signin" id="nav-signin" type="button" hidden>Sign in</button>
       <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav-links">
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h14M3 10h14M3 14h14"/></svg>
       </button>
@@ -138,7 +134,7 @@
         <div class="section-head reveal">
           <div class="eyebrow">Sample videos</div>
           <h2>The pipeline in motion.</h2>
-          <p class="lede">The same verified test clips as above, played as the annotated output: tracked players, their predicted actions and the group-activity banner. Each group clip is trimmed to the stretch where the banner shows the class. They loop on their own, slowed to about 12 seconds so each movement can be followed. All clips come from the dataset's held-out test split.</p>
+          <p class="lede">The same verified test clips as above, played as the annotated output: tracked players, their predicted actions and the group-activity banner. Each group clip is trimmed to the stretch where the banner shows the class. They loop on their own, about 8 seconds long so each movement can be followed. All clips come from the dataset's held-out test split.</p>
         </div>
 
         <div class="sub-block reveal">
@@ -607,27 +603,33 @@
       <div class="container">
         <div class="section-head reveal">
           <div class="eyebrow">Admin</div>
-          <h2>Who signed in.</h2>
-          <p class="lede">Everyone who entered the site with Google, newest first, with sign-ins and analyses per email. Only admin accounts see this section.</p>
+          <h2>Who visited, and what they did.</h2>
+          <p class="lede">Every browser that opened the site, whether or not it signed in, with the people who did sign in. Device, approximate place, visits, time on the site, scroll depth, sections viewed, clicks, analyses and where they came from. Only admin accounts see this section.</p>
         </div>
+
+        <div class="stat-cards reveal" id="admin-totals"></div>
+
+        <h3 class="sub-h" style="margin-top:36px">People who signed in with Google</h3>
         <div class="card reveal" style="overflow-x:auto">
           <table class="admin-table">
             <thead><tr><th>Email</th><th>First seen</th><th>Last seen</th><th>Sign-ins</th><th>Analyses</th></tr></thead>
             <tbody id="admin-rows"></tbody>
           </table>
         </div>
-        <div class="section-head reveal" style="margin-top:36px">
-          <h3 class="sub-h">Opened the site, no sign-in</h3>
-          <p class="muted" style="max-width:720px">Browsers that reached the login page, with device, approximate place (from the connection), shortened IP and where they came from. The last column shows the email they signed in as, or that they never did.</p>
+
+        <div class="admin-bar">
+          <h3 class="sub-h" style="margin:0">All visitors</h3>
+          <select id="admin-filter" class="select" aria-label="Filter visitors"><option value="all">Everyone</option><option value="anon">Never signed in</option><option value="signed">Signed in</option></select>
+          <button type="button" class="btn btn-sm" id="admin-csv">Download CSV</button>
+          <button type="button" class="btn btn-sm" id="admin-refresh">Refresh</button>
         </div>
         <div class="card reveal" style="overflow-x:auto">
           <table class="admin-table">
-            <thead><tr><th>Last seen</th><th>Device</th><th>Place</th><th>IP (shortened)</th><th>Came from</th><th>Visits</th><th>Signed in as</th></tr></thead>
-            <tbody id="admin-anon-rows"></tbody>
+            <thead><tr><th>Last seen</th><th>Who</th><th>Device</th><th>Place</th><th>Visits</th><th>Time</th><th>Scroll</th><th>Sections</th><th>Clicks</th><th>Analyses</th><th>Came from</th></tr></thead>
+            <tbody id="admin-br-rows"></tbody>
           </table>
         </div>
-        <p class="note" id="admin-anon-note">Loading…</p>
-        <p class="note" style="display:flex;gap:14px;align-items:center"><span id="admin-note">Loading…</span><button type="button" class="btn btn-sm" id="admin-refresh">Refresh</button></p>
+        <p class="note"><span id="admin-br-note"></span> <span id="admin-note">Loading…</span></p>
       </div>
     </section>
 

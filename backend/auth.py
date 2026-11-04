@@ -75,7 +75,7 @@ def visitors() -> list:
     """Per-email summary: first/last seen, sign-ins, analyses."""
     people = {}
     for r in _rows():
-        if r.get("kind") == "hit":
+        if r.get("kind") not in ("visit", "analyze") or not r.get("email"):
             continue
         p = people.setdefault(r["email"], {"email": r["email"], "first_seen": r["t"], "last_seen": r["t"], "visits": 0, "analyses": 0})
         p["first_seen"], p["last_seen"] = min(p["first_seen"], r["t"]), max(p["last_seen"], r["t"])
@@ -83,29 +83,65 @@ def visitors() -> list:
     return sorted(people.values(), key=lambda p: -p["last_seen"])
 
 
-def anonymous() -> list:
-    """Browsers that reached the login page, newest first, with the email they signed in as, if any."""
-    signed = {}
-    for r in _rows():
-        if r.get("kind") == "visit" and r.get("vid"):
+def browsers() -> list:
+    """One entry per browser (visitor id): who they are if they signed in, how often they came, for how long,
+    what they looked at, where from, and how many analyses they ran. Newest first."""
+    rows = list(_rows())
+    signed, analyses = {}, {}
+    for r in rows:
+        if r.get("vid") and r.get("kind") == "visit":
             signed.setdefault(r["vid"], set()).add(r["email"])
-    browsers = {}
-    for r in _rows():
-        if r.get("kind") != "hit":
+        if r.get("vid") and r.get("kind") == "analyze":
+            analyses[r["vid"]] = analyses.get(r["vid"], 0) + 1
+    out = {}
+    for r in rows:
+        if r.get("kind") not in ("hit", "leave"):
             continue
         key = r.get("vid") or f'{r.get("ip")}|{r.get("ua")}'
-        b = browsers.setdefault(key, {"first_seen": r["t"], "last_seen": r["t"], "hits": 0, "signed_in_as": sorted(signed.get(r.get("vid"), []))})
+        b = out.setdefault(key, {"vid": r.get("vid", ""), "first_seen": r["t"], "last_seen": r["t"], "sids": set(), "time": {}, "clicks": {},
+                                 "sections": set(), "scroll": 0, "returning": 0})
         b["first_seen"], b["last_seen"] = min(b["first_seen"], r["t"]), max(b["last_seen"], r["t"])
-        b["hits"] += 1
-        for k in ("device", "country", "city", "ip", "ref"):
-            if r.get(k):
-                b[k] = r[k]
-    return sorted(browsers.values(), key=lambda b: -b["last_seen"])
+        sid = r.get("sid") or str(r["t"])
+        b["sids"].add(sid)
+        if r["kind"] == "hit":
+            for k in ("device", "country", "region", "city", "tz", "lang", "screen", "ip", "ref", "utm"):
+                if r.get(k):
+                    b[k] = r[k]
+            b["returning"] = max(b["returning"], int(r.get("returning") or 0))
+            b["touch"] = bool(r.get("touch"))
+        else:
+            b["time"][sid] = max(b["time"].get(sid, 0), int(r.get("dur") or 0))
+            b["clicks"][sid] = max(b["clicks"].get(sid, 0), int(r.get("clicks") or 0))
+            b["scroll"] = max(b["scroll"], int(r.get("scroll") or 0))
+            b["sections"].update(r.get("sections") or [])
+    result = []
+    for b in out.values():
+        who = sorted(signed.get(b["vid"], [])) if b["vid"] else []
+        result.append({**{k: v for k, v in b.items() if k not in ("sids", "time", "clicks", "sections")},
+                       "visits": len(b["sids"]), "time_sec": sum(b["time"].values()), "clicks": sum(b["clicks"].values()),
+                       "sections": sorted(b["sections"]), "signed_in_as": who, "analyses": analyses.get(b["vid"], 0)})
+    return sorted(result, key=lambda x: -x["last_seen"])
 
 
-# --- anonymous visits: someone opened the site and got the login page -------------------------
+def totals(people: list, brs: list) -> dict:
+    now = time.time()
+    timed = [b for b in brs if b["time_sec"]]
+    return {
+        "browsers": len(brs),
+        "visits": sum(b["visits"] for b in brs),
+        "never_signed_in": sum(1 for b in brs if not b["signed_in_as"]),
+        "signed_in_people": len(people),
+        "people_who_analysed": sum(1 for p in people if p["analyses"]),
+        "analyses": sum(p["analyses"] for p in people),
+        "browsers_24h": sum(1 for b in brs if now - b["last_seen"] < 86400),
+        "browsers_7d": sum(1 for b in brs if now - b["last_seen"] < 7 * 86400),
+        "avg_time_sec": int(sum(b["time_sec"] for b in timed) / max(1, len(timed))),
+    }
+
+
+# --- tracking events from the page: a visit when it loads, a summary when the visitor leaves --------
 _HITS: dict = {}
-HITS_PER_HOUR = 40
+EVENTS_PER_HOUR = 240
 
 
 def _short_ip(ip: str) -> str:
@@ -120,22 +156,44 @@ def _device(ua: str) -> str:
     ua = ua or ""
     browser = next((n for k, n in (("Edg/", "Edge"), ("OPR/", "Opera"), ("Firefox/", "Firefox"), ("Chrome/", "Chrome"), ("Safari/", "Safari")) if k in ua), "Other browser")
     system = next((n for k, n in (("Android", "Android"), ("iPhone", "iPhone"), ("iPad", "iPad"), ("Windows", "Windows"), ("Mac OS", "macOS"), ("Linux", "Linux")) if k in ua), "unknown system")
-    kind = "bot" if any(w in ua.lower() for w in ("bot", "crawler", "spider", "curl", "python-requests")) else ""
-    return f"{browser} on {system}" + (" (bot)" if kind else "")
+    bot = any(w in ua.lower() for w in ("bot", "crawler", "spider", "curl", "python-requests", "headless"))
+    return f"{browser} on {system}" + (" (bot)" if bot else "")
 
 
-def record_hit(ip: str, ua: str, vid: str, country: str = "", city: str = "", ref: str = "") -> bool:
-    """Log that a browser reached the login page. Rate limited per IP; returns False when dropped."""
+def _s(v, n):
+    return str(v or "")[:n]
+
+
+def _i(v, lo, hi):
+    try:
+        return max(lo, min(int(v), hi))
+    except (TypeError, ValueError):
+        return lo
+
+
+def record_event(ip: str, ua: str, p: dict) -> bool:
+    """Log a page event ({"type": "visit"|"leave", ...}). Rate limited per IP; returns False when dropped."""
+    kind = p.get("type")
+    if kind not in ("visit", "leave"):
+        return False
     now = time.time()
     with _LOCK:
         n, start = _HITS.get(ip, (0, now))
         if now - start > 3600:
             n, start = 0, now
-        if n >= HITS_PER_HOUR:
+        if n >= EVENTS_PER_HOUR:
             return False
         _HITS[ip] = (n + 1, start)
-    row = {"t": int(now), "kind": "hit", "email": "", "vid": vid[:64], "ip": _short_ip(ip), "ua": ua[:200], "device": _device(ua),
-           "country": country[:2].upper(), "city": city[:60], "ref": ref[:200]}
+    row = {"t": int(now), "kind": "hit" if kind == "visit" else "leave", "email": "", "vid": _s(p.get("vid"), 64), "sid": _s(p.get("sid"), 32),
+           "ip": _short_ip(ip), "ua": ua[:200], "device": _device(ua)}
+    if kind == "visit":
+        row.update({"country": _s(p.get("country"), 2).upper(), "region": _s(p.get("region"), 40), "city": _s(p.get("city"), 60), "tz": _s(p.get("tz"), 40),
+                    "lang": _s(p.get("lang"), 12), "screen": _s(p.get("screen"), 16), "touch": bool(p.get("touch")), "ref": _s(p.get("ref"), 200),
+                    "utm": _s(p.get("utm"), 80), "returning": _i(p.get("returning"), 0, 9999)})
+    else:
+        secs = p.get("sections") if isinstance(p.get("sections"), list) else []
+        row.update({"dur": _i(p.get("dur"), 0, 6 * 3600), "scroll": _i(p.get("scroll"), 0, 100), "clicks": _i(p.get("clicks"), 0, 9999),
+                    "sections": [_s(x, 30) for x in secs[:20]]})
     print("VISIT", json.dumps(row), flush=True)
     try:
         with _LOCK:

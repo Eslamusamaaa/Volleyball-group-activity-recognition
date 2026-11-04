@@ -25,7 +25,7 @@ function render(box, c, kind) {
       <div class="sv-meta">
         <span class="verdict">✓ matches the dataset annotation</span>
         <div class="kv">${facts}<div><span>Source</span><span>test · video ${c.source_video} · clip ${esc(c.source_clip)}</span></div></div>
-        <p class="note" style="margin-top:0">${kind === "group" ? "The pipeline's annotated output for a test sequence, trimmed to the stretch where the banner shows this class, slowed to about 12 seconds and looping." : "The pipeline's annotated output for a 41-frame test sequence, slowed to about 12 seconds and looping."}</p>
+        <p class="note" style="margin-top:0">${kind === "group" ? "The pipeline's annotated output for a test sequence, trimmed to the stretch where the banner shows this class, slowed to about 8 seconds and looping." : "The pipeline's annotated output for a 41-frame test sequence, slowed to about 8 seconds and looping."}</p>
       </div>
     </div>`;
   const v = loopVideo($("video", box));

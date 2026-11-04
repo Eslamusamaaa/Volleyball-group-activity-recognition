@@ -49,7 +49,7 @@
 | 🔎 **Player detector** (YOLOv8n, fine-tuned) | **95.3 %** precision · **94.2 %** recall · **0.98** mAP50 |
 | 🧭 **Tracker** (ByteTrack) | **97.7 %** of ground-truth players matched |
 | 📚 **Dataset** | 4,830 clips · 55 videos · split by video 24 / 15 / 16 |
-| 🌐 **Live** | Vercel front end + Modal API, Google sign-in required |
+| 🌐 **Live** | Vercel front end + Modal API; the site is open, Google sign-in is needed only to run an analysis |
 
 <img src="docs/assets/divider.svg" width="100%" alt="">
 
@@ -151,11 +151,12 @@ event timeline and analytics. Plain HTML, CSS and ES modules, no build step, no 
 
 ```mermaid
 flowchart LR
-    U([👤 Visitor]):::user -->|Google sign-in| M[Vercel middleware<br/>verifies the token]:::vercel
-    M -->|valid cookie| F[Static site<br/>frontend/]:::vercel
-    F -->|Bearer token| API[Modal<br/>FastAPI backend]:::modal
+    U([👤 Visitor]):::user --> F[Static site<br/>Vercel, open to all]:::vercel
+    F -->|visit and leave events| API[Modal<br/>FastAPI backend]:::modal
+    F -.->|optional Google sign-in<br/>needed to analyse| API
     API --> N[YOLOv8n · ByteTrack<br/>ResNet50 · B8-mt]:::model
     API --> L[(Visitor log<br/>Modal volume)]:::store
+    L --> A[Admin section<br/>who visited, what they did]:::vercel
     classDef user fill:#1f2937,stroke:#9ca3af,color:#fff
     classDef vercel fill:#000,stroke:#fff,color:#fff
     classDef modal fill:#14532d,stroke:#7fee64,color:#fff
@@ -167,19 +168,19 @@ flowchart LR
 |---|---|
 | **Overview** | Headline metrics read from the experiment files; autoplaying hero with a switch between one verified clip per group activity |
 | **Verified samples** | Test-split frames with tracked players, IDs and predicted actions |
-| **Videos** | Looping annotated clips for **all 8 group activities** and 4 player actions, no controls, about 12 s each |
+| **Videos** | Looping annotated clips for **all 8 group activities** and 4 player actions, no controls, about 8 s each |
 | **Studio** | Upload, live pipeline stages, annotated video, synced event timeline, charts |
 | **Library** | Dataset rallies, one-click analysis |
 | **Technical** | Architecture, model details, baseline ladder, evaluation, API |
-| **Admin** | Visible only to admin accounts: who signed in, when, and how many analyses |
+| **Admin** | Visible only to admin accounts: totals, who signed in, and every visitor with device, place, time, sections and analyses |
 
 ### 🔐 Access and tracking
 
-- **Nothing is served without a Google sign-in.** [`frontend/middleware.js`](frontend/middleware.js) runs on every request and verifies the Google ID token (signature, issuer, audience, expiry, verified email). Pages get the login page, other files get `401`.
-- The API verifies the same token on `/api/analyze`, `/api/library/analyze` and `/api/analyze/url` ([`backend/auth.py`](backend/auth.py)).
-- Every sign-in and analysis is recorded with the Google email. Admin accounts (`ADMIN_EMAILS`) see the list in the site's **Admin** section, read from `GET /api/visitors`.
-- Optional `ALLOWED_EMAILS` restricts who may enter. With no `GOOGLE_CLIENT_ID` set, the wall is off, which is the default for local runs.
-- A public [privacy policy](frontend/privacy.html) describes exactly what is recorded.
+- **The site opens straight away.** Nobody is asked to sign in on arrival. Google sign-in is optional and happens from inside the site (the **Sign in** button in the nav, or the Studio section).
+- **Running an analysis needs a Google sign-in**, because it spends compute. The API verifies the Google ID token on `/api/analyze`, `/api/library/analyze` and `/api/analyze/url` ([`backend/auth.py`](backend/auth.py)). Optional `ALLOWED_EMAILS` restricts who may analyse.
+- **Every visit is tracked, signed in or not** ([`frontend/js/track.js`](frontend/js/track.js)): time, browser and system, approximate place (from Vercel's edge headers through [`middleware.js`](frontend/middleware.js)), shortened IP, language, time zone, screen size, referrer and campaign link, a random browser ID, time on the site, scroll depth, sections viewed and clicks. A later sign-in is linked to the same browser ID.
+- **Sign-ins and analyses** are recorded with the Google email. Admin accounts (`ADMIN_EMAILS`) get an **Admin** section in the site: totals (browsers, visits, people who signed in, people who analysed, analyses), the people who signed in, and a filterable table of every browser with a CSV download. It reads `GET /api/visitors`.
+- Events are JSON lines on a Modal volume (also printed to the app log). The public [privacy policy](frontend/privacy.html) lists exactly what is recorded.
 
 ### 🚀 Deployment
 
@@ -195,13 +196,13 @@ flowchart LR
 GOOGLE_CLIENT_ID=<web client id> ADMIN_EMAILS=<you@example.com> modal deploy deploy/modal/modal_app.py
 ```
 
-Then set the same `GOOGLE_CLIENT_ID` and the Modal URL in [`frontend/config.js`](frontend/config.js).
+Then set the same `GOOGLE_CLIENT_ID` and the Modal URL in [`frontend/config.js`](frontend/config.js). Redeploying costs almost nothing: Modal's free credit is used by container running time (an analysis, plus the idle minutes before the container scales down), not by `modal deploy` itself.
 
 <details>
 <summary><b>API endpoints</b></summary>
 
 `POST /api/analyze` · `POST /api/analyze/url` · `POST /api/library/analyze` · `GET /api/jobs/{id}` ·
-`GET /api/jobs/{id}/video` · `GET /api/library` · `POST /api/session` · `GET /api/visitors` (admin) ·
+`GET /api/jobs/{id}/video` · `GET /api/library` · `POST /api/session` · `POST /api/track` · `GET /api/visitors` (admin) ·
 `GET /api/health` · `POST /api/youtube/download` · `GET /api/youtube/progress/{id}`
 
 </details>
@@ -261,7 +262,7 @@ python -m venv .venv
 python scripts/build_frontend_data.py        # research.json and figures, from outputs/results
 python scripts/build_sample_data.py          # verified sample frames
 python scripts/render_showcase_clips.py      # one verified clip per group activity
-python scripts/render_sample_videos.py       # slow all clips to about 12 s, render player clips
+python scripts/render_sample_videos.py       # bring all clips to about 8 s, render player clips
 ```
 
 <details>

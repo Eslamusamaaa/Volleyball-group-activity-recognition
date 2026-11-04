@@ -46,7 +46,15 @@ export function toast(msg, kind = "") {
 // Google ID token for the costly endpoints; set by auth.js after sign-in.
 let authToken = "";
 export const setAuthToken = (t) => { authToken = t || ""; };
-export const authHeader = () => (authToken ? { Authorization: `Bearer ${authToken}` } : {});
+// Random id of this browser (kept in localStorage); the API uses it to link a visit to a later sign-in.
+export function visitorId() {
+  try {
+    let v = localStorage.getItem("volleyai.vid") || "";
+    if (!v) { v = crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now(); localStorage.setItem("volleyai.vid", v); }
+    return v;
+  } catch { return ""; }
+}
+export const authHeader = () => ({ "X-Visitor-Id": visitorId(), ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) });
 
 export async function getJSON(url, opts = {}) {
   const res = await fetch(apiUrl(url), { ...opts, headers: { ...authHeader(), ...opts.headers } });
