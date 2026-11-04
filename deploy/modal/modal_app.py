@@ -2,7 +2,7 @@
 
     pip install modal
     modal setup                           # one-time browser login
-    modal deploy deploy/modal/modal_app.py
+    GOOGLE_CLIENT_ID=... ADMIN_EMAILS=you@x.com [ALLOWED_EMAILS=a@x.com,b@y.com] modal deploy deploy/modal/modal_app.py
 
 Modal prints the public https URL; put it in frontend/config.js as API_BASE.
 CPU-only. max_containers=1 on purpose: backend/app.py keeps job state in
@@ -27,8 +27,14 @@ image = (
     .pip_install("torch==2.6.0", "torchvision==0.21.0",
                  index_url="https://download.pytorch.org/whl/cpu")
     .pip_install("fastapi", "uvicorn[standard]", "python-multipart",
-                 "opencv-python-headless", "ultralytics", "yt-dlp", "tqdm", "numpy")
-    .env({"DISABLE_YOUTUBE": "1"})
+                 "opencv-python-headless", "ultralytics", "yt-dlp", "tqdm", "numpy",
+                 "google-auth", "requests")
+    .env({"DISABLE_YOUTUBE": "1",
+          # Google sign-in: set both when deploying (the client ID is public, not a secret).
+          "GOOGLE_CLIENT_ID": os.environ.get("GOOGLE_CLIENT_ID", ""),
+          "ALLOWED_EMAILS": os.environ.get("ALLOWED_EMAILS", ""),
+          "ADMIN_EMAILS": os.environ.get("ADMIN_EMAILS", ""),
+          "VISITS_FILE": "/data/visits.jsonl"})
     .add_local_dir(os.path.join(ROOT, "backend"), f"{REMOTE}/backend", ignore=IGNORE)
     .add_local_dir(os.path.join(ROOT, "src"), f"{REMOTE}/src", ignore=IGNORE)
 )
@@ -46,10 +52,12 @@ if modal.is_local():  # this module is imported inside the container too, where 
             image = image.add_local_file(path, f"{REMOTE}/production Data/from our dataset/{name}")
 
 app = modal.App("volleyball-api")
+# Keeps the visitor log (who signed in with Google) across restarts.
+data = modal.Volume.from_name("volleyai-data", create_if_missing=True)
 
 
 @app.function(image=image, cpu=4, memory=6144, timeout=3600,
-              max_containers=1, scaledown_window=600)
+              max_containers=1, scaledown_window=600, volumes={"/data": data})
 @modal.concurrent(max_inputs=16)
 @modal.asgi_app()
 def web():
