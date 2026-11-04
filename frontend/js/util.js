@@ -43,8 +43,13 @@ export function toast(msg, kind = "") {
   toastTimer = setTimeout(() => el.classList.remove("show"), 4200);
 }
 
-export async function getJSON(url, opts) {
-  const res = await fetch(apiUrl(url), opts);
+// Google ID token for the costly endpoints; set by auth.js after sign-in.
+let authToken = "";
+export const setAuthToken = (t) => { authToken = t || ""; };
+export const authHeader = () => (authToken ? { Authorization: `Bearer ${authToken}` } : {});
+
+export async function getJSON(url, opts = {}) {
+  const res = await fetch(apiUrl(url), { ...opts, headers: { ...authHeader(), ...opts.headers } });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     const e = new Error(err.detail || `Request failed (${res.status})`);

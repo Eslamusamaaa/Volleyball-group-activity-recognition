@@ -19,8 +19,9 @@ import uuid
 import cv2
 from typing import Optional
 
-from fastapi import FastAPI, File, HTTPException, UploadFile, BackgroundTasks
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
+
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -28,6 +29,8 @@ from pydantic import BaseModel
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
+
+from backend.auth import require_user  # noqa: E402
 
 FRONTEND_DIR = os.path.join(ROOT, "frontend")
 OUTPUTS_DIR = os.path.join(ROOT, "outputs")
@@ -205,6 +208,7 @@ async def analyze_upload(
     video: UploadFile = File(...),
     stride: int = 9,
     n_frames: int = 9,
+    _user: Optional[str] = Depends(require_user),
 ):
     ext = os.path.splitext(video.filename or "")[1].lower()
     if ext not in ALLOWED_EXTENSIONS:
@@ -341,7 +345,7 @@ class AnalyzeLibraryRequest(BaseModel):
 
 
 @app.post("/api/library/analyze")
-def analyze_library_video(req: AnalyzeLibraryRequest):
+def analyze_library_video(req: AnalyzeLibraryRequest, _user: Optional[str] = Depends(require_user)):
     if req.category == "from internet" or req.category == "from_internet":
         vpath = os.path.join(INTERNET_DATA_DIR, req.filename)
     elif req.category == "from our dataset" or req.category == "from_dataset":
@@ -376,7 +380,7 @@ class YouTubeDownloadRequest(BaseModel):
 
 
 @app.post("/api/analyze/url")
-def analyze_url(req: YouTubeDownloadRequest):
+def analyze_url(req: YouTubeDownloadRequest, _user: Optional[str] = Depends(require_user)):
     """Downloads a video from YouTube / web URL and immediately runs full AI analysis pipeline."""
     if not YOUTUBE_ENABLED:
         raise HTTPException(403, YOUTUBE_OFF_MSG)

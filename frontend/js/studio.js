@@ -1,6 +1,6 @@
 // Analysis studio: upload / URL / library jobs, live pipeline tracker, results,
 // timeline and charts. Talks to the existing FastAPI endpoints unchanged.
-import { $, $$, esc, getJSON, apiUrl, toast, fmtTime, fmtDuration, activityOf, ACTIVITY, tabGroup, icons } from "./util.js";
+import { $, $$, esc, getJSON, apiUrl, authHeader, toast, fmtTime, fmtDuration, activityOf, ACTIVITY, tabGroup, icons } from "./util.js";
 import * as charts from "./charts.js";
 
 const els = {
@@ -48,6 +48,8 @@ function setFile(f) {
 }
 
 /* ---------- live tracker ---------- */
+import { signedIn, sessionExpired } from "./auth.js";
+
 const STAGE_BY_PHASE = [[/render/i, 3], [/track|recogni|detect|extract|process/i, 1], [/upload|download|fetch|initiali|queue|prob/i, 0]];
 function stageIndex(phase, status) {
   if (status === "done") return 4;
@@ -99,6 +101,7 @@ function fail(msg) {
 
 /* ---------- job lifecycle ---------- */
 function begin(name) {
+  if (!signedIn()) throw new Error("Sign in with Google (button above) to run an analysis.");
   busy = true; refreshSubmit();
   els.runError.hidden = true;
   els.results.hidden = true;
@@ -136,13 +139,14 @@ async function submit() {
       const data = await getJSON("/api/analyze/url", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) });
       poll(data.job_id, data.title || url, null);
     }
-  } catch (e) { fail(e.message); }
+  } catch (e) { if (e.status === 401) sessionExpired(); fail(e.message); }
 }
 
 function upload(f) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", apiUrl("/api/analyze"));
+    Object.entries(authHeader()).forEach(([k, v]) => xhr.setRequestHeader(k, v));
     xhr.upload.onprogress = (e) => {
       if (!e.lengthComputable) return;
       const p = (e.loaded / e.total) * 100;
@@ -151,6 +155,7 @@ function upload(f) {
     };
     xhr.onload = () => {
       let body = {}; try { body = JSON.parse(xhr.responseText); } catch { /* non-JSON error body */ }
+      if (xhr.status === 401) sessionExpired();
       xhr.status >= 200 && xhr.status < 300 ? resolve(body) : reject(new Error(body.detail || `Upload failed (${xhr.status})`));
     };
     xhr.onerror = () => reject(new Error("Network error while uploading."));
@@ -165,7 +170,7 @@ export async function analyzeLibrary(item) {
     begin(item.filename);
     const data = await getJSON("/api/library/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ category: item.category, filename: item.filename }) });
     poll(data.job_id, item.filename, item.stream_url);
-  } catch (e) { fail(e.message); }
+  } catch (e) { if (e.status === 401) sessionExpired(); fail(e.message); }
 }
 
 /* ---------- results ---------- */
