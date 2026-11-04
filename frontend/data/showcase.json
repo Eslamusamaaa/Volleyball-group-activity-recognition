@@ -38,5 +38,45 @@
   "source_video": 5,
   "source_clip": "34995",
   "confidence": 1.0
+ },
+ {
+  "label": "l-pass",
+  "team": "left",
+  "event": "pass",
+  "video_file": "assets/group/l_pass.mp4",
+  "poster": "assets/group/l_pass_poster.webp",
+  "source_video": 9,
+  "source_clip": "57475",
+  "confidence": 0.999
+ },
+ {
+  "label": "r_set",
+  "team": "right",
+  "event": "set",
+  "video_file": "assets/group/r_set.mp4",
+  "poster": "assets/group/r_set_poster.webp",
+  "source_video": 5,
+  "source_clip": "44085",
+  "confidence": 1.0
+ },
+ {
+  "label": "l-spike",
+  "team": "left",
+  "event": "spike",
+  "video_file": "assets/group/l_spike.mp4",
+  "poster": "assets/group/l_spike_poster.webp",
+  "source_video": 11,
+  "source_clip": "76780",
+  "confidence": 0.988
+ },
+ {
+  "label": "r_winpoint",
+  "team": "right",
+  "event": "winpoint",
+  "video_file": "assets/group/r_winpoint.mp4",
+  "poster": "assets/group/r_winpoint_poster.webp",
+  "source_video": 4,
+  "source_clip": "34395",
+  "confidence": 1.0
  }
 ]

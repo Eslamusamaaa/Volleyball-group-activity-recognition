@@ -32,7 +32,7 @@ SHOWCASE = os.path.join(ROOT, "frontend", "data", "showcase.json")
 FFMPEG = shutil.which("ffmpeg") or "ffmpeg"
 # The four classes shown on the site. Each already has a verified clip in
 # frontend/assets/group; add a label here to render and verify another one.
-ORDER = ["r_spike", "l_set", "r-pass", "l_winpoint"]
+ORDER = ["r_spike", "l_set", "r-pass", "l_winpoint", "l-pass", "r_set", "l-spike", "r_winpoint"]
 TRIES = 10
 
 
@@ -50,7 +50,8 @@ def poster(mp4, at_sec, dest):
 
 def main():
     ann = pickle.load(open(os.path.join(ROOT, "outputs", "annotations.pkl"), "rb"))
-    existing = {s["gt_scene"]: s for s in json.load(open(SAMPLES))["group"] if s.get("clip_video")}
+    # Clips already rendered (and slowed) are kept as they are; only missing labels are rendered.
+    existing = {c["label"]: c for c in json.load(open(SHOWCASE))} if os.path.exists(SHOWCASE) else {}
     predictor = WindowPredictor()
     tmp = tempfile.mkdtemp()
     items = {}
@@ -58,12 +59,10 @@ def main():
     for label in ORDER:
         team, event = ("left" if label[0] == "l" else "right"), label[2:]
         name = safe(label)
-        if label in existing:
-            s = existing[label]
-            mp4 = os.path.join(ROOT, "frontend", s["clip_video"])
-            poster(mp4, 41 // 2 / PLAYBACK_FPS, os.path.join(OUT, name + "_poster"))
-            items[label] = {"video": s["video"], "clip": s["clip"], "confidence": s["scene_conf"]}
-            print(label, "existing clip, poster written", flush=True)
+        if label in existing and os.path.exists(os.path.join(OUT, name + ".mp4")):
+            c = existing[label]
+            items[label] = {"video": c["source_video"], "clip": c["source_clip"], "confidence": c["confidence"]}
+            print(label, "kept", flush=True)
             continue
         cands = sorted((k for k, d in ann.items() if k[0] in TEST and d["category"] == label and len(d["players"]) >= 11),
                        key=lambda k: (k[0], int(k[1])))
