@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visitors — VolleyAI</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/base.css">
+  <style>
+    main { max-width: 860px; margin: 0 auto; padding: 48px 20px 80px; }
+    h1 { font-size: 30px; margin: 0 0 6px; }
+    p { color: var(--muted, #9aa3b2); }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.1); }
+    th { color: var(--muted, #9aa3b2); font-weight: 500; }
+    a { color: #ff8a45; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Visitors</h1>
+    <p id="note">Everyone who signed in with Google, newest first. Only admin accounts can see this list.</p>
+    <table id="t" hidden><thead><tr><th>Email</th><th>First seen</th><th>Last seen</th><th>Sign-ins</th><th>Analyses</th></tr></thead><tbody></tbody></table>
+    <p style="margin-top:28px"><a href="/">← Back to VolleyAI</a></p>
+  </main>
+  <script src="/config.js"></script>
+  <script>
+    const note = document.getElementById("note");
+    const when = (t) => new Date(t * 1000).toLocaleString();
+    (async () => {
+      let token = ""; try { token = sessionStorage.getItem("volleyai.idtoken") || ""; } catch (e) { /* storage blocked */ }
+      if (!token) { note.textContent = "Open the site, sign in, then come back to this page."; return; }
+      try {
+        const res = await fetch((window.API_BASE || "").replace(/\/$/, "") + "/api/visitors", { headers: { Authorization: "Bearer " + token } });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) { note.textContent = body.detail || "Could not load the list."; return; }
+        const rows = body.visitors.map((v) => { const tr = document.createElement("tr");
+          [v.email, when(v.first_seen), when(v.last_seen), v.visits, v.analyses].forEach((x) => { const td = document.createElement("td"); td.textContent = x; tr.appendChild(td); }); return tr; });
+        document.querySelector("#t tbody").append(...rows);
+        document.getElementById("t").hidden = false;
+        note.textContent = body.visitors.length + " visitor" + (body.visitors.length === 1 ? "" : "s") + ", newest first.";
+      } catch (e) { note.textContent = "The server is starting up or unreachable. Reload in a moment."; }
+    })();
+  </script>
+</body>
+</html>
