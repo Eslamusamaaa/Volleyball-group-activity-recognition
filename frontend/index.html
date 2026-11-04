@@ -44,6 +44,7 @@
         <a href="#library">Library</a>
         <a href="#technical">Technical</a>
         <a href="#references">References</a>
+        <a href="#admin" id="nav-admin" hidden>Admin</a>
         <a href="https://eslamusamaaa.github.io/" target="_blank" rel="noopener">Portfolio ↗</a>
         <a href="https://github.com/Eslamusamaaa/Volleyball-group-activity-recognition" target="_blank" rel="noopener">GitHub ↗</a>
       </nav>
@@ -598,6 +599,24 @@
             </div>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- ===== Admin (shown only to admin accounts) ===== -->
+    <section class="section" id="admin" hidden>
+      <div class="container">
+        <div class="section-head reveal">
+          <div class="eyebrow">Admin</div>
+          <h2>Who signed in.</h2>
+          <p class="lede">Everyone who entered the site with Google, newest first, with sign-ins and analyses per email. Only admin accounts see this section.</p>
+        </div>
+        <div class="card reveal" style="overflow-x:auto">
+          <table class="admin-table">
+            <thead><tr><th>Email</th><th>First seen</th><th>Last seen</th><th>Sign-ins</th><th>Analyses</th></tr></thead>
+            <tbody id="admin-rows"></tbody>
+          </table>
+        </div>
+        <p class="note" style="display:flex;gap:14px;align-items:center"><span id="admin-note">Loading…</span><button type="button" class="btn btn-sm" id="admin-refresh">Refresh</button></p>
       </div>
     </section>
 

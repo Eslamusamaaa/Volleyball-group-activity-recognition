@@ -331,3 +331,7 @@ html.locked .gate { display: grid; place-items: center; min-height: 100vh; paddi
 .gate-card h1 b { color: #ff8a45; }
 .gate-card p { margin: 0; color: var(--muted, #9aa3b2); }
 .gate-msg { min-height: 1.4em; font-size: 14px; }
+
+.admin-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.admin-table th, .admin-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.admin-table th { color: var(--muted, #9aa3b2); font-weight: 500; }

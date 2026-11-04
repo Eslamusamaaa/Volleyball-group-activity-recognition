@@ -8,6 +8,7 @@ const KEY = "volleyai.idtoken";
 let email = "";
 
 export const authEnabled = !!CLIENT_ID;
+export let isAdmin = false;
 export const signedIn = () => !authEnabled || !!email;
 
 const root = document.documentElement;
@@ -21,11 +22,11 @@ function setToken(token) {
   const c = token && claims(token);
   if (!c || c.exp * 1000 < Date.now() + 30000) {
     email = ""; setAuthToken("");
-    try { sessionStorage.removeItem(KEY); } catch { /* storage blocked */ }
+    try { localStorage.removeItem(KEY); } catch { /* storage blocked */ }
     return false;
   }
   email = c.email || ""; setAuthToken(token);
-  try { sessionStorage.setItem(KEY, token); } catch { /* storage blocked */ }
+  try { localStorage.setItem(KEY, token); } catch { /* storage blocked */ }
   return true;
 }
 
@@ -50,14 +51,14 @@ export function initAuth() {
     const enter = async () => {
       msg("Signing you in…");
       try {
-        await getJSON("/api/session", { method: "POST" });
+        isAdmin = !!(await getJSON("/api/session", { method: "POST" })).is_admin;
         root.classList.remove("locked"); showIdentity(); resolve();
       } catch (e) {
         setToken("");
         msg(e.status ? e.message : "The server is starting up or unreachable. Wait a moment and try again.");
       }
     };
-    let saved = ""; try { saved = sessionStorage.getItem(KEY) || ""; } catch { /* storage blocked */ }
+    let saved = ""; try { saved = localStorage.getItem(KEY) || ""; } catch { /* storage blocked */ }
     const restored = setToken(saved);
     const s = document.createElement("script");
     s.src = "https://accounts.google.com/gsi/client"; s.async = true; s.defer = true;

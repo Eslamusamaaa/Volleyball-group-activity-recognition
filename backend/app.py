@@ -30,7 +30,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from backend.auth import record, require_admin, require_user, visitors  # noqa: E402
+from backend.auth import ADMIN_EMAILS, record, require_admin, require_user, visitors  # noqa: E402
 
 FRONTEND_DIR = os.path.join(ROOT, "frontend")
 OUTPUTS_DIR = os.path.join(ROOT, "outputs")
@@ -248,7 +248,7 @@ async def analyze_upload(
 def start_session(user: Optional[str] = Depends(require_user)):
     """Called once after Google sign-in: records who entered the site."""
     record(user, "visit")
-    return {"email": user}
+    return {"email": user, "is_admin": bool(user and user in ADMIN_EMAILS)}
 
 
 @app.get("/api/visitors")
