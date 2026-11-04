@@ -4,6 +4,7 @@ import { initLibrary } from "./library.js";
 import { initPipeline } from "./pipeline.js";
 import { initResearch } from "./research.js";
 import { initSamples } from "./samples.js";
+import { initShowcase } from "./showcase.js";
 
 initNav();
 initTooltips();
@@ -12,3 +13,4 @@ initStudio();
 initLibrary();
 initResearch().finally(initReveal);
 initSamples();
+initShowcase();

@@ -6,6 +6,11 @@ export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 const ESC = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
 export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ESC[c]);
 
+// Backend origin when the UI is hosted apart from the API (see config.js).
+// Empty string = same origin, which is how the FastAPI app serves this UI.
+const API_BASE = (window.API_BASE || "").replace(/\/$/, "");
+export const apiUrl = (u) => (u && u.startsWith("/api") ? API_BASE + u : u);
+
 export const pct = (x, d = 1) => `${(x * 100).toFixed(d)}%`;
 
 export function fmtTime(sec) {
@@ -39,7 +44,7 @@ export function toast(msg, kind = "") {
 }
 
 export async function getJSON(url, opts) {
-  const res = await fetch(url, opts);
+  const res = await fetch(apiUrl(url), opts);
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     const e = new Error(err.detail || `Request failed (${res.status})`);

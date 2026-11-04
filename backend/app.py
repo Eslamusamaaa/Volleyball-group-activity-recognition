@@ -42,6 +42,11 @@ os.makedirs(DATASET_DATA_DIR, exist_ok=True)
 MAX_UPLOAD_BYTES = 500 * 1024 * 1024  # 500 MB
 ALLOWED_EXTENSIONS = {".mp4", ".avi", ".mov", ".mkv", ".webm"}
 
+# Set DISABLE_YOUTUBE=1 to switch off the two endpoints that download from YouTube.
+YOUTUBE_ENABLED = os.environ.get("DISABLE_YOUTUBE") != "1"
+YOUTUBE_OFF_MSG = ("YouTube downloads are switched off: the model was trained on one fixed camera view and "
+                   "has no 'not gameplay' class, so results on full YouTube matches are not reliable yet.")
+
 app = FastAPI(title="Volleyball AI Analytics Platform API", version="2.0.0")
 
 app.add_middleware(
@@ -373,6 +378,8 @@ class YouTubeDownloadRequest(BaseModel):
 @app.post("/api/analyze/url")
 def analyze_url(req: YouTubeDownloadRequest):
     """Downloads a video from YouTube / web URL and immediately runs full AI analysis pipeline."""
+    if not YOUTUBE_ENABLED:
+        raise HTTPException(403, YOUTUBE_OFF_MSG)
     from src.inference.download_youtube_matches import download_url, search_and_download
 
     if not req.url and not req.query:
@@ -427,6 +434,8 @@ def get_download_progress(download_id: str):
 
 @app.post("/api/youtube/download")
 def download_youtube_video(req: YouTubeDownloadRequest, background_tasks: BackgroundTasks):
+    if not YOUTUBE_ENABLED:
+        raise HTTPException(403, YOUTUBE_OFF_MSG)
     from src.inference.download_youtube_matches import download_url, search_and_download
 
     if not req.url and not req.query:
