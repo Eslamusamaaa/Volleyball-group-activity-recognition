@@ -1,5 +1,5 @@
 // Match library + YouTube importer.
-import { $, $$, esc, getJSON, toast, fmtDuration, tabGroup, icons } from "./util.js";
+import { $, $$, esc, getJSON, apiUrl, toast, fmtDuration, tabGroup, icons } from "./util.js";
 import { analyzeLibrary } from "./studio.js";
 
 let data = { internet_matches: [], dataset_plays: [] };
@@ -42,7 +42,7 @@ function render() {
 function preview(it) {
   $("#preview-title").textContent = it.title;
   const v = $("#preview-dialog-video");
-  v.src = it.stream_url;
+  v.src = apiUrl(it.stream_url);
   dlg.showModal();
   v.play().catch(() => {});
 }

@@ -1,6 +1,6 @@
 // Analysis studio: upload / URL / library jobs, live pipeline tracker, results,
 // timeline and charts. Talks to the existing FastAPI endpoints unchanged.
-import { $, $$, esc, getJSON, toast, fmtTime, fmtDuration, activityOf, ACTIVITY, tabGroup, icons } from "./util.js";
+import { $, $$, esc, getJSON, apiUrl, toast, fmtTime, fmtDuration, activityOf, ACTIVITY, tabGroup, icons } from "./util.js";
 import * as charts from "./charts.js";
 
 const els = {
@@ -142,7 +142,7 @@ async function submit() {
 function upload(f) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", "/api/analyze");
+    xhr.open("POST", apiUrl("/api/analyze"));
     xhr.upload.onprogress = (e) => {
       if (!e.lengthComputable) return;
       const p = (e.loaded / e.total) * 100;
@@ -176,10 +176,10 @@ function showResults(job, sourceUrl) {
   els.results.hidden = false;
 
   const src = sourceUrl || (job.source_type === "url" && job.filename ? `/api/library/stream/from_internet/${encodeURIComponent(job.filename)}` : null);
-  els.src.src = src || "";
-  els.ai.src = job.annotated_video_url || "";
+  els.src.src = apiUrl(src) || "";
+  els.ai.src = apiUrl(job.annotated_video_url) || "";
   els.download.hidden = !job.annotated_video_url;
-  if (job.annotated_video_url) { els.download.href = job.annotated_video_url; els.download.download = `annotated_${job.filename || "match"}.mp4`; }
+  if (job.annotated_video_url) { els.download.href = apiUrl(job.annotated_video_url); els.download.download = `annotated_${job.filename || "match"}.mp4`; }
   setView("annotated");
   $$("[data-view]").forEach((b) => (b.hidden = b.dataset.view !== "annotated" && !src));
 
