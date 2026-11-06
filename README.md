@@ -155,7 +155,7 @@ flowchart LR
     F -->|visit and leave events| API[Modal<br/>FastAPI backend]:::modal
     F -.->|optional Google sign-in<br/>needed to analyse| API
     API --> N[YOLOv8n · ByteTrack<br/>ResNet50 · B8-mt]:::model
-    API --> L[(Visitor log<br/>Modal volume)]:::store
+    API --> L[(Visitor log<br/>app log and /tmp)]:::store
     L --> A[Admin section<br/>who visited, what they did]:::vercel
     classDef user fill:#1f2937,stroke:#9ca3af,color:#fff
     classDef vercel fill:#000,stroke:#fff,color:#fff
@@ -180,7 +180,7 @@ flowchart LR
 - **Running an analysis needs a Google sign-in**, because it spends compute. The API verifies the Google ID token on `/api/analyze`, `/api/library/analyze` and `/api/analyze/url` ([`backend/auth.py`](backend/auth.py)). Optional `ALLOWED_EMAILS` restricts who may analyse.
 - **Every visit is tracked, signed in or not** ([`frontend/js/track.js`](frontend/js/track.js)): time, browser and system, approximate place (from Vercel's edge headers through [`middleware.js`](frontend/middleware.js)), shortened IP, language, time zone, screen size, referrer and campaign link, a random browser ID, time on the site, scroll depth, sections viewed and clicks. A later sign-in is linked to the same browser ID.
 - **Sign-ins and analyses** are recorded with the Google email. Admin accounts (`ADMIN_EMAILS`) get an **Admin** section in the site: totals (browsers, visits, people who signed in, people who analysed, analyses), the people who signed in, and a filterable table of every browser with a CSV download. It reads `GET /api/visitors`.
-- Events are JSON lines on a Modal volume (also printed to the app log). The public [privacy policy](frontend/privacy.html) lists exactly what is recorded.
+- Events are printed to the Modal app log as `VISIT {...}` lines and also appended to a JSON-lines file inside the container. There is deliberately no Modal Volume (storage is billed even after the free credit runs out), so the Admin tables only cover the time since the container last started; the full history is in the app log (`modal app logs volleyball-api`). The public [privacy policy](frontend/privacy.html) lists exactly what is recorded.
 
 ### 🚀 Deployment
 

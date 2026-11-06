@@ -34,7 +34,8 @@ image = (
           "GOOGLE_CLIENT_ID": os.environ.get("GOOGLE_CLIENT_ID", ""),
           "ALLOWED_EMAILS": os.environ.get("ALLOWED_EMAILS", ""),
           "ADMIN_EMAILS": os.environ.get("ADMIN_EMAILS", ""),
-          "VISITS_FILE": "/data/visits.jsonl"})
+          # no Modal Volume: the log lives in the container (lost when it scales down) and in the app log
+          "VISITS_FILE": "/tmp/visits.jsonl"})
     .add_local_dir(os.path.join(ROOT, "backend"), f"{REMOTE}/backend", ignore=IGNORE)
     .add_local_dir(os.path.join(ROOT, "src"), f"{REMOTE}/src", ignore=IGNORE)
 )
@@ -52,12 +53,10 @@ if modal.is_local():  # this module is imported inside the container too, where 
             image = image.add_local_file(path, f"{REMOTE}/production Data/from our dataset/{name}")
 
 app = modal.App("volleyball-api")
-# Keeps the visitor log (who signed in with Google) across restarts.
-data = modal.Volume.from_name("volleyai-data", create_if_missing=True)
 
 
 @app.function(image=image, cpu=4, memory=6144, timeout=3600,
-              max_containers=1, scaledown_window=600, volumes={"/data": data})
+              max_containers=1, scaledown_window=600)
 @modal.concurrent(max_inputs=16)
 @modal.asgi_app()
 def web():

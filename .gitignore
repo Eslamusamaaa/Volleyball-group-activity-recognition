@@ -45,3 +45,6 @@ outputs/cvpr_text.txt
 # Real pipeline demo video used by the frontend
 !frontend/assets/demo/*.mp4
 !frontend/assets/group/*.mp4
+
+# visitor-log backups contain email addresses
+backups/
